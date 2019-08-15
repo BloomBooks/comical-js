@@ -1,0 +1,10 @@
+{
+  "name": "bubble-edit",
+  "version": "0.1.0",
+  "description": "Edit cartoon bubble frames around an HTML element",
+  "main": "index.js",
+  "repository": "https://github.com/BloomBooks/bubble-edit.git",
+  "author": "John Thomson <john_thomson@sil.org>",
+  "license": "MIT",
+  "private": false
+}
