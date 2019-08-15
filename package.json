@@ -6,5 +6,16 @@
   "repository": "https://github.com/BloomBooks/bubble-edit.git",
   "author": "John Thomson <john_thomson@sil.org>",
   "license": "MIT",
-  "private": false
+  "private": false,
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@storybook/html": "^5.1.11",
+    "babel-loader": "^8.0.6",
+    "npx": "^10.2.0"
+  },
+  "dependencies": {},
+  "scripts": {
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  }
 }
