@@ -1,20 +1,17 @@
-import {Path, Point, Color, Tool, ToolEvent} from "paper";
+import {Path, CompoundPath, Point, Color, Tool, ToolEvent} from "paper";
 
 export default class BubbleEdit {
 
 
     public static drawTail(start: Point, tip: Point):void {
-        const path = new Path();
-        path.strokeColor = new Color("black");
-        
-        path.moveTo(start);
         const xmid = (start.x! + tip.x!)/2;
         const ymid = (start.y! + tip.y!)/2
         let mid = new Point(xmid - ymid/5, ymid - xmid/5);
 
         const tipHandle = this.makeHandle(tip);
         const curveHandle = this.makeHandle(mid);
-        this.makeTail(path, start, tipHandle.position!, curveHandle.position!);
+        let tail = this.makeTail(start, tipHandle.position!, curveHandle.position!);
+        curveHandle.bringToFront();
 
         let state = "idle";
 
@@ -35,17 +32,16 @@ export default class BubbleEdit {
             } else {
                 return;
             }
-            path.segments!.pop();
-            path.segments!.pop();
-            this.makeTail(path, start, tipHandle.position!, curveHandle.position!);
+            tail.remove();
+            tail = this.makeTail(start, tipHandle.position!, curveHandle.position!);
+            curveHandle.bringToFront();
         }
         tool.onMouseUp = (event: ToolEvent) => {
                 state = "idle";
         }
     }
 
-    static makeTail(path: Path, root: Point, tip: Point, mid:Point) {
-        path.removeSegments();
+    static makeTail(root: Point, tip: Point, mid:Point): CompoundPath {
         const tailWidth = 50;
         const xdiff = tip.x! - root.x!;
         const ydiff = tip.y! - root.y!;
@@ -60,12 +56,18 @@ export default class BubbleEdit {
         const end = root.subtract(delta).subtract(delta);
         const mid1 = mid.add(delta);
         const mid2 = mid.subtract(delta);
-        path.moveTo(begin);
-        path.lineTo(mid1);
-        path.lineTo(tip);
-        path.lineTo(mid2);
-        path.lineTo(end);
-        //path.smooth();
+        const path1 = new Path.Arc(begin, mid1, tip);
+        const path2 = new Path.Arc(tip, mid2, end);
+        //path2.clockwise = true;
+        const path3 = new Path();
+        //path3.clockwise = true;
+        path3.moveTo(end);
+        path3.lineTo(begin);
+        const tail = new CompoundPath({children: [path1, path2, path3]});
+        //tail.fillRule = "evenodd";
+        tail.strokeColor = new Color("black");
+        tail.fillColor = new Color("yellow");
+        return tail;
     }
 
     static makeHandle(tip: Point): Path.Circle {
