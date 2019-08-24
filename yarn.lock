@@ -973,10 +973,6 @@
     telejson "^2.2.1"
     util-deprecate "^1.0.2"
 
-"@svgdotjs/svg.js@^3.0.10":
-  version "3.0.13"
-  resolved "https://registry.yarnpkg.com/@svgdotjs/svg.js/-/svg.js-3.0.13.tgz#0afb2213fe98c0d951e0f0a9f6053e1f32056843"
-
 "@types/storybook__html@^5.0.2":
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/@types/storybook__html/-/storybook__html-5.0.2.tgz#c8f1ef4f4f1326b486a7fcbd02f7f59b9b61b14f"
@@ -5670,6 +5666,10 @@ pako@~1.0.5:
   version "1.0.10"
   resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.10.tgz#4328badb5086a426aa90f541977d4955da5c9732"
 
+paper@^0.12.3:
+  version "0.12.3"
+  resolved "https://registry.yarnpkg.com/paper/-/paper-0.12.3.tgz#7274a31c17b8998ab0d98207fcf25a8f25f4c18d"
+
 parallel-transform@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/parallel-transform/-/parallel-transform-1.1.0.tgz#d410f065b05da23081fcd10f28854c29bda33b06"
@@ -7256,13 +7256,7 @@ supports-color@^5.3.0:
   dependencies:
     has-flag "^3.0.0"
 
-svg.draggable.js@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/svg.draggable.js/-/svg.draggable.js-3.0.0.tgz#15d8570a396a3fc8cc34a34f18d1ad11c6290a62"
-  dependencies:
-    "@svgdotjs/svg.js" "^3.0.10"
-
-svg.js@*, svg.js@^2.7.1:
+svg.js@*:
   version "2.7.1"
   resolved "https://registry.yarnpkg.com/svg.js/-/svg.js-2.7.1.tgz#eb977ed4737001eab859949b4a398ee1bb79948d"
 

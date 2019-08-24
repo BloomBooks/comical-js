@@ -19,8 +19,7 @@
     "webpack-cli": "^3.3.6"
   },
   "dependencies": {
-    "svg.draggable.js": "^3.0.0",
-    "svg.js": "^2.7.1",
+    "paper": "^0.12.3",
     "webpack": "^4.39.2"
   },
   "scripts": {

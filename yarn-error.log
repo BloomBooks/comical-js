@@ -1,5 +1,5 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add -D @types/global
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add paper.js
 
 PATH: 
   C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\iCLS\;C:\Program Files\Intel\Intel(R) Management Engine Components\iCLS\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Python27\;C:\Python27\Scripts;C:\Program Files (x86)\Common Files\SIL;C:\Program Files (x86)\SIL\FieldWorks 8\;C:\ProgramData\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\Git\cmd;C:\Program Files (x86)\FFmpeg\bin;C:\Program Files (x86)\eSpeak\command_line;%NVM_HOME%;%NVM_SYMLINK%;C:\Program Files (x86)\Yarn\bin\;C:\Program Files\Intel\WiFi\bin\;C:\Program Files\Common Files\Intel\WirelessCommon\;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Microsoft VS Code\bin;C:\Program Files (x86)\Git\cmd;C:\Program Files (x86)\Git\bin;\C:\Program Files (x86)\Git\cmd;C:\Ruby23-x64\bin;C:\Users\Thomson\AppData\Local\Microsoft\WindowsApps;C:\Users\Thomson\AppData\Roaming\npm;C:\Users\Thomson\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\Thomson\AppData\Local\Yarn\bin
@@ -14,7 +14,7 @@ Platform:
   win32 x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@types%2fglobal: Not found
+  Error: https://registry.yarnpkg.com/paper.js: Not found
       at Request.params.callback [as _callback] (C:\Program Files (x86)\Yarn\lib\cli.js:65327:18)
       at Request.self.callback (C:\Program Files (x86)\Yarn\lib\cli.js:133155:22)
       at Request.emit (events.js:189:13)
@@ -48,8 +48,6 @@ npm manifest:
       "webpack-cli": "^3.3.6"
     },
     "dependencies": {
-      "svg.draggable.js": "^3.0.0",
-      "svg.js": "^2.7.1",
       "webpack": "^4.39.2"
     },
     "scripts": {
@@ -1036,10 +1034,6 @@ Lockfile:
       store2 "^2.7.1"
       telejson "^2.2.1"
       util-deprecate "^1.0.2"
-  
-  "@svgdotjs/svg.js@^3.0.10":
-    version "3.0.13"
-    resolved "https://registry.yarnpkg.com/@svgdotjs/svg.js/-/svg.js-3.0.13.tgz#0afb2213fe98c0d951e0f0a9f6053e1f32056843"
   
   "@types/storybook__html@^5.0.2":
     version "5.0.2"
@@ -7320,13 +7314,7 @@ Lockfile:
     dependencies:
       has-flag "^3.0.0"
   
-  svg.draggable.js@^3.0.0:
-    version "3.0.0"
-    resolved "https://registry.yarnpkg.com/svg.draggable.js/-/svg.draggable.js-3.0.0.tgz#15d8570a396a3fc8cc34a34f18d1ad11c6290a62"
-    dependencies:
-      "@svgdotjs/svg.js" "^3.0.10"
-  
-  svg.js@*, svg.js@^2.7.1:
+  svg.js@*:
     version "2.7.1"
     resolved "https://registry.yarnpkg.com/svg.js/-/svg.js-2.7.1.tgz#eb977ed4737001eab859949b4a398ee1bb79948d"
   

@@ -1,6 +1,6 @@
 //import { document, console } from 'global';
 import { storiesOf } from '@storybook/html';
-import SVG from "svg.js";
+import {setup, Path, Point, Color} from "paper";
 import BubbleEdit from "../src/bubbleEdit";
 
 storiesOf('Demo', module)
@@ -12,16 +12,24 @@ storiesOf('Demo', module)
     button.addEventListener('click', e => console.log(e));
     return button;
   });
-storiesOf('svg', module)
-  .add('square', () => {
-    const div = document.createElement("div");
-    var draw = SVG(div).size(300,300);
-    draw.rect(100, 100).attr({ fill: '#f06' });
-    return div;
+storiesOf('paper', module)
+  .add('line', () => {
+    const canvas = document.createElement("canvas");
+    setup(canvas);
+    const path = new Path();
+    path.strokeColor = new Color("black");
+    const start = new Point(100,100);
+    path.moveTo(start);
+    path.lineTo(start.add(new Point(200, -50)));
+    //view.play();
+    return canvas;
   });
 storiesOf('bubble-edit', module)
   .add('drag tail', () => {
-    const div = document.createElement("div");
-    BubbleEdit.drawTail(div);
-    return div;
+    const canvas = document.createElement("canvas");
+    canvas.height = 500;
+    canvas.width = 500;
+    setup(canvas);
+    BubbleEdit.drawTail();
+    return canvas;
   })
