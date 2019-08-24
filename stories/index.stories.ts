@@ -30,6 +30,8 @@ storiesOf('bubble-edit', module)
     canvas.height = 500;
     canvas.width = 500;
     setup(canvas);
-    BubbleEdit.drawTail();
+    const start = new Point(100,100);
+    const tip = start.add(new Point(200, -50));
+    BubbleEdit.drawTail(start, tip);
     return canvas;
   })
