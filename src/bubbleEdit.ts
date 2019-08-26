@@ -1,4 +1,4 @@
-import {Path, CompoundPath, Point, Color, Tool, ToolEvent} from "paper";
+import {Path, Point, Color, Tool, ToolEvent} from "paper";
 
 export default class BubbleEdit {
 
@@ -41,7 +41,7 @@ export default class BubbleEdit {
         }
     }
 
-    static makeTail(root: Point, tip: Point, mid:Point): CompoundPath {
+    static makeTail(root: Point, tip: Point, mid:Point): Path {
         const tailWidth = 50;
         const xdiff = tip.x! - root.x!;
         const ydiff = tip.y! - root.y!;
@@ -58,16 +58,11 @@ export default class BubbleEdit {
         const mid2 = mid.subtract(delta);
         const path1 = new Path.Arc(begin, mid1, tip);
         const path2 = new Path.Arc(tip, mid2, end);
-        //path2.clockwise = true;
-        const path3 = new Path();
-        //path3.clockwise = true;
-        path3.moveTo(end);
-        path3.lineTo(begin);
-        const tail = new CompoundPath({children: [path1, path2, path3]});
-        //tail.fillRule = "evenodd";
-        tail.strokeColor = new Color("black");
-        tail.fillColor = new Color("yellow");
-        return tail;
+        path1.addSegments(path2.segments!);
+        path2.remove();
+        path1.strokeColor = new Color("black");
+        path1.fillColor = new Color("yellow");
+        return path1;
     }
 
     static makeHandle(tip: Point): Path.Circle {
