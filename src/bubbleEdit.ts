@@ -1,16 +1,17 @@
-import {Path, Point, Color, Tool, ToolEvent} from "paper";
+import {Path, Point, Color, Tool, ToolEvent, Item} from "paper";
 
 export default class BubbleEdit {
 
+    static backColor = new Color("yellow");
 
-    public static drawTail(start: Point, tip: Point):void {
+    public static drawTail(start: Point, tip: Point, lineBehind? : Item|null):void {
         const xmid = (start.x! + tip.x!)/2;
         const ymid = (start.y! + tip.y!)/2
         let mid = new Point(xmid - ymid/5, ymid - xmid/5);
 
         const tipHandle = this.makeHandle(tip);
         const curveHandle = this.makeHandle(mid);
-        let tail = this.makeTail(start, tipHandle.position!, curveHandle.position!);
+        let tails = this.makeTail(start, tipHandle.position!, curveHandle.position!, lineBehind);
         curveHandle.bringToFront();
 
         let state = "idle";
@@ -40,8 +41,8 @@ export default class BubbleEdit {
             } else {
                 return;
             }
-            tail.remove();
-            tail = this.makeTail(start, tipHandle.position!, curveHandle.position!);
+            tails.forEach(t => t.remove());
+            tails = this.makeTail(start, tipHandle.position!, curveHandle.position!, lineBehind);
             curveHandle.bringToFront();
         }
         tool.onMouseUp = (event: ToolEvent) => {
@@ -49,7 +50,7 @@ export default class BubbleEdit {
         }
     }
 
-    static makeTail(root: Point, tip: Point, mid:Point): Path {
+    static makeTail(root: Point, tip: Point, mid:Point, lineBehind? : Item|null): Path[] {
         const tailWidth = 50;
         // we want to make the base of the tail a line of length tailWidth
         // at right angles to the line from root to mid
@@ -70,13 +71,17 @@ export default class BubbleEdit {
         const mid1 = mid.add(deltaMid);
         const mid2 = mid.subtract(deltaMid);
 
-        const result = new Path.Arc(begin, mid1, tip);
-        const path2 = new Path.Arc(tip, mid2, end);
-        result.addSegments(path2.segments!);
-        path2.remove();
-        result.strokeColor = new Color("black");
-        result.fillColor = new Color("yellow");
-        return result;
+        const pathstroke = new Path.Arc(begin, mid1, tip);
+        const pathArc2 = new Path.Arc(tip, mid2, end);
+        pathstroke.addSegments(pathArc2.segments!);
+        pathArc2.remove();
+        const pathFill = pathstroke.clone() as Path;
+        pathstroke.strokeColor = new Color("black");
+        if (lineBehind) {
+            pathstroke.insertBelow(lineBehind);
+        }
+        pathFill.fillColor = BubbleEdit.backColor;
+        return [pathstroke, pathFill];
     }
 
     static makeHandle(tip: Point): Path.Circle {
@@ -84,5 +89,22 @@ export default class BubbleEdit {
         result.strokeColor = new Color("blue");
         result.fillColor = new Color("white");
         return result;
+    }
+
+    // Given a list of shapes, which should initially have no stroke or fill color,
+    // draws them twice, once with a black outline, then again filled with our
+    // backColor. If the shapes overlap, this gives the effect of outlining the
+    // combined shape. Then we draw the draggable tail on top, also with merged outline.
+    public static drawTailOnShapes(start: Point, tip: Point, shapes: Path[]) {
+        const interiors: Path[] = [];
+        shapes.forEach(s => {
+            var copy = s.clone() as Path;
+            interiors.push(copy);
+            copy.bringToFront(); // already in front of s, want in front of all
+            copy.fillColor = BubbleEdit.backColor;
+        })
+        var stroke = new Color("black");
+        shapes.forEach(s => s.strokeColor = stroke);
+        BubbleEdit.drawTail(start, tip, interiors[0]);
     }
 }
