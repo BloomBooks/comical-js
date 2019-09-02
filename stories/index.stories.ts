@@ -1,6 +1,6 @@
 //import { document, console } from 'global';
 import { storiesOf } from '@storybook/html';
-import {setup, Path, Point, Color, Rectangle, project, Item} from "paper";
+import {setup, Path, Point, Color, Rectangle, project, Item, Shape} from "paper";
 import BubbleEdit from "../src/bubbleEdit";
 
 storiesOf('Demo', module)
@@ -25,7 +25,19 @@ storiesOf('paper', module)
     return canvas;
   })
   .add('svg shapes', () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    const textDiv = document.createElement("div");
+    textDiv.innerText="This is a shape to wrap around. It is 150px wide.";
+    textDiv.style.width = "150px";
+    textDiv.style.textAlign = "center";
+    textDiv.style.backgroundColor = "yellow";
+    textDiv.style.position = "absolute";
+    textDiv.style.top = "50px";
+    textDiv.style.left = "80px";
     const canvas = document.createElement("canvas");
+    wrapDiv.appendChild(canvas);
+    wrapDiv.appendChild(textDiv);
     setup(canvas);
     const speechBuble = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
     <svg
@@ -87,26 +99,10 @@ storiesOf('paper', module)
     //        return x.shape ==="rectangle";
     //      });
     project!.importSVG(speechBuble, {onLoad: (item:Item) => {
-      // appears the test function is called twice. First item appears to be a
-      // bounding rectangle at 0,0 with height and width 100. No name, strokeBounds null.
-      // Second is the layer1 group.
-      // Never called for the items generated from the circle and rectangle
-        //  const rectangles = item.getItems((x: any) => {
-        //   return x.name ==="content-holder";
-        // });
-        const contentHolder = item.getItem({recursive: true, match:(x: any) => {
-          return x.name ==="content-holder";
-        }});
-        // contentHolder (which should be a rectangle in SVG) comes out as a Shape.
-        // (can also cause it to come out as a Path, by setting expandShapes: true
-        // in the getItem options).
-        // It has property size, with height, width as numbers matching the
-        // height and width specified in the SVG for the rectangle.)
-        // Also position, which surprisingly is about 50,50...probably a center.
-        contentHolder.fillColor = new Color("cyan");
+        BubbleEdit.wrapBubbleAroundDiv(item as Shape, textDiv);
       }
     });
-    return canvas;
+    return wrapDiv;
   });
 storiesOf('bubble-edit', module)
   .add('drag tail', () => {

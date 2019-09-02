@@ -1,4 +1,4 @@
-import {Path, Point, Color, Tool, ToolEvent, Item} from "paper";
+import {Path, Point, Color, Tool, ToolEvent, Item, Shape} from "paper";
 
 export default class BubbleEdit {
 
@@ -106,5 +106,42 @@ export default class BubbleEdit {
         var stroke = new Color("black");
         shapes.forEach(s => s.strokeColor = stroke);
         BubbleEdit.drawTail(start, tip, interiors[0]);
+    }
+
+    public static wrapBubbleAroundDiv(bubble: Shape, content: HTMLElement) {
+      // recursive: true is required to see any but the root "g" element
+      // (apparently contrary to documentation).
+      // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
+      const contentHolder = bubble.getItem({recursive: true, match:(x: any) => {
+        return x.name ==="content-holder";
+      }});
+      // contentHolder (which should be a rectangle in SVG) comes out as a Shape.
+      // (can also cause it to come out as a Path, by setting expandShapes: true
+      // in the getItem options).
+      // It has property size, with height, width as numbers matching the
+      // height and width specified in the SVG for the rectangle.)
+      // Also position, which surprisingly is about 50,50...probably a center.
+      contentHolder.fillColor = new Color("cyan");
+      const adjustSize = () => {
+        var contentWidth = content.offsetWidth;
+        var contentHeight = content.offsetHeight;
+        if (contentWidth < 1 || contentHeight < 1) {
+            // Horrible kludge until I can find an event that fires when the object is ready.
+            window.setTimeout(adjustSize, 100);
+            return;
+        }
+        var holderWidth = (contentHolder as any).size.width;
+        var holderHeight = (contentHolder as any).size.height;
+        bubble.scale(contentWidth/holderWidth, contentHeight / holderHeight);
+        const contentLeft = content.offsetLeft;
+        const contentTop = content.offsetTop;
+        const contentCenter = new Point(contentLeft + contentWidth/2, contentTop + contentHeight/2);
+        bubble.position= contentCenter;
+      }
+      adjustSize();
+      //window.addEventListener('load', adjustSize);
+
+      //var topContent = content.offsetTop;
+
     }
 }
