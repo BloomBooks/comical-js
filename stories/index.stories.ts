@@ -44,7 +44,7 @@ storiesOf('paper', module)
     wrapDiv.appendChild(textDiv);
 
     const textDiv2 = document.createElement("div");
-    textDiv2.innerText="This is another shape to wrap around. It is 200px wide.";
+    textDiv2.innerText="This is another shape to wrap around. It is 200px wide. It has a bit more text to make it squarer.";
     textDiv2.style.width = "200px";
     textDiv2.style.textAlign = "center";
     //textDiv2.style.backgroundColor = "pink";
@@ -132,7 +132,7 @@ storiesOf('bubble-edit', module)
          x="13.229166"
          height="65.956848"
          width="74.461304"
-         style="fill:#ffffff;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
+         style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
     </g>
   </svg>`;
 }
