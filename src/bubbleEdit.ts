@@ -121,7 +121,7 @@ export default class BubbleEdit {
       // It has property size, with height, width as numbers matching the
       // height and width specified in the SVG for the rectangle.)
       // Also position, which surprisingly is about 50,50...probably a center.
-      contentHolder.fillColor = new Color("cyan");
+      //contentHolder.fillColor = new Color("cyan");
       const adjustSize = () => {
         var contentWidth = content.offsetWidth;
         var contentHeight = content.offsetHeight;
