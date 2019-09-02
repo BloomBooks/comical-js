@@ -95,7 +95,7 @@ export default class BubbleEdit {
     // draws them twice, once with a black outline, then again filled with our
     // backColor. If the shapes overlap, this gives the effect of outlining the
     // combined shape. Then we draw the draggable tail on top, also with merged outline.
-    public static drawTailOnShapes(start: Point, tip: Point, shapes: Path[]) {
+    public static drawTailOnShapes(start: Point, tip: Point, shapes: Item[]) {
         const interiors: Path[] = [];
         shapes.forEach(s => {
             var copy = s.clone() as Path;

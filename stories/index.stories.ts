@@ -34,7 +34,7 @@ storiesOf('paper', module)
     setup(canvas);
 
     const textDiv = document.createElement("div");
-    textDiv.innerText="This is a shape to wrap around. It is 150px wide.";
+    textDiv.innerText="This is a block of text to wrap around. It is 150px wide.";
     textDiv.style.width = "150px";
     textDiv.style.textAlign = "center";
     //textDiv.style.backgroundColor = "yellow";
@@ -44,7 +44,7 @@ storiesOf('paper', module)
     wrapDiv.appendChild(textDiv);
 
     const textDiv2 = document.createElement("div");
-    textDiv2.innerText="This is another shape to wrap around. It is 200px wide. It has a bit more text to make it squarer.";
+    textDiv2.innerText="This is another text block to wrap around. It is 200px wide. It has a bit more text to make it squarer.";
     textDiv2.style.width = "200px";
     textDiv2.style.textAlign = "center";
     //textDiv2.style.backgroundColor = "pink";
