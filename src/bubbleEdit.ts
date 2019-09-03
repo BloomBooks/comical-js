@@ -7,8 +7,10 @@ export default class BubbleEdit {
     public static drawTail(start: Point, tip: Point, lineBehind? : Item|null):void {
         const xmid = (start.x! + tip.x!)/2;
         const ymid = (start.y! + tip.y!)/2
-        let mid = new Point(xmid - ymid/5, ymid - xmid/5);
-
+        const deltaX = tip.x! - start.x!
+        const deltaY = tip.y! - start.y!
+        let mid = new Point(xmid - deltaY/10, ymid + deltaX/10);
+        
         const tipHandle = this.makeHandle(tip);
         const curveHandle = this.makeHandle(mid);
         let tails = this.makeTail(start, tipHandle.position!, curveHandle.position!, lineBehind);
@@ -108,7 +110,7 @@ export default class BubbleEdit {
         BubbleEdit.drawTail(start, tip, interiors[0]);
     }
 
-    public static wrapBubbleAroundDiv(bubble: Shape, content: HTMLElement) {
+    public static wrapBubbleAroundDiv(bubble: Shape, content: HTMLElement, whenPlaced: () => void) {
       // recursive: true is required to see any but the root "g" element
       // (apparently contrary to documentation).
       // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
@@ -138,11 +140,19 @@ export default class BubbleEdit {
         const contentTop = content.offsetTop;
         const contentCenter = new Point(contentLeft + contentWidth/2, contentTop + contentHeight/2);
         bubble.position= contentCenter;
+        whenPlaced();
       }
       adjustSize();
       //window.addEventListener('load', adjustSize);
 
       //var topContent = content.offsetTop;
 
+    }
+
+    public static wrapBubbleAroundDivWithTail(bubble: Shape, content: HTMLElement) {
+        BubbleEdit.wrapBubbleAroundDiv(bubble, content, () => {
+            BubbleEdit.drawTailOnShapes(bubble!.position!, bubble!.position!.add(new Point(200,100)),[bubble])
+        });
+        
     }
 }
