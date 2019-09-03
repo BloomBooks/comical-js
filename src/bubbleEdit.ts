@@ -1,4 +1,4 @@
-import {Path, Point, Color, Tool, ToolEvent, Item, Shape} from "paper";
+import {Path, Point, Color, Tool, ToolEvent, Item, Shape, project} from "paper";
 
 export default class BubbleEdit {
 
@@ -86,10 +86,13 @@ export default class BubbleEdit {
         return [pathstroke, pathFill];
     }
 
+    static handleIndex = 0;
+
     static makeHandle(tip: Point): Path.Circle {
         const result = new Path.Circle(tip, 10);
         result.strokeColor = new Color("blue");
         result.fillColor = new Color("white");
+        result.name = "handle" + BubbleEdit.handleIndex++;
         return result;
     }
 
@@ -153,6 +156,20 @@ export default class BubbleEdit {
         BubbleEdit.wrapBubbleAroundDiv(bubble, content, () => {
             BubbleEdit.drawTailOnShapes(bubble!.position!, bubble!.position!.add(new Point(200,100)),[bubble])
         });
-        
+    }
+
+    public static convertCanvasToSvgImg(parent: HTMLElement) {
+        const canvas = parent.getElementsByTagName("canvas")[0];
+        if (!canvas) {
+            return;
+        }
+        // Remove drag handles
+        project!.getItems({recursive: true, match:(x: any) => {
+            return x.name && x.name.startsWith("handle");
+          }}).forEach(x => x.remove());
+        const svg = project!.exportSVG() as SVGElement;
+        canvas.parentElement!.insertBefore(svg, canvas);
+        canvas.remove();
+
     }
 }

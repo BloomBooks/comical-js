@@ -111,8 +111,20 @@ storiesOf('bubble-edit', module)
         BubbleEdit.wrapBubbleAroundDivWithTail(item2 as Shape, textDiv2);
       }
     });
+    addFinishButton(wrapDiv);
     return wrapDiv;
   });
+
+  function addFinishButton(wrapDiv: HTMLElement) {
+    const button = document.createElement("button");
+    button.title = "Finish";
+    button.innerText = "Finish";
+    wrapDiv.appendChild(button);
+    button.addEventListener("click", () => {
+      BubbleEdit.convertCanvasToSvgImg(wrapDiv);
+    }
+    )
+  }
 
   function speechBubble() {
     return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
