@@ -1,6 +1,6 @@
 //import { document, console } from 'global';
 import { storiesOf } from '@storybook/html';
-import {setup, Path, Point, Color, Rectangle, project, Item, Shape} from "paper";
+import {setup, Path, Point, Color, Rectangle} from "paper";
 import BubbleEdit from "../src/bubbleEdit";
 
 storiesOf('Demo', module)
@@ -77,15 +77,9 @@ storiesOf('bubble-edit', module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
     
-    project!.importSVG(speechBubble(), {onLoad: (item:Item) => {
-        BubbleEdit.wrapBubbleAroundDiv(item as Shape, textDiv, () => {});
-      }
-    });
+    BubbleEdit.wrapBubbleAroundDiv("speech", textDiv, () => {});
+    BubbleEdit.wrapBubbleAroundDiv("shout", textDiv2, () => {});
 
-    project!.importSVG(shoutBubble(), {onLoad: (item2:Item) => {
-        BubbleEdit.wrapBubbleAroundDiv(item2 as Shape, textDiv2, () => {});
-      }
-    });
     return wrapDiv;
   })
   .add('shout with tail', () => {
@@ -107,10 +101,7 @@ storiesOf('bubble-edit', module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    project!.importSVG(shoutBubble(), {onLoad: (item2:Item) => {
-        BubbleEdit.wrapBubbleAroundDivWithTail(item2 as Shape, textDiv2);
-      }
-    });
+    BubbleEdit.wrapBubbleAroundDivWithTail("shout", textDiv2);
     addFinishButton(wrapDiv);
     return wrapDiv;
   });
@@ -126,96 +117,4 @@ storiesOf('bubble-edit', module)
     )
   }
 
-  function speechBubble() {
-    return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-  <svg
-     xmlns:dc="http://purl.org/dc/elements/1.1/"
-     xmlns:cc="http://creativecommons.org/ns#"
-     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:svg="http://www.w3.org/2000/svg"
-     xmlns="http://www.w3.org/2000/svg"
-     id="svg8"
-     version="1.1"
-     viewBox="0 0 100 100"
-     height="100mm"
-     width="100mm">
-    <defs
-       id="defs2" />
-    <metadata
-       id="metadata5">
-      <rdf:RDF>
-        <cc:Work
-           rdf:about="">
-          <dc:format>image/svg+xml</dc:format>
-          <dc:type
-             rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-          <dc:title></dc:title>
-        </cc:Work>
-      </rdf:RDF>
-    </metadata>
-    <g
-       transform="translate(0,-197)"
-       id="layer1">
-      <ellipse
-         ry="49.702854"
-         rx="49.608364"
-         cy="247.10715"
-         cx="50.36533"
-         id="path3715"
-         style="fill:#ffffff;stroke:#000000;stroke-width:0.26660731;stroke-opacity:1" />
-      <rect
-        id="content-holder"
-        class="content-holder"
-         y="214.03423"
-         x="13.229166"
-         height="65.956848"
-         width="74.461304"
-         style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
-    </g>
-  </svg>`;
-}
-
-  function shoutBubble() {
-    return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-    <svg
-       xmlns:dc="http://purl.org/dc/elements/1.1/"
-       xmlns:cc="http://creativecommons.org/ns#"
-       xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-       xmlns:svg="http://www.w3.org/2000/svg"
-       xmlns="http://www.w3.org/2000/svg"
-       id="svg8"
-       version="1.1"
-       viewBox="0 0 100 100"
-       height="100mm"
-       width="100mm">
-      <defs
-         id="defs2" />
-      <metadata
-         id="metadata5">
-        <rdf:RDF>
-          <cc:Work
-             rdf:about="">
-            <dc:format>image/svg+xml</dc:format>
-            <dc:type
-               rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-            <dc:title></dc:title>
-          </cc:Work>
-        </rdf:RDF>
-      </metadata>
-      <g
-         transform="translate(0,-197)"
-         id="layer1">
-         <path
-         id="path4528"
-         d="m 34.773809,223.10566 14.174107,-25.89137 12.662202,25.51339 21.92262,-25.13542 -6.199227,26.04296 19.050415,-5.82123 -18.898809,23.62351 22.489583,8.50447 -22.678569,13.60714 20.78869,31.56101 -39.498513,-24.94643 2.834823,21.73363 -17.386906,-21.73363 -17.575892,27.0253 0.566965,-27.0253 L 4.346726,290.00744 22.489583,258.44643 0.37797618,247.67411 22.867559,235.76786 1.7008928,199.29316 Z"
-         style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-         <rect
-         id="content-holder"
-         y="223.63522"
-         x="22.830175"
-         height="46.376858"
-         width="54.503334"
-         style="fill:none;stroke:#000000;stroke-width:0.18981449;stroke-opacity:1;fill-opacity:0" />
-      </g>
-    </svg>`;
-  }
+  
