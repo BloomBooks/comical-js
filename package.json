@@ -23,7 +23,7 @@
     "webpack": "^4.39.2"
   },
   "scripts": {
-    "storybook": "start-storybook -p 6006",
+    "storybook": "start-storybook -s ./storyStatic -p 6006",
     "build-storybook": "build-storybook"
   }
 }

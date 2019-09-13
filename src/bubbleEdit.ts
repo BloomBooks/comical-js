@@ -303,6 +303,9 @@ export default class BubbleEdit {
 
   public static convertBubbleJsonToCanvas(parent: HTMLElement) {
     const canvas = parent.ownerDocument!.createElement("canvas");
+    canvas.style.position = "absolute";
+    canvas.style.top = "0";
+    canvas.style.left = "0";
     const oldSvg = parent.getElementsByClassName("bubble-edit-generated")[0];
     if (oldSvg) {
       oldSvg.parentElement!.insertBefore(canvas, oldSvg);

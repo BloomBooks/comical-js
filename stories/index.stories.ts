@@ -2,6 +2,7 @@
 import { storiesOf } from "@storybook/html";
 import { setup, Path, Point, Color, Rectangle } from "paper";
 import BubbleEdit from "../src/bubbleEdit";
+import { Bubble, Tip } from "../src/bubble";
 
 storiesOf("Demo", module)
   .add("heading", () => "<h1>Hello World</h1>")
@@ -114,7 +115,46 @@ storiesOf("bubble-edit", module)
     BubbleEdit.wrapBubbleAroundDivWithTail("shout", textDiv2);
     addFinishButton(wrapDiv);
     return wrapDiv;
+  })
+  .add("two bubbles on picture", () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.background = "url('7.jpg') no-repeat 0/800px";
+    wrapDiv.style.height = "600px";
+
+    var div1 = makeTextBlock(wrapDiv, "Oh no! He's dead!", 180, 40, 100);
+    var tip: Tip = { targetX: 100, targetY: 80, midpointX: 150, midpointY: 60 };
+    var bubble: Bubble = {
+      version: "1.0",
+      style: "speech",
+      tips: [tip],
+      level: 1
+    };
+    BubbleEdit.setBubble(bubble, div1);
+    window.setTimeout(() => BubbleEdit.convertBubbleJsonToCanvas(wrapDiv), 10);
+
+    addFinishButton(wrapDiv);
+    return wrapDiv;
   });
+
+function makeTextBlock(
+  parent: HTMLElement,
+  content: string,
+  x: number,
+  y: number,
+  width: number
+): HTMLElement {
+  const textDiv = document.createElement("div");
+  textDiv.innerText = content;
+  textDiv.style.width = `${width}px`;
+  textDiv.style.textAlign = "center";
+  textDiv.style.position = "absolute";
+  textDiv.style.top = `${y}px`;
+  textDiv.style.left = `${x}px`;
+  textDiv.style.zIndex = "1";
+  parent.appendChild(textDiv);
+  return textDiv;
+}
 
 function addFinishButton(wrapDiv: HTMLElement) {
   const button = document.createElement("button");
