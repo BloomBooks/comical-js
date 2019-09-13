@@ -1,208 +1,369 @@
-import {Path, Point, Color, Tool, ToolEvent, Item, Shape, project} from "paper";
+import {
+  Path,
+  Point,
+  Color,
+  ToolEvent,
+  Item,
+  Shape,
+  project,
+  setup
+} from "paper";
+
+import { Bubble, Tip } from "bubble";
 
 export default class BubbleEdit {
+  static backColor = new Color("yellow");
 
-    static backColor = new Color("yellow");
+  public static drawTail(
+    start: Point,
+    mid: Point,
+    tip: Point,
+    lineBehind?: Item | null,
+    elementToUpdate?: HTMLElement
+  ): void {
+    const tipHandle = this.makeHandle(tip);
+    const curveHandle = this.makeHandle(mid);
+    let tails = this.makeTail(
+      start,
+      tipHandle.position!,
+      curveHandle.position!,
+      lineBehind
+    );
+    curveHandle.bringToFront();
 
-    public static drawTail(start: Point, tip: Point, lineBehind? : Item|null):void {
-        const xmid = (start.x! + tip.x!)/2;
-        const ymid = (start.y! + tip.y!)/2
-        const deltaX = tip.x! - start.x!
-        const deltaY = tip.y! - start.y!
-        let mid = new Point(xmid - deltaY/10, ymid + deltaX/10);
-        
-        const tipHandle = this.makeHandle(tip);
-        const curveHandle = this.makeHandle(mid);
-        let tails = this.makeTail(start, tipHandle.position!, curveHandle.position!, lineBehind);
-        curveHandle.bringToFront();
-
-        let state = "idle";
-
-        const tool = new Tool();
-        tool.onMouseDown = (event: ToolEvent) => {
-            if (event.item === tipHandle)
-            {
-                state = "dragTip";
-            } else if (event.item == curveHandle) {
-                state = "dragCurve";
-            }
-        }
-        tool.onMouseDrag = (event: ToolEvent) => {
-            if (state === "dragTip") {
-                const delta = event.point!.subtract(tipHandle.position!).divide(2);
-                tipHandle.position = event.point;
-                // moving the curve handle half as much is intended to keep
-                // the curve roughly the same shape as the tip moves.
-                // It might be more precise if we moved it a distance
-                // proportional to how close it is to the tip to begin with.
-                // Then again, we may decide to constrain it to stay
-                // equidistant from the root and tip.
-                curveHandle.position = curveHandle.position!.add(delta);
-            } else if (state === "dragCurve") {
-                curveHandle.position = event.point;
-            } else {
-                return;
-            }
-            tails.forEach(t => t.remove());
-            tails = this.makeTail(start, tipHandle.position!, curveHandle.position!, lineBehind);
-            curveHandle.bringToFront();
-        }
-        tool.onMouseUp = (event: ToolEvent) => {
-                state = "idle";
-        }
-    }
-
-    static makeTail(root: Point, tip: Point, mid:Point, lineBehind? : Item|null): Path[] {
-        const tailWidth = 50;
-        // we want to make the base of the tail a line of length tailWidth
-        // at right angles to the line from root to mid
-        // centered at root.
-        const angleBase = new Point(mid.x! - root.x!, mid.y! - root.y!).angle!;
-        const deltaBase = new Point(0,0);
-        deltaBase.angle = angleBase + 90;
-        deltaBase.length = tailWidth / 2;
-        const begin = root.add(deltaBase);
-        const end = root.subtract(deltaBase);
-
-        // The midpoints of the arcs are a quarter base width either side of mid,
-        // offset at right angles to the root/tip line.
-        const angleMid = new Point(tip.x! - root.x!, tip.y! - root.y!).angle!;
-        const deltaMid = new Point(0,0);
-        deltaMid.angle = angleMid + 90;
-        deltaMid.length = tailWidth / 4;
-        const mid1 = mid.add(deltaMid);
-        const mid2 = mid.subtract(deltaMid);
-
-        const pathstroke = new Path.Arc(begin, mid1, tip);
-        const pathArc2 = new Path.Arc(tip, mid2, end);
-        pathstroke.addSegments(pathArc2.segments!);
-        pathArc2.remove();
-        const pathFill = pathstroke.clone() as Path;
-        pathstroke.strokeColor = new Color("black");
-        if (lineBehind) {
-            pathstroke.insertBelow(lineBehind);
-        }
-        pathFill.fillColor = BubbleEdit.backColor;
-        return [pathstroke, pathFill];
-    }
-
-    static handleIndex = 0;
-
-    static makeHandle(tip: Point): Path.Circle {
-        const result = new Path.Circle(tip, 10);
-        result.strokeColor = new Color("blue");
-        result.fillColor = new Color("white");
-        result.name = "handle" + BubbleEdit.handleIndex++;
-        return result;
-    }
-
-    // Given a list of shapes, which should initially have no stroke or fill color,
-    // draws them twice, once with a black outline, then again filled with our
-    // backColor. If the shapes overlap, this gives the effect of outlining the
-    // combined shape. Then we draw the draggable tail on top, also with merged outline.
-    public static drawTailOnShapes(start: Point, tip: Point, shapes: Item[]) {
-        const interiors: Path[] = [];
-        shapes.forEach(s => {
-            var copy = s.clone() as Path;
-            interiors.push(copy);
-            copy.bringToFront(); // already in front of s, want in front of all
-            copy.fillColor = BubbleEdit.backColor;
-        })
-        var stroke = new Color("black");
-        shapes.forEach(s => s.strokeColor = stroke);
-        BubbleEdit.drawTail(start, tip, interiors[0]);
-    }
-
-    private static getShape(bubbleSpec: Shape|string, doWithShape: (s: Shape) => void) {
-        if(typeof bubbleSpec !== "string") {
-            doWithShape(bubbleSpec as Shape);
-            return;
-        }
-        let svg: string = "";
-        switch (bubbleSpec) {
-            case "speech":
-                svg = BubbleEdit.speechBubble();
-                break;
-            case "shout":
-                svg = BubbleEdit.shoutBubble();
-                break;
-            default:
-                console.log("unknown bubble type; using default");
-                svg = BubbleEdit.speechBubble();
-        }
-        project!.importSVG(svg, {onLoad: (item:Item) => {
-            doWithShape(item as Shape);
-          }
-        });      
-    }
-
-    public static wrapBubbleAroundDiv(bubbleSpec: Shape|string, content: HTMLElement, whenPlaced: (s:Shape) => void) {
-        BubbleEdit.getShape(bubbleSpec, bubble =>
-            BubbleEdit.wrapShapeAroundDiv(bubble, content, whenPlaced));
-    }
-
-    private static wrapShapeAroundDiv(bubble: Shape, content: HTMLElement, whenPlaced: (s:Shape) => void) {
-      // recursive: true is required to see any but the root "g" element
-      // (apparently contrary to documentation).
-      // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
-      const contentHolder = bubble.getItem({recursive: true, match:(x: any) => {
-        return x.name ==="content-holder";
-      }});
-      // contentHolder (which should be a rectangle in SVG) comes out as a Shape.
-      // (can also cause it to come out as a Path, by setting expandShapes: true
-      // in the getItem options).
-      // It has property size, with height, width as numbers matching the
-      // height and width specified in the SVG for the rectangle.)
-      // Also position, which surprisingly is about 50,50...probably a center.
-      //contentHolder.fillColor = new Color("cyan");
-      contentHolder.strokeWidth = 0;
-      const adjustSize = () => {
-        var contentWidth = content.offsetWidth;
-        var contentHeight = content.offsetHeight;
-        if (contentWidth < 1 || contentHeight < 1) {
-            // Horrible kludge until I can find an event that fires when the object is ready.
-            window.setTimeout(adjustSize, 100);
-            return;
-        }
-        var holderWidth = (contentHolder as any).size.width;
-        var holderHeight = (contentHolder as any).size.height;
-        bubble.scale(contentWidth/holderWidth, contentHeight / holderHeight);
-        const contentLeft = content.offsetLeft;
-        const contentTop = content.offsetTop;
-        const contentCenter = new Point(contentLeft + contentWidth/2, contentTop + contentHeight/2);
-        bubble.position= contentCenter;
-        whenPlaced(bubble);
+    let state = "idle";
+    tipHandle.onMouseDown = () => {
+      state = "dragTip";
+    };
+    curveHandle.onMouseDown = () => {
+      state = "dragCurve";
+    };
+    tipHandle.onMouseDrag = curveHandle.onMouseDrag = (event: ToolEvent) => {
+      if (state === "dragTip") {
+        const delta = event.point!.subtract(tipHandle.position!).divide(2);
+        tipHandle.position = event.point;
+        // moving the curve handle half as much is intended to keep
+        // the curve roughly the same shape as the tip moves.
+        // It might be more precise if we moved it a distance
+        // proportional to how close it is to the tip to begin with.
+        // Then again, we may decide to constrain it to stay
+        // equidistant from the root and tip.
+        curveHandle.position = curveHandle.position!.add(delta);
+      } else if (state === "dragCurve") {
+        curveHandle.position = event.point;
+      } else {
+        return;
       }
-      adjustSize();
-      //window.addEventListener('load', adjustSize);
+      tails.forEach(t => t.remove());
+      tails = this.makeTail(
+        start,
+        tipHandle.position!,
+        curveHandle.position!,
+        lineBehind
+      );
+      curveHandle.bringToFront();
+      if (elementToUpdate) {
+        const bubble = BubbleEdit.getBubble(elementToUpdate);
+        const tip: Tip = {
+          targetX: tipHandle!.position!.x!,
+          targetY: tipHandle!.position!.y!,
+          midpointX: curveHandle!.position!.x!,
+          midpointY: curveHandle!.position!.y!
+        };
+        bubble.tips[0] = tip; // enhance: for multiple tips, need to figure which one to update
+        BubbleEdit.setBubble(bubble, elementToUpdate);
+      }
+    };
+    tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
+      state = "idle";
+    };
+  }
 
-      //var topContent = content.offsetTop;
+  static defaultMid(start: Point, target: Point): Point {
+    const xmid = (start.x! + target.x!) / 2;
+    const ymid = (start.y! + target.y!) / 2;
+    const deltaX = target.x! - start.x!;
+    const deltaY = target.y! - start.y!;
+    return new Point(xmid - deltaY / 10, ymid + deltaX / 10);
+  }
 
+  static makeTail(
+    root: Point,
+    tip: Point,
+    mid: Point,
+    lineBehind?: Item | null
+  ): Path[] {
+    const tailWidth = 50;
+    // we want to make the base of the tail a line of length tailWidth
+    // at right angles to the line from root to mid
+    // centered at root.
+    const angleBase = new Point(mid.x! - root.x!, mid.y! - root.y!).angle!;
+    const deltaBase = new Point(0, 0);
+    deltaBase.angle = angleBase + 90;
+    deltaBase.length = tailWidth / 2;
+    const begin = root.add(deltaBase);
+    const end = root.subtract(deltaBase);
+
+    // The midpoints of the arcs are a quarter base width either side of mid,
+    // offset at right angles to the root/tip line.
+    const angleMid = new Point(tip.x! - root.x!, tip.y! - root.y!).angle!;
+    const deltaMid = new Point(0, 0);
+    deltaMid.angle = angleMid + 90;
+    deltaMid.length = tailWidth / 4;
+    const mid1 = mid.add(deltaMid);
+    const mid2 = mid.subtract(deltaMid);
+
+    const pathstroke = new Path.Arc(begin, mid1, tip);
+    const pathArc2 = new Path.Arc(tip, mid2, end);
+    pathstroke.addSegments(pathArc2.segments!);
+    pathArc2.remove();
+    const pathFill = pathstroke.clone() as Path;
+    pathstroke.strokeColor = new Color("black");
+    if (lineBehind) {
+      pathstroke.insertBelow(lineBehind);
     }
+    pathFill.fillColor = BubbleEdit.backColor;
+    return [pathstroke, pathFill];
+  }
 
-    public static wrapBubbleAroundDivWithTail(bubbleSpec: Shape|string, content: HTMLElement) {
-        BubbleEdit.wrapBubbleAroundDiv(bubbleSpec, content, (bubble:Shape) => {
-            BubbleEdit.drawTailOnShapes(bubble!.position!, bubble!.position!.add(new Point(200,100)),[bubble])
-        });
+  static handleIndex = 0;
+
+  static makeHandle(tip: Point): Path.Circle {
+    const result = new Path.Circle(tip, 10);
+    result.strokeColor = new Color("blue");
+    result.fillColor = new Color("white");
+    result.name = "handle" + BubbleEdit.handleIndex++;
+    return result;
+  }
+
+  // Given a list of shapes, which should initially have no stroke or fill color,
+  // draws them twice, once with a black outline, then again filled with our
+  // backColor. If the shapes overlap, this gives the effect of outlining the
+  // combined shape. Then we draw the draggable tail on top, also with merged outline.
+  public static drawTailOnShapes(
+    start: Point,
+    mid: Point,
+    tip: Point,
+    shapes: Item[],
+    elementToUpdate?: HTMLElement
+  ) {
+    const interiors: Path[] = [];
+    shapes.forEach(s => {
+      var copy = s.clone() as Path;
+      interiors.push(copy);
+      copy.bringToFront(); // already in front of s, want in front of all
+      copy.fillColor = BubbleEdit.backColor;
+    });
+    var stroke = new Color("black");
+    shapes.forEach(s => (s.strokeColor = stroke));
+    BubbleEdit.drawTail(start, mid, tip, interiors[0], elementToUpdate);
+  }
+
+  private static getShape(
+    bubbleSpec: Shape | string,
+    doWithShape: (s: Shape) => void
+  ) {
+    if (typeof bubbleSpec !== "string") {
+      doWithShape(bubbleSpec as Shape);
+      return;
     }
+    let svg: string = "";
+    switch (bubbleSpec) {
+      case "speech":
+        svg = BubbleEdit.speechBubble();
+        break;
+      case "shout":
+        svg = BubbleEdit.shoutBubble();
+        break;
+      default:
+        console.log("unknown bubble type; using default");
+        svg = BubbleEdit.speechBubble();
+    }
+    project!.importSVG(svg, {
+      onLoad: (item: Item) => {
+        doWithShape(item as Shape);
+      }
+    });
+  }
 
-    public static convertCanvasToSvgImg(parent: HTMLElement) {
-        const canvas = parent.getElementsByTagName("canvas")[0];
-        if (!canvas) {
-            return;
+  public static wrapBubbleAroundDiv(
+    bubbleSpec: Shape | string,
+    content: HTMLElement,
+    whenPlaced: (s: Shape) => void
+  ) {
+    BubbleEdit.getShape(bubbleSpec, bubble =>
+      BubbleEdit.wrapShapeAroundDiv(bubble, content, whenPlaced)
+    );
+  }
+
+  private static wrapShapeAroundDiv(
+    bubble: Shape,
+    content: HTMLElement,
+    whenPlaced: (s: Shape) => void
+  ) {
+    // recursive: true is required to see any but the root "g" element
+    // (apparently contrary to documentation).
+    // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
+    const contentHolder = bubble.getItem({
+      recursive: true,
+      match: (x: any) => {
+        return x.name === "content-holder";
+      }
+    });
+    // contentHolder (which should be a rectangle in SVG) comes out as a Shape.
+    // (can also cause it to come out as a Path, by setting expandShapes: true
+    // in the getItem options).
+    // It has property size, with height, width as numbers matching the
+    // height and width specified in the SVG for the rectangle.)
+    // Also position, which surprisingly is about 50,50...probably a center.
+    //contentHolder.fillColor = new Color("cyan");
+    contentHolder.strokeWidth = 0;
+    const adjustSize = () => {
+      var contentWidth = content.offsetWidth;
+      var contentHeight = content.offsetHeight;
+      if (contentWidth < 1 || contentHeight < 1) {
+        // Horrible kludge until I can find an event that fires when the object is ready.
+        window.setTimeout(adjustSize, 100);
+        return;
+      }
+      var holderWidth = (contentHolder as any).size.width;
+      var holderHeight = (contentHolder as any).size.height;
+      bubble.scale(contentWidth / holderWidth, contentHeight / holderHeight);
+      const contentLeft = content.offsetLeft;
+      const contentTop = content.offsetTop;
+      const contentCenter = new Point(
+        contentLeft + contentWidth / 2,
+        contentTop + contentHeight / 2
+      );
+      bubble.position = contentCenter;
+      whenPlaced(bubble);
+    };
+    adjustSize();
+    //window.addEventListener('load', adjustSize);
+
+    //var topContent = content.offsetTop;
+  }
+
+  public static wrapBubbleAroundDivWithTail(
+    bubbleSpec: Shape | string,
+    content: HTMLElement,
+    desiredTip?: Tip
+  ) {
+    BubbleEdit.wrapBubbleAroundDiv(bubbleSpec, content, (bubble: Shape) => {
+      let target = bubble!.position!.add(new Point(200, 100));
+      let mid = BubbleEdit.defaultMid(bubble!.position!, target);
+      if (desiredTip) {
+        target = new Point(desiredTip.targetX, desiredTip.targetY);
+        mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
+      }
+      const tip: Tip = {
+        targetX: target.x!,
+        targetY: target.y!,
+        midpointX: mid.x!,
+        midpointY: mid.y!
+      };
+      if (typeof bubbleSpec === "string") {
+        const bubble: Bubble = {
+          version: "1.0",
+          style: (bubbleSpec as unknown) as string,
+          tips: [tip],
+          level: 1
+        };
+        BubbleEdit.setBubble(bubble, content);
+      }
+      BubbleEdit.drawTailOnShapes(
+        bubble!.position!,
+        mid,
+        target,
+        [bubble],
+        content
+      );
+    });
+  }
+
+  public static convertCanvasToSvgImg(parent: HTMLElement) {
+    const canvas = parent.getElementsByTagName("canvas")[0];
+    if (!canvas) {
+      return;
+    }
+    // Remove drag handles
+    project!
+      .getItems({
+        recursive: true,
+        match: (x: any) => {
+          return x.name && x.name.startsWith("handle");
         }
-        // Remove drag handles
-        project!.getItems({recursive: true, match:(x: any) => {
-            return x.name && x.name.startsWith("handle");
-          }}).forEach(x => x.remove());
-        const svg = project!.exportSVG() as SVGElement;
-        canvas.parentElement!.insertBefore(svg, canvas);
-        canvas.remove();
+      })
+      .forEach(x => x.remove());
+    const svg = project!.exportSVG() as SVGElement;
+    svg.classList.add("bubble-edit-generated");
+    canvas.parentElement!.insertBefore(svg, canvas);
+    canvas.remove();
+  }
 
+  public static convertBubbleJsonToCanvas(parent: HTMLElement) {
+    const canvas = parent.ownerDocument!.createElement("canvas");
+    const oldSvg = parent.getElementsByClassName("bubble-edit-generated")[0];
+    if (oldSvg) {
+      oldSvg.parentElement!.insertBefore(canvas, oldSvg);
+      oldSvg.remove();
+    } else {
+      parent.appendChild(canvas);
     }
+    canvas.width = parent.clientWidth;
+    canvas.height = parent.clientHeight;
+    setup(canvas);
 
-    public static speechBubble() {
-        return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    const elements = parent.ownerDocument!.evaluate(
+      ".//*[@data-bubble]",
+      parent,
+      null,
+      XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
+      null
+    );
+    // Enhance: we want to be able to make all the bubbles and all the tails
+    // as a connected set so that all overlaps happen properly.
+    // Eventually, we should make distinct sets for each level.
+    // Eventually, we should be able to handle more than one tail per bubble.
+    for (let i = 0; i < elements.snapshotLength; i++) {
+      const element = elements.snapshotItem(i) as HTMLElement;
+      const bubble = BubbleEdit.getBubble(element);
+      if (bubble.tips.length) {
+        BubbleEdit.wrapBubbleAroundDivWithTail(
+          bubble.style,
+          element,
+          bubble.tips[0]
+        );
+      } else {
+        BubbleEdit.wrapBubbleAroundDiv(bubble.style, element, () => {});
+      }
+    }
+  }
+
+  public static bubbleVersion = "1.0";
+
+  public static getBubble(element: HTMLElement): Bubble {
+    const escapedJson = element.getAttribute("data-bubble");
+    if (!escapedJson) {
+      return {
+        version: BubbleEdit.bubbleVersion,
+        style: "none",
+        tips: [],
+        level: 1
+      };
+    }
+    const json = escapedJson.replace("`", '"');
+    return JSON.parse(json); // enhance: can we usefully validate it?
+  }
+
+  public static setBubble(bubble: Bubble, element: HTMLElement): void {
+    const json = JSON.stringify(bubble);
+    const escapedJson = json.replace('"', "`");
+    element.setAttribute("data-bubble", escapedJson);
+  }
+
+  public static speechBubble() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
       <svg
          xmlns:dc="http://purl.org/dc/elements/1.1/"
          xmlns:cc="http://creativecommons.org/ns#"
@@ -248,10 +409,10 @@ export default class BubbleEdit {
              style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
         </g>
       </svg>`;
-    }
-    
-      public static shoutBubble() {
-        return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  }
+
+  public static shoutBubble() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <svg
            xmlns:dc="http://purl.org/dc/elements/1.1/"
            xmlns:cc="http://creativecommons.org/ns#"
@@ -293,13 +454,13 @@ export default class BubbleEdit {
              style="fill:none;stroke:#000000;stroke-width:0.18981449;stroke-opacity:1;fill-opacity:0" />
           </g>
         </svg>`;
-      }
+  }
 }
 
 // planned next steps
-// 1. When we wrap a shape around an element, record the shape as the data-bubble attr.
+// 1. When we wrap a shape around an element, record the shape as the data-bubble attr, a block of json as indicted in the design doc.
 // Tricks will be needed if it is an arbitrary SVG.
-// 2. When a tail is attached or its key points moved, record tip and mid positions in data-tail-mid and data-tail-tip.
+// 2. When a tail is attached or its key points moved, record tip and mid positions as properties in the data-bubble attr.
 // 3. Add function ConvertSvgToCanvas(parent). Does more or less the opposite of ConvertCanvasToSvg,
 // but using the data-X attributes of children of parent that have them to initialize the canvas paper elements.
 // Enhance test code to make Finish button toggle between Save and Edit.
