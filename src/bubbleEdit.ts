@@ -306,12 +306,13 @@ export default class BubbleEdit {
     canvas.style.position = "absolute";
     canvas.style.top = "0";
     canvas.style.left = "0";
+    canvas.classList.add("bubble-edit-generated");
     const oldSvg = parent.getElementsByClassName("bubble-edit-generated")[0];
     if (oldSvg) {
       oldSvg.parentElement!.insertBefore(canvas, oldSvg);
       oldSvg.remove();
     } else {
-      parent.prepend(canvas);
+      parent.insertBefore(canvas, parent.firstChild); // want to use prepend, not in FF45.
     }
     canvas.width = parent.clientWidth;
     canvas.height = parent.clientHeight;

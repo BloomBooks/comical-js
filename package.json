@@ -15,15 +15,18 @@
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.0.6",
     "npx": "^10.2.0",
+    "shx": "^0.3.2",
     "typescript": "^3.5.3",
+    "webpack": "^4.39.2",
     "webpack-cli": "^3.3.6"
   },
   "dependencies": {
-    "paper": "^0.12.3",
-    "webpack": "^4.39.2"
+    "paper": "^0.12.3"
   },
   "scripts": {
     "storybook": "start-storybook -s ./storyStatic -p 6006",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "makdbloomdesktopdir": "shx mkdir ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\bubble-edit",
+    "tobloomdesktop": "shx cp src\\*.ts ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\bubble-edit"
   }
 }
