@@ -12,7 +12,7 @@ import {
 import { Bubble, Tip } from "bubble";
 
 export default class BubbleEdit {
-  static backColor = new Color("yellow");
+  static backColor = new Color("white");
 
   public static drawTail(
     start: Point,
@@ -311,7 +311,7 @@ export default class BubbleEdit {
       oldSvg.parentElement!.insertBefore(canvas, oldSvg);
       oldSvg.remove();
     } else {
-      parent.appendChild(canvas);
+      parent.prepend(canvas);
     }
     canvas.width = parent.clientWidth;
     canvas.height = parent.clientHeight;

@@ -123,17 +123,47 @@ storiesOf("bubble-edit", module)
     wrapDiv.style.height = "600px";
 
     var div1 = makeTextBlock(wrapDiv, "Oh no! He's dead!", 180, 40, 100);
-    var tip: Tip = { targetX: 100, targetY: 80, midpointX: 150, midpointY: 60 };
+    var tip1: Tip = {
+      targetX: 100,
+      targetY: 80,
+      midpointX: 150,
+      midpointY: 60
+    };
     var bubble: Bubble = {
       version: "1.0",
       style: "speech",
-      tips: [tip],
+      tips: [tip1],
       level: 1
     };
     BubbleEdit.setBubble(bubble, div1);
+
+    var div2 = makeTextBlock(
+      wrapDiv,
+      "The oxen stubled! The ark was falling! He touched it! How could God do such a thing?",
+      350,
+      50,
+      200
+    );
+    var tip2: Tip = {
+      targetX: 700,
+      targetY: 80,
+      midpointX: 650,
+      midpointY: 60
+    };
+    var bubble: Bubble = {
+      version: "1.0",
+      style: "speech",
+      tips: [tip2],
+      level: 1
+    };
+    BubbleEdit.setBubble(bubble, div2);
     window.setTimeout(() => BubbleEdit.convertBubbleJsonToCanvas(wrapDiv), 10);
 
-    addFinishButton(wrapDiv);
+    const button = addFinishButton(wrapDiv);
+    // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "600px";
+    button.style.left = "0";
     return wrapDiv;
   });
 
@@ -156,10 +186,11 @@ function makeTextBlock(
   return textDiv;
 }
 
-function addFinishButton(wrapDiv: HTMLElement) {
+function addFinishButton(wrapDiv: HTMLElement): HTMLButtonElement {
   const button = document.createElement("button");
   button.title = "Finish";
   button.innerText = "Finish";
+  button.style.zIndex = "100";
   wrapDiv.appendChild(button);
   let editable = true;
   button.addEventListener("click", () => {
@@ -173,4 +204,5 @@ function addFinishButton(wrapDiv: HTMLElement) {
       button.innerText = "Finish";
     }
   });
+  return button;
 }
