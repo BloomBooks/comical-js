@@ -10,6 +10,7 @@ import {
 } from "paper";
 
 import { Bubble, Tip } from "bubble";
+import { uniqueIds } from "./uniqueId";
 
 export default class BubbleEdit {
   static backColor = new Color("white");
@@ -93,7 +94,7 @@ export default class BubbleEdit {
     mid: Point,
     lineBehind?: Item | null
   ): Path[] {
-    const tailWidth = 50;
+    const tailWidth = 25;
     // we want to make the base of the tail a line of length tailWidth
     // at right angles to the line from root to mid
     // centered at root.
@@ -129,9 +130,15 @@ export default class BubbleEdit {
   static handleIndex = 0;
 
   static makeHandle(tip: Point): Path.Circle {
-    const result = new Path.Circle(tip, 10);
-    result.strokeColor = new Color("blue");
+    const result = new Path.Circle(tip, 8);
+    result.strokeColor = new Color("aqua");
+    result.strokeWidth = 2;
     result.fillColor = new Color("white");
+    // We basically want the bubbles transparent, especially for the tip, so
+    // you can see where the tip actually ends up. But if it's perfectly transparent,
+    // paper.js doesn't register hit tests on the transparent part. So go for a very
+    // small alpha.
+    result.fillColor.alpha = 0.01;
     result.name = "handle" + BubbleEdit.handleIndex++;
     return result;
   }
@@ -244,6 +251,55 @@ export default class BubbleEdit {
     //var topContent = content.offsetTop;
   }
 
+  public static makeDefaultTip(targetDiv: HTMLElement): Tip {
+    const parent: HTMLElement = targetDiv.parentElement as HTMLElement;
+    const targetBox = targetDiv.getBoundingClientRect();
+    const parentBox = parent.getBoundingClientRect();
+    // center of targetbox relative to parent.
+    const rootCenter = new Point(
+      targetBox.left - parentBox.left + targetBox.width / 2,
+      targetBox.top - parentBox.top + targetBox.height / 2
+    );
+    let targetX = targetBox.left - parentBox.left - targetBox.width / 2;
+    if (targetBox.left - parentBox.left < parentBox.right - targetBox.right) {
+      // box is closer to left than right...make the tail point right
+      targetX = targetBox.right - parentBox.left + targetBox.width / 2;
+    }
+    let targetY = targetBox.bottom - parentBox.top + 20;
+    if (targetY > parentBox.height - 5) {
+      targetY = parentBox.height - 5;
+    }
+    if (targetY < targetBox.bottom - parentBox.top) {
+      // try pointing up
+      targetY = targetBox.top - parentBox.top - 20;
+      if (targetY < 5) {
+        targetY = 5;
+      }
+    }
+    // Final checks: make sure the target is at least in the picture.
+    if (targetX < 0) {
+      targetX = 0;
+    }
+    if (targetX > parentBox.width) {
+      targetX = parentBox.width;
+    }
+    if (targetY < 0) {
+      targetY = 0;
+    }
+    if (targetY > parentBox.height) {
+      targetY = parentBox.height;
+    }
+    const target = new Point(targetX, targetY);
+    const mid: Point = BubbleEdit.defaultMid(rootCenter, target);
+    const result: Tip = {
+      targetX,
+      targetY,
+      midpointX: mid.x!,
+      midpointY: mid.y!
+    };
+    return result;
+  }
+
   public static wrapBubbleAroundDivWithTail(
     bubbleSpec: Shape | string,
     content: HTMLElement,
@@ -297,6 +353,7 @@ export default class BubbleEdit {
       .forEach(x => x.remove());
     const svg = project!.exportSVG() as SVGElement;
     svg.classList.add("bubble-edit-generated");
+    uniqueIds(svg);
     canvas.parentElement!.insertBefore(svg, canvas);
     canvas.remove();
   }
@@ -356,13 +413,13 @@ export default class BubbleEdit {
         level: 1
       };
     }
-    const json = escapedJson.replace("`", '"');
+    const json = escapedJson.replace(/`/g, '"');
     return JSON.parse(json); // enhance: can we usefully validate it?
   }
 
   public static setBubble(bubble: Bubble, element: HTMLElement): void {
     const json = JSON.stringify(bubble);
-    const escapedJson = json.replace('"', "`");
+    const escapedJson = json.replace(/"/g, "`");
     element.setAttribute("data-bubble", escapedJson);
   }
 

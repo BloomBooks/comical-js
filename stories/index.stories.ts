@@ -2,7 +2,7 @@
 import { storiesOf } from "@storybook/html";
 import { setup, Path, Point, Color, Rectangle } from "paper";
 import BubbleEdit from "../src/bubbleEdit";
-import { Bubble, Tip } from "../src/bubble";
+import { Bubble } from "../src/bubble";
 
 storiesOf("Demo", module)
   .add("heading", () => "<h1>Hello World</h1>")
@@ -123,41 +123,34 @@ storiesOf("bubble-edit", module)
     wrapDiv.style.height = "600px";
 
     var div1 = makeTextBlock(wrapDiv, "Oh no! He's dead!", 180, 40, 100);
-    var tip1: Tip = {
-      targetX: 100,
-      targetY: 80,
-      midpointX: 150,
-      midpointY: 60
-    };
-    var bubble: Bubble = {
-      version: "1.0",
-      style: "speech",
-      tips: [tip1],
-      level: 1
-    };
-    BubbleEdit.setBubble(bubble, div1);
 
     var div2 = makeTextBlock(
       wrapDiv,
       "The oxen stubled! The ark was falling! He touched it! How could God do such a thing?",
-      350,
+      380,
       50,
       200
     );
-    var tip2: Tip = {
-      targetX: 700,
-      targetY: 80,
-      midpointX: 650,
-      midpointY: 60
-    };
-    var bubble: Bubble = {
-      version: "1.0",
-      style: "speech",
-      tips: [tip2],
-      level: 1
-    };
-    BubbleEdit.setBubble(bubble, div2);
-    window.setTimeout(() => BubbleEdit.convertBubbleJsonToCanvas(wrapDiv), 10);
+
+    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      var bubble: Bubble = {
+        version: "1.0",
+        style: "speech",
+        tips: [BubbleEdit.makeDefaultTip(div1)],
+        level: 1
+      };
+      BubbleEdit.setBubble(bubble, div1);
+      var bubble: Bubble = {
+        version: "1.0",
+        style: "speech",
+        tips: [BubbleEdit.makeDefaultTip(div2)],
+        level: 1
+      };
+      BubbleEdit.setBubble(bubble, div2);
+      BubbleEdit.convertBubbleJsonToCanvas(wrapDiv);
+    }, 200);
 
     const button = addFinishButton(wrapDiv);
     // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
