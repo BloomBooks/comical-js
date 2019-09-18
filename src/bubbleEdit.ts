@@ -358,23 +358,10 @@ export default class BubbleEdit {
     canvas.remove();
   }
 
-  public static convertBubbleJsonToCanvas(parent: HTMLElement) {
-    const canvas = parent.ownerDocument!.createElement("canvas");
-    canvas.style.position = "absolute";
-    canvas.style.top = "0";
-    canvas.style.left = "0";
-    canvas.classList.add("bubble-edit-generated");
-    const oldSvg = parent.getElementsByClassName("bubble-edit-generated")[0];
-    if (oldSvg) {
-      oldSvg.parentElement!.insertBefore(canvas, oldSvg);
-      oldSvg.remove();
-    } else {
-      parent.insertBefore(canvas, parent.firstChild); // want to use prepend, not in FF45.
-    }
-    canvas.width = parent.clientWidth;
-    canvas.height = parent.clientHeight;
-    setup(canvas);
-
+  // call after adding or deleting elements with data-bubble
+  // assumes convertBubbleJsonToCanvas has been called and canvas exists
+  public static update(parent: HTMLElement) {
+    project!.activeLayer.removeChildren();
     const elements = parent.ownerDocument!.evaluate(
       ".//*[@data-bubble]",
       parent,
@@ -399,6 +386,25 @@ export default class BubbleEdit {
         BubbleEdit.wrapBubbleAroundDiv(bubble.style, element, () => {});
       }
     }
+  }
+
+  public static convertBubbleJsonToCanvas(parent: HTMLElement) {
+    const canvas = parent.ownerDocument!.createElement("canvas");
+    canvas.style.position = "absolute";
+    canvas.style.top = "0";
+    canvas.style.left = "0";
+    canvas.classList.add("bubble-edit-generated");
+    const oldSvg = parent.getElementsByClassName("bubble-edit-generated")[0];
+    if (oldSvg) {
+      oldSvg.parentElement!.insertBefore(canvas, oldSvg);
+      oldSvg.remove();
+    } else {
+      parent.insertBefore(canvas, parent.firstChild); // want to use prepend, not in FF45.
+    }
+    canvas.width = parent.clientWidth;
+    canvas.height = parent.clientHeight;
+    setup(canvas);
+    BubbleEdit.update(parent);
   }
 
   public static bubbleVersion = "1.0";
