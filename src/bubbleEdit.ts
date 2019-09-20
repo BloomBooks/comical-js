@@ -182,6 +182,8 @@ export default class BubbleEdit {
       case "shout":
         svg = BubbleEdit.shoutBubble();
         break;
+      case "none":
+        break;
       default:
         console.log("unknown bubble type; using default");
         svg = BubbleEdit.speechBubble();
@@ -198,9 +200,11 @@ export default class BubbleEdit {
     content: HTMLElement,
     whenPlaced: (s: Shape) => void
   ) {
-    BubbleEdit.getShape(bubbleSpec, bubble =>
-      BubbleEdit.wrapShapeAroundDiv(bubble, content, whenPlaced)
-    );
+    BubbleEdit.getShape(bubbleSpec, bubble => {
+      if (bubble) {
+        BubbleEdit.wrapShapeAroundDiv(bubble, content, whenPlaced);
+      }
+    });
   }
 
   private static wrapShapeAroundDiv(
@@ -412,6 +416,14 @@ export default class BubbleEdit {
   public static getBubble(element: HTMLElement): Bubble {
     const escapedJson = element.getAttribute("data-bubble");
     if (!escapedJson) {
+      return BubbleEdit.getDefaultBubble(element, "none");
+    }
+    const json = escapedJson.replace(/`/g, '"');
+    return JSON.parse(json); // enhance: can we usefully validate it?
+  }
+
+  public static getDefaultBubble(element: HTMLElement, style: string): Bubble {
+    if (!style || style == "none") {
       return {
         version: BubbleEdit.bubbleVersion,
         style: "none",
@@ -419,14 +431,29 @@ export default class BubbleEdit {
         level: 1
       };
     }
-    const json = escapedJson.replace(/`/g, '"');
-    return JSON.parse(json); // enhance: can we usefully validate it?
+    return {
+      version: BubbleEdit.bubbleVersion,
+      style: style,
+      tips: [BubbleEdit.makeDefaultTip(element)],
+      level: 1
+    };
   }
 
-  public static setBubble(bubble: Bubble, element: HTMLElement): void {
-    const json = JSON.stringify(bubble);
-    const escapedJson = json.replace(/"/g, "`");
-    element.setAttribute("data-bubble", escapedJson);
+  public static setBubble(
+    bubble: Bubble | undefined,
+    element: HTMLElement
+  ): void {
+    if (bubble) {
+      console.assert(
+        !!(bubble.version && bubble.level && bubble.tips && bubble.style),
+        "Bubble lacks minimum fields"
+      );
+      const json = JSON.stringify(bubble);
+      const escapedJson = json.replace(/"/g, "`");
+      element.setAttribute("data-bubble", escapedJson);
+    } else {
+      element.removeAttribute("data-bubble");
+    }
   }
 
   public static speechBubble() {

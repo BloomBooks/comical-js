@@ -1,13 +1,24 @@
 // This is the interface for storing the state of a bubble.
 
-export interface Bubble {
-  version: string; // currently 1.0
-  style: string; // currently one of speech or shout
-  tips: Tip[];
-  level: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
+// BubblePattern actually defines all the Bubble properties, but
+// all of them are optional, for use in methods designed to allow a subset
+// of properties to be changed. Bubble overrides to make a minimal set required.
+export interface BubblePattern {
+  version?: string; // currently 1.0
+  style?: string; // currently one of speech or shout
+  tips?: Tip[];
+  level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
   borderStyle?: string; // not implemented or fully designed yet
   backgroundColors?: string[]; //  just 1 color for solid, multiple for gradient. Omit for white. Top to bottom.
   outerBorderColor?: string; // omit for black; not implemented.
+}
+
+export interface Bubble extends BubblePattern {
+  // A real bubble stored in data-bubble should always have at least version, style, tips, and level.
+  // The only things overridden here should be to change something from optional to required.
+  version: string; // currently 1.0
+  style: string; // currently one of speech or shout
+  tips: Tip[];
 }
 // Design has a parentBubble attribute...not sure whether we need this, so leaving out for now.
 // Do we need to control things like angle of gradient?
