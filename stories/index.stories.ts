@@ -1,8 +1,8 @@
 //import { document, console } from 'global';
 import { storiesOf } from "@storybook/html";
 import { setup, Path, Point, Color, Rectangle } from "paper";
-import BubbleEdit from "../src/bubbleEdit";
-import { Bubble } from "../src/bubble";
+import Comical from "../src/comical";
+import { BubbleSpec } from "../src/bubbleSpec";
 
 storiesOf("Demo", module)
   .add("heading", () => "<h1>Hello World</h1>")
@@ -33,7 +33,7 @@ storiesOf("bubble-edit", module)
     setup(canvas);
     const start = new Point(100, 100);
     const tip = start.add(new Point(200, -50));
-    BubbleEdit.drawTail(start, BubbleEdit.defaultMid(start, tip), tip);
+    Comical.drawTail(start, Comical.defaultMid(start, tip), tip);
     return canvas;
   })
   .add("tail on bubbles", () => {
@@ -49,7 +49,7 @@ storiesOf("bubble-edit", module)
     const oval2 = new Path.Ellipse(
       new Rectangle(new Point(100, 50), new Point(300, 150))
     );
-    BubbleEdit.drawTailOnShapes(start, BubbleEdit.defaultMid(start, tip), tip, [
+    Comical.drawTailOnShapes(start, Comical.defaultMid(start, tip), tip, [
       oval1,
       oval2
     ]);
@@ -86,8 +86,8 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    BubbleEdit.wrapBubbleAroundDiv("speech", textDiv, () => {});
-    BubbleEdit.wrapBubbleAroundDiv("shout", textDiv2, () => {});
+    Comical.wrapBubbleAroundDiv("speech", textDiv, () => {});
+    Comical.wrapBubbleAroundDiv("shout", textDiv2, () => {});
 
     return wrapDiv;
   })
@@ -112,7 +112,7 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    BubbleEdit.wrapBubbleAroundDivWithTail("shout", textDiv2);
+    Comical.wrapBubbleAroundDivWithTail("shout", textDiv2);
     addFinishButton(wrapDiv);
     return wrapDiv;
   })
@@ -135,21 +135,21 @@ storiesOf("bubble-edit", module)
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
-      var bubble: Bubble = {
+      var bubble: BubbleSpec = {
         version: "1.0",
         style: "speech",
-        tips: [BubbleEdit.makeDefaultTip(div1)],
+        tips: [Comical.makeDefaultTip(div1)],
         level: 1
       };
-      BubbleEdit.setBubble(bubble, div1);
-      var bubble: Bubble = {
+      Comical.setBubble(bubble, div1);
+      var bubble: BubbleSpec = {
         version: "1.0",
         style: "speech",
-        tips: [BubbleEdit.makeDefaultTip(div2)],
+        tips: [Comical.makeDefaultTip(div2)],
         level: 1
       };
-      BubbleEdit.setBubble(bubble, div2);
-      BubbleEdit.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.setBubble(bubble, div2);
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
 
     const button = addFinishButton(wrapDiv);
@@ -188,11 +188,11 @@ function addFinishButton(wrapDiv: HTMLElement): HTMLButtonElement {
   let editable = true;
   button.addEventListener("click", () => {
     if (editable) {
-      BubbleEdit.convertCanvasToSvgImg(wrapDiv);
+      Comical.convertCanvasToSvgImg(wrapDiv);
       editable = false;
       button.innerText = "Edit";
     } else {
-      BubbleEdit.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
       editable = true;
       button.innerText = "Finish";
     }

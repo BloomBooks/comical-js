@@ -9,10 +9,10 @@ import {
   setup
 } from "paper";
 
-import { Bubble, Tip } from "bubble";
+import { BubbleSpec, Tip } from "bubbleSpec";
 import { uniqueIds } from "./uniqueId";
 
-export default class BubbleEdit {
+export default class Comical {
   static backColor = new Color("white");
 
   public static drawTail(
@@ -64,7 +64,7 @@ export default class BubbleEdit {
       );
       curveHandle.bringToFront();
       if (elementToUpdate) {
-        const bubble = BubbleEdit.getBubble(elementToUpdate);
+        const bubble = Comical.getBubble(elementToUpdate);
         const tip: Tip = {
           targetX: tipHandle!.position!.x!,
           targetY: tipHandle!.position!.y!,
@@ -72,7 +72,7 @@ export default class BubbleEdit {
           midpointY: curveHandle!.position!.y!
         };
         bubble.tips[0] = tip; // enhance: for multiple tips, need to figure which one to update
-        BubbleEdit.setBubble(bubble, elementToUpdate);
+        Comical.setBubble(bubble, elementToUpdate);
       }
     };
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
@@ -123,7 +123,7 @@ export default class BubbleEdit {
     if (lineBehind) {
       pathstroke.insertBelow(lineBehind);
     }
-    pathFill.fillColor = BubbleEdit.backColor;
+    pathFill.fillColor = Comical.backColor;
     return [pathstroke, pathFill];
   }
 
@@ -139,7 +139,7 @@ export default class BubbleEdit {
     // paper.js doesn't register hit tests on the transparent part. So go for a very
     // small alpha.
     result.fillColor.alpha = 0.01;
-    result.name = "handle" + BubbleEdit.handleIndex++;
+    result.name = "handle" + Comical.handleIndex++;
     return result;
   }
 
@@ -159,11 +159,11 @@ export default class BubbleEdit {
       var copy = s.clone() as Path;
       interiors.push(copy);
       copy.bringToFront(); // already in front of s, want in front of all
-      copy.fillColor = BubbleEdit.backColor;
+      copy.fillColor = Comical.backColor;
     });
     var stroke = new Color("black");
     shapes.forEach(s => (s.strokeColor = stroke));
-    BubbleEdit.drawTail(start, mid, tip, interiors[0], elementToUpdate);
+    Comical.drawTail(start, mid, tip, interiors[0], elementToUpdate);
   }
 
   private static getShape(
@@ -177,16 +177,16 @@ export default class BubbleEdit {
     let svg: string = "";
     switch (bubbleSpec) {
       case "speech":
-        svg = BubbleEdit.speechBubble();
+        svg = Comical.speechBubble();
         break;
       case "shout":
-        svg = BubbleEdit.shoutBubble();
+        svg = Comical.shoutBubble();
         break;
       case "none":
         break;
       default:
         console.log("unknown bubble type; using default");
-        svg = BubbleEdit.speechBubble();
+        svg = Comical.speechBubble();
     }
     project!.importSVG(svg, {
       onLoad: (item: Item) => {
@@ -200,9 +200,9 @@ export default class BubbleEdit {
     content: HTMLElement,
     whenPlaced: (s: Shape) => void
   ) {
-    BubbleEdit.getShape(bubbleSpec, bubble => {
+    Comical.getShape(bubbleSpec, bubble => {
       if (bubble) {
-        BubbleEdit.wrapShapeAroundDiv(bubble, content, whenPlaced);
+        Comical.wrapShapeAroundDiv(bubble, content, whenPlaced);
       }
     });
   }
@@ -294,7 +294,7 @@ export default class BubbleEdit {
       targetY = parentBox.height;
     }
     const target = new Point(targetX, targetY);
-    const mid: Point = BubbleEdit.defaultMid(rootCenter, target);
+    const mid: Point = Comical.defaultMid(rootCenter, target);
     const result: Tip = {
       targetX,
       targetY,
@@ -309,9 +309,9 @@ export default class BubbleEdit {
     content: HTMLElement,
     desiredTip?: Tip
   ) {
-    BubbleEdit.wrapBubbleAroundDiv(bubbleSpec, content, (bubble: Shape) => {
+    Comical.wrapBubbleAroundDiv(bubbleSpec, content, (bubble: Shape) => {
       let target = bubble!.position!.add(new Point(200, 100));
-      let mid = BubbleEdit.defaultMid(bubble!.position!, target);
+      let mid = Comical.defaultMid(bubble!.position!, target);
       if (desiredTip) {
         target = new Point(desiredTip.targetX, desiredTip.targetY);
         mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
@@ -323,15 +323,15 @@ export default class BubbleEdit {
         midpointY: mid.y!
       };
       if (typeof bubbleSpec === "string") {
-        const bubble: Bubble = {
+        const bubble: BubbleSpec = {
           version: "1.0",
           style: (bubbleSpec as unknown) as string,
           tips: [tip],
           level: 1
         };
-        BubbleEdit.setBubble(bubble, content);
+        Comical.setBubble(bubble, content);
       }
-      BubbleEdit.drawTailOnShapes(
+      Comical.drawTailOnShapes(
         bubble!.position!,
         mid,
         target,
@@ -379,15 +379,15 @@ export default class BubbleEdit {
     // Eventually, we should be able to handle more than one tail per bubble.
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
-      const bubble = BubbleEdit.getBubble(element);
+      const bubble = Comical.getBubble(element);
       if (bubble.tips.length) {
-        BubbleEdit.wrapBubbleAroundDivWithTail(
+        Comical.wrapBubbleAroundDivWithTail(
           bubble.style,
           element,
           bubble.tips[0]
         );
       } else {
-        BubbleEdit.wrapBubbleAroundDiv(bubble.style, element, () => {});
+        Comical.wrapBubbleAroundDiv(bubble.style, element, () => {});
       }
     }
   }
@@ -408,39 +408,39 @@ export default class BubbleEdit {
     canvas.width = parent.clientWidth;
     canvas.height = parent.clientHeight;
     setup(canvas);
-    BubbleEdit.update(parent);
+    Comical.update(parent);
   }
 
   public static bubbleVersion = "1.0";
 
-  public static getBubble(element: HTMLElement): Bubble {
+  public static getBubble(element: HTMLElement): BubbleSpec {
     const escapedJson = element.getAttribute("data-bubble");
     if (!escapedJson) {
-      return BubbleEdit.getDefaultBubble(element, "none");
+      return Comical.getDefaultBubble(element, "none");
     }
     const json = escapedJson.replace(/`/g, '"');
     return JSON.parse(json); // enhance: can we usefully validate it?
   }
 
-  public static getDefaultBubble(element: HTMLElement, style: string): Bubble {
+  public static getDefaultBubble(element: HTMLElement, style: string): BubbleSpec {
     if (!style || style == "none") {
       return {
-        version: BubbleEdit.bubbleVersion,
+        version: Comical.bubbleVersion,
         style: "none",
         tips: [],
         level: 1
       };
     }
     return {
-      version: BubbleEdit.bubbleVersion,
+      version: Comical.bubbleVersion,
       style: style,
-      tips: [BubbleEdit.makeDefaultTip(element)],
+      tips: [Comical.makeDefaultTip(element)],
       level: 1
     };
   }
 
   public static setBubble(
-    bubble: Bubble | undefined,
+    bubble: BubbleSpec | undefined,
     element: HTMLElement
   ): void {
     if (bubble) {

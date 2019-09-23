@@ -3,7 +3,7 @@
 // BubblePattern actually defines all the Bubble properties, but
 // all of them are optional, for use in methods designed to allow a subset
 // of properties to be changed. Bubble overrides to make a minimal set required.
-export interface BubblePattern {
+export interface BubbleSpecPattern {
   version?: string; // currently 1.0
   style?: string; // currently one of speech or shout
   tips?: Tip[];
@@ -13,7 +13,7 @@ export interface BubblePattern {
   outerBorderColor?: string; // omit for black; not implemented.
 }
 
-export interface Bubble extends BubblePattern {
+export interface BubbleSpec extends BubbleSpecPattern {
   // A real bubble stored in data-bubble should always have at least version, style, tips, and level.
   // The only things overridden here should be to change something from optional to required.
   version: string; // currently 1.0
