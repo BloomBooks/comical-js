@@ -167,15 +167,15 @@ export default class Comical {
   }
 
   private static getShape(
-    bubbleSpec: Shape | string,
+    bubbleStyle: string,
     doWithShape: (s: Shape) => void
   ) {
-    if (typeof bubbleSpec !== "string") {
-      doWithShape(bubbleSpec as Shape);
+    if (typeof bubbleStyle !== "string") {
+      doWithShape(bubbleStyle as Shape);
       return;
     }
     let svg: string = "";
-    switch (bubbleSpec) {
+    switch (bubbleStyle) {
       case "speech":
         svg = Comical.speechBubble();
         break;
@@ -196,11 +196,11 @@ export default class Comical {
   }
 
   public static wrapBubbleAroundDiv(
-    bubbleSpec: Shape | string,
+    bubbleStyle: string,
     content: HTMLElement,
     whenPlaced: (s: Shape) => void
   ) {
-    Comical.getShape(bubbleSpec, bubble => {
+    Comical.getShape(bubbleStyle, bubble => {
       if (bubble) {
         Comical.wrapShapeAroundDiv(bubble, content, whenPlaced);
       }
@@ -305,11 +305,11 @@ export default class Comical {
   }
 
   public static wrapBubbleAroundDivWithTail(
-    bubbleSpec: Shape | string,
+    bubbleStyle: string,
     content: HTMLElement,
     desiredTip?: Tip
   ) {
-    Comical.wrapBubbleAroundDiv(bubbleSpec, content, (bubble: Shape) => {
+    Comical.wrapBubbleAroundDiv(bubbleStyle, content, (bubble: Shape) => {
       let target = bubble!.position!.add(new Point(200, 100));
       let mid = Comical.defaultMid(bubble!.position!, target);
       if (desiredTip) {
@@ -322,10 +322,10 @@ export default class Comical {
         midpointX: mid.x!,
         midpointY: mid.y!
       };
-      if (typeof bubbleSpec === "string") {
+      if (typeof bubbleStyle === "string") {
         const bubble: BubbleSpec = {
           version: "1.0",
-          style: (bubbleSpec as unknown) as string,
+          style: (bubbleStyle as unknown) as string,
           tips: [tip],
           level: 1
         };
