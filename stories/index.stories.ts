@@ -2,6 +2,7 @@
 import { storiesOf } from "@storybook/html";
 import { setup, Path, Point, Color, Rectangle } from "paper";
 import Comical from "../src/comical";
+import Bubble from "../src/bubble";
 import { BubbleSpec } from "../src/bubbleSpec";
 
 storiesOf("Demo", module)
@@ -33,7 +34,7 @@ storiesOf("bubble-edit", module)
     setup(canvas);
     const start = new Point(100, 100);
     const tip = start.add(new Point(200, -50));
-    Comical.drawTail(start, Comical.defaultMid(start, tip), tip);
+    Bubble.drawTail(start, Bubble.defaultMid(start, tip), tip);
     return canvas;
   })
   .add("tail on bubbles", () => {
@@ -49,7 +50,7 @@ storiesOf("bubble-edit", module)
     const oval2 = new Path.Ellipse(
       new Rectangle(new Point(100, 50), new Point(300, 150))
     );
-    Comical.drawTailOnShapes(start, Comical.defaultMid(start, tip), tip, [
+    Comical.drawTailOnShapes(start, Bubble.defaultMid(start, tip), tip, [
       oval1,
       oval2
     ]);
@@ -86,8 +87,8 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    Comical.wrapBubbleAroundDiv("speech", textDiv, () => {});
-    Comical.wrapBubbleAroundDiv("shout", textDiv2, () => {});
+    Bubble.wrapBubbleAroundDiv("speech", textDiv, () => {});
+    Bubble.wrapBubbleAroundDiv("shout", textDiv2, () => {});
 
     return wrapDiv;
   })
@@ -112,7 +113,7 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    Comical.wrapBubbleAroundDivWithTail("shout", textDiv2);
+    Bubble.wrapBubbleAroundDivWithTail("shout", textDiv2);
     addFinishButton(wrapDiv);
     return wrapDiv;
   })
@@ -138,17 +139,17 @@ storiesOf("bubble-edit", module)
       var bubble: BubbleSpec = {
         version: "1.0",
         style: "speech",
-        tips: [Comical.makeDefaultTip(div1)],
+        tips: [Bubble.makeDefaultTip(div1)],
         level: 1
       };
-      Comical.setBubble(bubble, div1);
+      Bubble.setBubble(bubble, div1);
       var bubble: BubbleSpec = {
         version: "1.0",
         style: "speech",
-        tips: [Comical.makeDefaultTip(div2)],
+        tips: [Bubble.makeDefaultTip(div2)],
         level: 1
       };
-      Comical.setBubble(bubble, div2);
+      Bubble.setBubble(bubble, div2);
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
 
