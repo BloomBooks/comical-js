@@ -3,7 +3,6 @@ import { storiesOf } from "@storybook/html";
 import { setup, Path, Point, Color, Rectangle } from "paper";
 import Comical from "../src/comical";
 import Bubble from "../src/bubble";
-import { BubbleSpec } from "../src/bubbleSpec";
 
 storiesOf("Demo", module)
   .add("heading", () => "<h1>Hello World</h1>")
@@ -75,6 +74,7 @@ storiesOf("bubble-edit", module)
     textDiv.style.top = "50px";
     textDiv.style.left = "80px";
     wrapDiv.appendChild(textDiv);
+    const bubble1 = new Bubble(textDiv);
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
@@ -86,9 +86,10 @@ storiesOf("bubble-edit", module)
     textDiv2.style.top = "250px";
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
+    const bubble2 = new Bubble(textDiv2);
 
-    Bubble.wrapBubbleAroundDiv("speech", textDiv, () => {});
-    Bubble.wrapBubbleAroundDiv("shout", textDiv2, () => {});
+    bubble1.wrapBubbleAroundDiv("speech", () => {});
+    bubble2.wrapBubbleAroundDiv("shout", () => {});
 
     return wrapDiv;
   })
@@ -113,7 +114,8 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    Bubble.wrapBubbleAroundDivWithTail("shout", textDiv2);
+    const bubble = new Bubble(textDiv2);
+    bubble.wrapBubbleAroundDivWithTail("shout");
     addFinishButton(wrapDiv);
     return wrapDiv;
   })
@@ -127,7 +129,7 @@ storiesOf("bubble-edit", module)
 
     var div2 = makeTextBlock(
       wrapDiv,
-      "The oxen stubled! The ark was falling! He touched it! How could God do such a thing?",
+      "The oxen stumbled! The ark was falling! He touched it! How could God do such a thing?",
       380,
       50,
       200
@@ -136,20 +138,23 @@ storiesOf("bubble-edit", module)
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
-      var bubble: BubbleSpec = {
+      const bubble1 = new Bubble(div1);
+      bubble1.spec = {
         version: "1.0",
         style: "speech",
         tips: [Bubble.makeDefaultTip(div1)],
         level: 1
       };
-      Bubble.setBubble(bubble, div1);
-      var bubble: BubbleSpec = {
+      bubble1.setBubbleSpec(bubble1.spec);
+
+      const bubble2 = new Bubble(div2);
+      bubble2.spec = {
         version: "1.0",
         style: "speech",
         tips: [Bubble.makeDefaultTip(div2)],
         level: 1
       };
-      Bubble.setBubble(bubble, div2);
+      bubble2.setBubbleSpec(bubble2.spec);
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
 

@@ -4,7 +4,19 @@ import Comical from "./comical";
 
 // This class should represent a bubble (including the tail) and the methods for drawing a single bubble
 export default class Bubble {
-  public static getBubble(element: HTMLElement): BubbleSpec {
+  public content: HTMLElement;
+  // TODO: What is the best name for "spec"?
+  public spec: BubbleSpec; // Enhance: Another option is that the Bubble class could implement BubbleSpec directly.
+  // public style: string;
+
+  constructor(element: HTMLElement) {
+    this.content = element;
+
+    this.spec = Bubble.getBubbleSpec(this.content);
+  }
+
+  // Retrieves the bubble associated with the element
+  public static getBubbleSpec(element: HTMLElement): BubbleSpec {
     const escapedJson = element.getAttribute("data-bubble");
     if (!escapedJson) {
       return Bubble.getDefaultBubble(element, "none");
@@ -34,29 +46,30 @@ export default class Bubble {
   }
 
   // Links the bubbleShape with the content element
-  public static setBubble(
-    bubble: BubbleSpec | undefined,
-    element: HTMLElement
-  ): void {
-    if (bubble) {
+  public setBubbleSpec(spec: BubbleSpec): void {
+    if (spec) {
       console.assert(
-        !!(bubble.version && bubble.level && bubble.tips && bubble.style),
+        !!(spec.version && spec.level && spec.tips && spec.style),
         "Bubble lacks minimum fields"
       );
-      const json = JSON.stringify(bubble);
+
+      this.spec = spec;
+
+      const json = JSON.stringify(spec);
       const escapedJson = json.replace(/"/g, "`");
-      element.setAttribute("data-bubble", escapedJson);
+      this.content.setAttribute("data-bubble", escapedJson);
     } else {
-      element.removeAttribute("data-bubble");
+      // TODO: This code used to be here, but doesn't seem like it could ever be hit.
+      // Remove if needed
+      this.content.removeAttribute("data-bubble");
     }
   }
 
-  public static wrapBubbleAroundDivWithTail(
-    bubbleStyle: string,
-    content: HTMLElement,
+  public wrapBubbleAroundDivWithTail(
+    bubbleStyle: string, // TODO: Instance var
     desiredTip?: Tip
   ) {
-    Bubble.wrapBubbleAroundDiv(bubbleStyle, content, (bubble: Shape) => {
+    this.wrapBubbleAroundDiv(bubbleStyle, (bubble: Shape) => {
       let target = bubble!.position!.add(new Point(200, 100));
       let mid = Bubble.defaultMid(bubble!.position!, target);
       if (desiredTip) {
@@ -77,35 +90,30 @@ export default class Bubble {
           tips: [tip],
           level: 1
         };
-        Bubble.setBubble(bubble, content);
+        this.setBubbleSpec(bubble);
       }
       Comical.drawTailOnShapes(
         bubble!.position!,
         mid,
         target,
         [bubble],
-        content
+        this.content
       );
     });
   }
 
-  public static wrapBubbleAroundDiv(
+  public wrapBubbleAroundDiv(
     bubbleStyle: string,
-    content: HTMLElement,
     whenPlaced: (s: Shape) => void
   ) {
     Bubble.getShape(bubbleStyle, bubble => {
       if (bubble) {
-        Bubble.wrapShapeAroundDiv(bubble, content, whenPlaced);
+        this.wrapShapeAroundDiv(bubble, whenPlaced);
       }
     });
   }
 
-  private static wrapShapeAroundDiv(
-    bubble: Shape,
-    content: HTMLElement,
-    whenPlaced: (s: Shape) => void
-  ) {
+  private wrapShapeAroundDiv(bubble: Shape, whenPlaced: (s: Shape) => void) {
     // recursive: true is required to see any but the root "g" element
     // (apparently contrary to documentation).
     // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
@@ -124,8 +132,8 @@ export default class Bubble {
     //contentHolder.fillColor = new Color("cyan");
     contentHolder.strokeWidth = 0;
     const adjustSize = () => {
-      var contentWidth = content.offsetWidth;
-      var contentHeight = content.offsetHeight;
+      var contentWidth = this.content.offsetWidth;
+      var contentHeight = this.content.offsetHeight;
       if (contentWidth < 1 || contentHeight < 1) {
         // Horrible kludge until I can find an event that fires when the object is ready.
         window.setTimeout(adjustSize, 100);
@@ -134,8 +142,8 @@ export default class Bubble {
       var holderWidth = (contentHolder as any).size.width;
       var holderHeight = (contentHolder as any).size.height;
       bubble.scale(contentWidth / holderWidth, contentHeight / holderHeight);
-      const contentLeft = content.offsetLeft;
-      const contentTop = content.offsetTop;
+      const contentLeft = this.content.offsetLeft;
+      const contentTop = this.content.offsetTop;
       const contentCenter = new Point(
         contentLeft + contentWidth / 2,
         contentTop + contentHeight / 2
@@ -185,9 +193,9 @@ export default class Bubble {
     lineBehind?: Item | null,
     elementToUpdate?: HTMLElement
   ): void {
-    const tipHandle = this.makeHandle(tip);
-    const curveHandle = this.makeHandle(mid);
-    let tails = this.makeTail(
+    const tipHandle = Bubble.makeHandle(tip);
+    const curveHandle = Bubble.makeHandle(mid);
+    let tails = Bubble.makeTail(
       start,
       tipHandle.position!,
       curveHandle.position!,
@@ -219,7 +227,7 @@ export default class Bubble {
         return;
       }
       tails.forEach(t => t.remove());
-      tails = this.makeTail(
+      tails = Bubble.makeTail(
         start,
         tipHandle.position!,
         curveHandle.position!,
@@ -227,15 +235,18 @@ export default class Bubble {
       );
       curveHandle.bringToFront();
       if (elementToUpdate) {
-        const bubble = Bubble.getBubble(elementToUpdate);
+        const bubble = new Bubble(elementToUpdate);
+        bubble.spec = Bubble.getBubbleSpec(elementToUpdate); // TODO: IS this line even necessary?
         const tip: Tip = {
           targetX: tipHandle!.position!.x!,
           targetY: tipHandle!.position!.y!,
           midpointX: curveHandle!.position!.x!,
           midpointY: curveHandle!.position!.y!
         };
-        bubble.tips[0] = tip; // enhance: for multiple tips, need to figure which one to update
-        Bubble.setBubble(bubble, elementToUpdate);
+        bubble.spec.tips[0] = tip; // enhance: for multiple tips, need to figure which one to update
+
+        // TODO: Is this redundant?
+        bubble.setBubbleSpec(bubble.spec);
       }
     };
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
