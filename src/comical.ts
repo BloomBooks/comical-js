@@ -70,12 +70,12 @@ export default class Comical {
       const element = elements.snapshotItem(i) as HTMLElement;
       const bubble = new Bubble(element);
       if (bubble.spec.tips.length) {
-        bubble.wrapBubbleAroundDivWithTail(
+        bubble.wrapBubbleWithTailAroundDiv(
           bubble.spec.style,
           bubble.spec.tips[0]
         );
       } else {
-        bubble.wrapBubbleAroundDiv(bubble.spec.style, () => {});
+        bubble.wrapBubbleAroundDiv(bubble.spec.style);
       }
     }
   }

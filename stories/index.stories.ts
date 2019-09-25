@@ -88,8 +88,8 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
     const bubble2 = new Bubble(textDiv2);
 
-    bubble1.wrapBubbleAroundDiv("speech", () => {});
-    bubble2.wrapBubbleAroundDiv("shout", () => {});
+    bubble1.wrapBubbleAroundDiv("speech");
+    bubble2.wrapBubbleAroundDiv("shout");
 
     return wrapDiv;
   })
@@ -115,7 +115,7 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
 
     const bubble = new Bubble(textDiv2);
-    bubble.wrapBubbleAroundDivWithTail("shout");
+    bubble.wrapBubbleWithTailAroundDiv("shout");
     addFinishButton(wrapDiv);
     return wrapDiv;
   })

@@ -6,13 +6,17 @@ import Comical from "./comical";
 export default class Bubble {
   public content: HTMLElement;
   // TODO: What is the best name for "spec"?
+  // TODO: This variable is dangerous. You dont' want people modifying this variable directly, cuz we need to persist the changes into bloom
   public spec: BubbleSpec; // Enhance: Another option is that the Bubble class could implement BubbleSpec directly.
   // public style: string;
+  private shape: Shape;
+  private tails: (Tip | undefined)[];
 
   constructor(element: HTMLElement) {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
+    this.tails = [];
   }
 
   // Retrieves the bubble associated with the element
@@ -65,59 +69,66 @@ export default class Bubble {
     }
   }
 
-  public wrapBubbleAroundDivWithTail(
+  public wrapBubbleWithTailAroundDiv(bubbleStyle: string, tail?: Tip) {
+    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, [tail]);
+  }
+
+  public wrapBubbleAndTailsAroundDiv(
     bubbleStyle: string, // TODO: Instance var
-    desiredTip?: Tip
+    tails: (Tip | undefined)[]
   ) {
-    this.wrapBubbleAroundDiv(bubbleStyle, (bubble: Shape) => {
-      let target = bubble!.position!.add(new Point(200, 100));
-      let mid = Bubble.defaultMid(bubble!.position!, target);
-      if (desiredTip) {
-        target = new Point(desiredTip.targetX, desiredTip.targetY);
-        mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
-      }
-      // TODO: This should be called tail: Tail, and targetX should be tipX.
-      const tip: Tip = {
-        targetX: target.x!,
-        targetY: target.y!,
-        midpointX: mid.x!,
-        midpointY: mid.y!
-      };
-      if (typeof bubbleStyle === "string") {
-        const bubble: BubbleSpec = {
-          version: "1.0",
-          style: (bubbleStyle as unknown) as string,
-          tips: [tip],
-          level: 1
-        };
-        this.setBubbleSpec(bubble);
-      }
-      Comical.drawTailOnShapes(
-        bubble!.position!,
-        mid,
-        target,
-        [bubble],
-        this.content
-      );
-    });
+    this.tails = tails;
+    Bubble.loadShape(bubbleStyle, (newlyLoadedShape: Shape) => {
+      this.wrapShapeAroundDiv(newlyLoadedShape);
+    }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
   }
 
-  public wrapBubbleAroundDiv(
-    bubbleStyle: string,
-    whenPlaced: (s: Shape) => void
-  ) {
-    Bubble.getShape(bubbleStyle, bubble => {
-      if (bubble) {
-        this.wrapShapeAroundDiv(bubble, whenPlaced);
-      }
-    });
+  // A callback for after the shape is loaded/place.
+  // Figures out the information for the tail, then draws the shape and tail
+  private drawTailAfterShapePlaced(desiredTip: Tip | undefined) {
+    let target = this.shape.position!.add(new Point(200, 100));
+    let mid = Bubble.defaultMid(this.shape.position!, target);
+    if (desiredTip) {
+      target = new Point(desiredTip.targetX, desiredTip.targetY);
+      mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
+    }
+    // TODO: This should be called tail: Tail, and targetX should be tipX.
+    const tip: Tip = {
+      targetX: target.x!,
+      targetY: target.y!,
+      midpointX: mid.x!,
+      midpointY: mid.y!
+    };
+
+    // TODO: Is there something less awkward than creating a new spec object?
+    const bubbleSpec: BubbleSpec = {
+      version: "1.0",
+      style: this.spec.style,
+      tips: [tip],
+      level: 1
+    };
+
+    this.setBubbleSpec(bubbleSpec);
+
+    Comical.drawTailOnShapes(
+      this.shape.position!,
+      mid,
+      target,
+      [this.shape],
+      this.content
+    );
   }
 
-  private wrapShapeAroundDiv(bubble: Shape, whenPlaced: (s: Shape) => void) {
+  public wrapBubbleAroundDiv(bubbleStyle: string) {
+    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, []);
+  }
+
+  private wrapShapeAroundDiv(shape: Shape) {
+    this.shape = shape;
     // recursive: true is required to see any but the root "g" element
     // (apparently contrary to documentation).
     // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
-    const contentHolder = bubble.getItem({
+    const contentHolder = this.shape.getItem({
       recursive: true,
       match: (x: any) => {
         return x.name === "content-holder";
@@ -141,15 +152,24 @@ export default class Bubble {
       }
       var holderWidth = (contentHolder as any).size.width;
       var holderHeight = (contentHolder as any).size.height;
-      bubble.scale(contentWidth / holderWidth, contentHeight / holderHeight);
+      this.shape.scale(
+        contentWidth / holderWidth,
+        contentHeight / holderHeight
+      );
       const contentLeft = this.content.offsetLeft;
       const contentTop = this.content.offsetTop;
       const contentCenter = new Point(
         contentLeft + contentWidth / 2,
         contentTop + contentHeight / 2
       );
-      bubble.position = contentCenter;
-      whenPlaced(bubble);
+      this.shape.position = contentCenter;
+
+      // Draw tails, if necessary
+      if (this.tails.length > 0) {
+        this.tails.forEach(tail => {
+          this.drawTailAfterShapePlaced(tail);
+        });
+      }
     };
     adjustSize();
     //window.addEventListener('load', adjustSize);
@@ -157,14 +177,7 @@ export default class Bubble {
     //var topContent = content.offsetTop;
   }
 
-  private static getShape(
-    bubbleStyle: string,
-    doWithShape: (s: Shape) => void
-  ) {
-    if (typeof bubbleStyle !== "string") {
-      doWithShape(bubbleStyle as Shape);
-      return;
-    }
+  private static getShapeSvgString(bubbleStyle: string): string {
     let svg: string = "";
     switch (bubbleStyle) {
       case "speech":
@@ -179,9 +192,18 @@ export default class Bubble {
         console.log("unknown bubble type; using default");
         svg = Bubble.speechBubble();
     }
+
+    return svg;
+  }
+
+  private static loadShape(
+    bubbleStyle: string,
+    onShapeLoaded: (s: Shape) => void
+  ) {
+    const svg = Bubble.getShapeSvgString(bubbleStyle);
     project!.importSVG(svg, {
       onLoad: (item: Item) => {
-        doWithShape(item as Shape);
+        onShapeLoaded(item as Shape);
       }
     });
   }
