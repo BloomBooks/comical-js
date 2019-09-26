@@ -1,8 +1,13 @@
 // This is the interface for storing the state of a bubble.
 
-// BubblePattern actually defines all the Bubble properties, but
+// BubbleSpecPattern actually defines all the BubbleSpec properties, but
 // all of them are optional, for use in methods designed to allow a subset
-// of properties to be changed. Bubble overrides to make a minimal set required.
+// of properties to be changed. BubbleSpec overrides to make a minimal set required.
+// The main purpose of this class is to store the state of a bubble in a modified JSON
+// string in the data-bubble attribute of an HTML element. See the Bubble methods
+// setBubbleSpec and getBubbleSpec. This allows re-creatting the paper.js editable
+// state of the bubble even after we have discarded all that in favor of an SVG
+// for a finished HTML document that doesn't depend on Javascript.
 export interface BubbleSpecPattern {
   version?: string; // currently 1.0
   style?: string; // currently one of speech or shout

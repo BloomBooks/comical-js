@@ -3,7 +3,22 @@ import { Path, Point, Color, Item, project, setup } from "paper";
 import Bubble from "./bubble";
 import { uniqueIds } from "./uniqueId";
 
-// Manages all the bubbles
+// Manages a collection of comic bubbles warpped around HTML elements that share a common parent.
+// Each element that has a comic bubble has a data-bubble attribute specifying the appearance
+// of the bubble. Comical can help with initializing this to add a bubble to an element.
+// The data-bubble attributes contain a modified JSON representation of a BubbleSpec
+// describing the bubble.
+// Comical is designed to be the main class exported by Comical.js, and provides methods
+// for setting things up (using a canvas overlayed on the common parent of the bubbles
+// and paper.js shapes) so that the bubbles can be edited by dragging handles.
+// It also supports drawing groups of bubbles in layers, with appropriate merging
+// of bubbles at the same level.
+// As the bubbles are edited using Comical handles, the data-bubble attributes are
+// automatically updated. It's also possible to alter a data-bubble attribute using
+// external code, and tell Comical to update things to match.
+// Finally, Comical can replace a finished bubble canvas with a single SVG, resulting in
+// a visually identical set of bubbles that can be rendered without using Canvas and
+// Javascript.
 export default class Comical {
   static backColor = new Color("white");
 
