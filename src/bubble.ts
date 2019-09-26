@@ -2,7 +2,16 @@ import { Path, Point, Color, ToolEvent, Item, Shape, project } from "paper";
 import { BubbleSpec, Tip } from "bubbleSpec";
 import Comical from "./comical";
 
-// This class should represent a bubble (including the tail) and the methods for drawing a single bubble
+// This class represents a bubble (including the tails, if any) wrapped around an HTML element
+// and handles
+// - storing and retrieving the BubbleSpec that represents the persistent state of
+// the Bubble from the element's data-bubble attribute;
+// - creating paper.js shapes representing the bubble and tails
+// - positioning and sizing those shapes based on the position and size of the wrapped element
+// - automatically repostioning them when the wrapped element changes (ToDo)
+// - creating handles on the tails to allow the user to drag them, and updating
+// the data-bubble as well as the paper.js shapes when this happens
+// - allowing the Bubble to be dragged, and updating the wrapped element's position (ToDo)
 export default class Bubble {
   public content: HTMLElement;
   // TODO: What is the best name for "spec"?
