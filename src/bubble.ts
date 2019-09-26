@@ -101,6 +101,10 @@ export default class Bubble {
     this.persistBubbleSpec();
   }
 
+  public wrapBubbleAroundDiv(bubbleStyle: string) {
+    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, []);
+  }
+
   public wrapBubbleWithTailAroundDiv(bubbleStyle: string, tail: Tip) {
     this.wrapBubbleAndTailsAroundDiv(bubbleStyle, [tail]);
   }
@@ -114,35 +118,6 @@ export default class Bubble {
     Bubble.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
       this.wrapShapeAroundDiv(newlyLoadedShape);
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
-  }
-
-  // A callback for after the shape is loaded/place.
-  // Figures out the information for the tail, then draws the shape and tail
-  private drawTailAfterShapePlaced(desiredTip: Tip) {
-    const target = new Point(desiredTip.targetX, desiredTip.targetY);
-    const mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
-
-    // TODO: Is there something less awkward than creating a new spec object?
-    const bubbleSpec: BubbleSpec = {
-      version: "1.0",
-      style: this.spec.style,
-      tips: [desiredTip],
-      level: 1
-    };
-
-    this.setBubbleSpec(bubbleSpec);
-
-    Comical.drawTailOnShapes(
-      this.shape.position!,
-      mid,
-      target,
-      [this.shape],
-      this.content
-    );
-  }
-
-  public wrapBubbleAroundDiv(bubbleStyle: string) {
-    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, []);
   }
 
   private wrapShapeAroundDiv(shape: Shape) {
@@ -197,6 +172,31 @@ export default class Bubble {
     //window.addEventListener('load', adjustSize);
 
     //var topContent = content.offsetTop;
+  }
+
+  // A callback for after the shape is loaded/place.
+  // Figures out the information for the tail, then draws the shape and tail
+  private drawTailAfterShapePlaced(desiredTip: Tip) {
+    const target = new Point(desiredTip.targetX, desiredTip.targetY);
+    const mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
+
+    // TODO: Is there something less awkward than creating a new spec object?
+    const bubbleSpec: BubbleSpec = {
+      version: "1.0",
+      style: this.spec.style,
+      tips: [desiredTip],
+      level: 1
+    };
+
+    this.setBubbleSpec(bubbleSpec);
+
+    Comical.drawTailOnShapes(
+      this.shape.position!,
+      mid,
+      target,
+      [this.shape],
+      this.content
+    );
   }
 
   private static getShapeSvgString(bubbleStyle: string): string {
