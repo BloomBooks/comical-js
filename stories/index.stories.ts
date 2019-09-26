@@ -74,7 +74,7 @@ storiesOf("bubble-edit", module)
     textDiv.style.top = "50px";
     textDiv.style.left = "80px";
     wrapDiv.appendChild(textDiv);
-    const bubble1 = new Bubble(textDiv);
+    const bubble1 = Bubble.getInstance(textDiv);
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
@@ -86,7 +86,7 @@ storiesOf("bubble-edit", module)
     textDiv2.style.top = "250px";
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
-    const bubble2 = new Bubble(textDiv2);
+    const bubble2 = Bubble.getInstance(textDiv2);
 
     bubble1.wrapBubbleAroundDiv("speech");
     bubble2.wrapBubbleAroundDiv("shout");
@@ -114,9 +114,47 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    const bubble = new Bubble(textDiv2);
-    bubble.wrapBubbleWithTailAroundDiv("shout");
+    const bubble = Bubble.getInstance(textDiv2);
+    bubble.wrapBubbleWithTailAroundDiv("shout", {
+      targetX: 420,
+      targetY: 400,
+      midpointX: 320,
+      midpointY: 375
+    });
     addFinishButton(wrapDiv);
+    return wrapDiv;
+  })
+  .add("Save and reload test", () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "300px";
+    const canvas = document.createElement("canvas");
+    canvas.height = 300;
+    canvas.width = 500;
+    wrapDiv.appendChild(canvas);
+    setup(canvas);
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerText =
+      'Move the tail, click the "Save and Reload" button, and make sure the tail stays in the same place';
+    textDiv2.style.width = "200px";
+    textDiv2.style.textAlign = "center";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "50px";
+    textDiv2.style.left = "120px";
+    wrapDiv.appendChild(textDiv2);
+
+    let bubble = Bubble.getInstance(textDiv2);
+    bubble.wrapBubbleWithTailAroundDiv("shout", {
+      targetX: 220,
+      targetY: 250,
+      midpointX: 220,
+      midpointY: 175
+    });
+    addReloadButton(wrapDiv, () => {
+      bubble = Bubble.getInstance(textDiv2);
+      Comical.update(wrapDiv);
+    });
     return wrapDiv;
   })
   .add("two bubbles on picture", () => {
@@ -138,7 +176,7 @@ storiesOf("bubble-edit", module)
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
-      const bubble1 = new Bubble(div1);
+      const bubble1 = Bubble.getInstance(div1);
       bubble1.spec = {
         version: "1.0",
         style: "speech",
@@ -147,7 +185,7 @@ storiesOf("bubble-edit", module)
       };
       bubble1.setBubbleSpec(bubble1.spec);
 
-      const bubble2 = new Bubble(div2);
+      const bubble2 = Bubble.getInstance(div2);
       bubble2.spec = {
         version: "1.0",
         style: "speech",
@@ -202,6 +240,22 @@ function addFinishButton(wrapDiv: HTMLElement): HTMLButtonElement {
       editable = true;
       button.innerText = "Finish";
     }
+  });
+  return button;
+}
+
+function addReloadButton(
+  wrapDiv: HTMLElement,
+  clickHandler: () => void
+): HTMLButtonElement {
+  wrapDiv.appendChild(document.createElement("br"));
+  const button = document.createElement("button");
+  button.title = "Save and Reload";
+  button.innerText = "Save and Reload";
+  button.style.zIndex = "100";
+  wrapDiv.appendChild(button);
+  button.addEventListener("click", () => {
+    clickHandler();
   });
   return button;
 }

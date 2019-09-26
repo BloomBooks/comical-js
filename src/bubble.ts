@@ -16,29 +16,44 @@ export default class Bubble {
   public content: HTMLElement;
   // TODO: What is the best name for "spec"?
   // TODO: This variable is dangerous. You dont' want people modifying this variable directly, cuz we need to persist the changes into bloom
-  public spec: BubbleSpec; // Enhance: Another option is that the Bubble class could implement BubbleSpec directly.
-  // public style: string;
+  public spec: BubbleSpec;
   private shape: Shape;
-  private tails: (Tip | undefined)[];
 
-  constructor(element: HTMLElement) {
+  private constructor(element: HTMLElement) {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
-    this.tails = [];
+  }
+
+  private static knownInstances: [HTMLElement, Bubble][] = [];
+  public static getInstance(element: HTMLElement): Bubble {
+    let bubble: Bubble | undefined = undefined;
+    for (let i = 0; i < this.knownInstances.length; ++i) {
+      // Check for same reference
+      if (element === this.knownInstances[i][0]) {
+        bubble = this.knownInstances[i][1];
+      }
+    }
+
+    if (bubble == undefined) {
+      bubble = new Bubble(element);
+      this.knownInstances.push([element, bubble]);
+    }
+
+    return bubble;
   }
 
   // Retrieves the bubble associated with the element
   public static getBubbleSpec(element: HTMLElement): BubbleSpec {
     const escapedJson = element.getAttribute("data-bubble");
     if (!escapedJson) {
-      return Bubble.getDefaultBubble(element, "none");
+      return Bubble.getDefaultBubbleSpec(element, "none");
     }
     const json = escapedJson.replace(/`/g, '"');
     return JSON.parse(json); // enhance: can we usefully validate it?
   }
 
-  public static getDefaultBubble(
+  public static getDefaultBubbleSpec(
     element: HTMLElement,
     style: string
   ): BubbleSpec {
@@ -60,60 +75,58 @@ export default class Bubble {
 
   // Links the bubbleShape with the content element
   public setBubbleSpec(spec: BubbleSpec): void {
-    if (spec) {
-      console.assert(
-        !!(spec.version && spec.level && spec.tips && spec.style),
-        "Bubble lacks minimum fields"
-      );
+    console.assert(
+      !!(spec.version && spec.level && spec.tips && spec.style),
+      "Bubble lacks minimum fields"
+    );
 
-      this.spec = spec;
-
-      const json = JSON.stringify(spec);
-      const escapedJson = json.replace(/"/g, "`");
-      this.content.setAttribute("data-bubble", escapedJson);
-    } else {
-      // TODO: This code used to be here, but doesn't seem like it could ever be hit.
-      // Remove if needed
-      this.content.removeAttribute("data-bubble");
-    }
+    this.spec = spec;
+    this.persistBubbleSpec();
   }
 
-  public wrapBubbleWithTailAroundDiv(bubbleStyle: string, tail?: Tip) {
+  protected persistBubbleSpec() {
+    const json = JSON.stringify(this.spec);
+    const escapedJson = json.replace(/"/g, "`");
+    this.content.setAttribute("data-bubble", escapedJson);
+
+    // TODO: Are there any conditions where we might want to remove the data-bubble attribute? It is kinda nice to have the tail information persist even if the style is set to "none"
+  }
+
+  public getStyle(): string {
+    return this.spec.style;
+  }
+  public setStyle(style: string): void {
+    // TODO: Consider validating
+    this.spec.style = style;
+    this.persistBubbleSpec();
+  }
+
+  public wrapBubbleWithTailAroundDiv(bubbleStyle: string, tail: Tip) {
     this.wrapBubbleAndTailsAroundDiv(bubbleStyle, [tail]);
   }
 
   public wrapBubbleAndTailsAroundDiv(
     bubbleStyle: string, // TODO: Instance var
-    tails: (Tip | undefined)[]
+    tails: Tip[]
   ) {
-    this.tails = tails;
-    Bubble.loadShape(bubbleStyle, (newlyLoadedShape: Shape) => {
+    this.spec.tips = tails;
+    this.setStyle(bubbleStyle);
+    Bubble.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
       this.wrapShapeAroundDiv(newlyLoadedShape);
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
   }
 
   // A callback for after the shape is loaded/place.
   // Figures out the information for the tail, then draws the shape and tail
-  private drawTailAfterShapePlaced(desiredTip: Tip | undefined) {
-    let target = this.shape.position!.add(new Point(200, 100));
-    let mid = Bubble.defaultMid(this.shape.position!, target);
-    if (desiredTip) {
-      target = new Point(desiredTip.targetX, desiredTip.targetY);
-      mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
-    }
-    // TODO: This should be called tail: Tail, and targetX should be tipX.
-    const tip: Tip = {
-      targetX: target.x!,
-      targetY: target.y!,
-      midpointX: mid.x!,
-      midpointY: mid.y!
-    };
+  private drawTailAfterShapePlaced(desiredTip: Tip) {
+    const target = new Point(desiredTip.targetX, desiredTip.targetY);
+    const mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
 
     // TODO: Is there something less awkward than creating a new spec object?
     const bubbleSpec: BubbleSpec = {
       version: "1.0",
       style: this.spec.style,
-      tips: [tip],
+      tips: [desiredTip],
       level: 1
     };
 
@@ -174,8 +187,8 @@ export default class Bubble {
       this.shape.position = contentCenter;
 
       // Draw tails, if necessary
-      if (this.tails.length > 0) {
-        this.tails.forEach(tail => {
+      if (this.spec.tips.length > 0) {
+        this.spec.tips.forEach(tail => {
           this.drawTailAfterShapePlaced(tail);
         });
       }
@@ -266,17 +279,17 @@ export default class Bubble {
       );
       curveHandle.bringToFront();
       if (elementToUpdate) {
-        const bubble = new Bubble(elementToUpdate);
+        const bubble = Bubble.getInstance(elementToUpdate);
         bubble.spec = Bubble.getBubbleSpec(elementToUpdate); // TODO: IS this line even necessary?
-        const tip: Tip = {
+
+        const newTip: Tip = {
           targetX: tipHandle!.position!.x!,
           targetY: tipHandle!.position!.y!,
           midpointX: curveHandle!.position!.x!,
           midpointY: curveHandle!.position!.y!
         };
-        bubble.spec.tips[0] = tip; // enhance: for multiple tips, need to figure which one to update
+        bubble.spec.tips[0] = newTip; // enhance: for multiple tips, need to figure which one to update
 
-        // TODO: Is this redundant?
         bubble.setBubbleSpec(bubble.spec);
       }
     };
