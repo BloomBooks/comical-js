@@ -18,8 +18,12 @@ export default class Bubble {
   // TODO: What is the best name for "spec"?
   // TODO: This variable is dangerous. You dont' want people modifying this variable directly, cuz we need to persist the changes into bloom
   public spec: BubbleSpec;
+  // the main shape of the bubble, including its border
   private shape: Shape;
-  //private tails: Tail[] = [];
+  // a clone of shape with no border and an appropriate fill; drawn after all shapes
+  // to fill them in and erase any overlapping borders.
+  private innerShape: Shape;
+  private tails: Tail[] = [];
 
   public constructor(element: HTMLElement) {
     this.content = element;
@@ -111,6 +115,9 @@ export default class Bubble {
     // Also position, which surprisingly is about 50,50...probably a center.
     //contentHolder.fillColor = new Color("cyan");
     contentHolder.strokeWidth = 0;
+    this.innerShape = shape.clone() as Shape;
+    //this.innerShape.bringToFront();
+    this.innerShape.fillColor = Comical.backColor;
     const adjustSize = () => {
       var contentWidth = this.content.offsetWidth;
       var contentHeight = this.content.offsetHeight;
@@ -125,6 +132,8 @@ export default class Bubble {
         contentWidth / holderWidth,
         contentHeight / holderHeight
       );
+      this.innerShape.scale(contentWidth / holderWidth,
+        contentHeight / holderHeight);
       const contentLeft = this.content.offsetLeft;
       const contentTop = this.content.offsetTop;
       const contentCenter = new Point(
@@ -132,6 +141,7 @@ export default class Bubble {
         contentTop + contentHeight / 2
       );
       this.shape.position = contentCenter;
+      this.innerShape.position = contentCenter;
 
       // Draw tails, if necessary
       if (this.spec.tips.length > 0) {
@@ -151,44 +161,13 @@ export default class Bubble {
   private drawTailAfterShapePlaced(desiredTip: Tip) {
     const target = new Point(desiredTip.targetX, desiredTip.targetY);
     const mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
+    const start = new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
+      this.content.offsetTop + this.content.offsetHeight / 2);
 
-    // TODO: Is there something less awkward than creating a new spec object?
-    const bubbleSpec: BubbleSpec = {
-      version: "1.0",
-      style: this.spec.style,
-      tips: [desiredTip],
-      level: 1
-    };
-
-    this.setBubbleSpec(bubbleSpec);
-
-    this.drawTailOnShapes(
-      mid,
-      target,
-      [this.shape]
-    );
-  }
-
-  // Given a list of shapes, which should initially have no stroke or fill color,
-  // draws them twice, once with a black outline, then again filled with our
-  // backColor. If the shapes overlap, this gives the effect of outlining the
-  // combined shape. Then we draw the draggable tail on top, also with merged outline.
-  public drawTailOnShapes(
-    mid: Point,
-    tip: Point,
-    shapes: Item[]
-  ) {
-    const start = this.shape.position!;
-    const interiors: Path[] = [];
-    shapes.forEach(s => {
-      var copy = s.clone() as Path;
-      interiors.push(copy);
-      copy.bringToFront(); // already in front of s, want in front of all
-      copy.fillColor = Comical.backColor;
-    });
-    var stroke = new Color("black");
-    shapes.forEach(s => (s.strokeColor = stroke));
-    this.drawTail(start, mid, tip, interiors[0]);
+    const tail = this.drawTail(start, mid, target,);
+    tail.putStrokeBehind(this.innerShape);
+    // keep track of it; eventually adjustSize will adjust its start position.
+    this.tails.push(tail);
   }
 
   private static getShapeSvgString(bubbleStyle: string): string {
@@ -225,9 +204,8 @@ export default class Bubble {
   public drawTail(
     start: Point,
     mid: Point,
-    tip: Point,
-    lineBehind?: Item | null,
-  ): void {
+    tip: Point
+  ): Tail {
     const tipHandle = Bubble.makeHandle(tip);
     const curveHandle = Bubble.makeHandle(mid);
     let tail = new Tail(
@@ -235,9 +213,7 @@ export default class Bubble {
       tipHandle.position!,
       curveHandle.position!,
     );
-    if (lineBehind) {
-      tail.putStrokeBehind(lineBehind);
-    }
+
     curveHandle.bringToFront();
 
     let state = "idle";
@@ -285,6 +261,7 @@ export default class Bubble {
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
       state = "idle";
     };
+    return tail;
   }
 
   // TODO: Help? where should I be? I think this comes up with unique names.
