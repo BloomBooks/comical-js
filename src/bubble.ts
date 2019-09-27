@@ -19,6 +19,10 @@ export default class Bubble {
   public spec: BubbleSpec;
   private shape: Shape;
 
+  // Don't use new() to create Bubble elements. Use getInstance() instead.
+  // The reason why is because if multiple Bubble objects get created which correspond to the same element, they will have different member variables
+  // (e.g. different spec variables). If multiple objects are allowed, then a lot more flushing changes and re-reading the HTML will be required to keep them in sync.
+  // Instead, if we assume that only one instance is passed out per element, the code is much simpler.
   private constructor(element: HTMLElement) {
     this.content = element;
 
@@ -34,6 +38,9 @@ export default class Bubble {
   }
 
   private static knownInstances: [HTMLElement, Bubble][] = [];
+
+  // Gets an existing Bubble instance corresponding to the element if available,
+  // or creates a new instance if necessary
   public static getInstance(element: HTMLElement): Bubble {
     let bubble: Bubble | undefined = undefined;
     for (let i = 0; i < this.knownInstances.length; ++i) {
@@ -44,7 +51,7 @@ export default class Bubble {
     }
 
     if (bubble == undefined) {
-      bubble = new Bubble(element);
+      bubble = new Bubble(element); // This function is the only place where new Bubble() should be called, in order to enforce only 1 Bubble instance per HTMLElement
       this.knownInstances.push([element, bubble]);
     }
 
