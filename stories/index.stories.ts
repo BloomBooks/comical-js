@@ -1,6 +1,6 @@
 //import { document, console } from 'global';
 import { storiesOf } from "@storybook/html";
-import { setup, Path, Point, Color, Rectangle } from "paper";
+import { setup, Path, Point, Color } from "paper";
 import Comical from "../src/comical";
 import Bubble from "../src/bubble";
 
@@ -26,35 +26,38 @@ storiesOf("paper", module).add("line", () => {
 });
 
 storiesOf("bubble-edit", module)
-  .add("drag tail", () => {
-    const canvas = document.createElement("canvas");
-    canvas.height = 500;
-    canvas.width = 500;
-    setup(canvas);
-    const start = new Point(100, 100);
-    const tip = start.add(new Point(200, -50));
-    Bubble.drawTail(start, Bubble.defaultMid(start, tip), tip);
-    return canvas;
-  })
-  .add("tail on bubbles", () => {
-    const canvas = document.createElement("canvas");
-    canvas.height = 500;
-    canvas.width = 500;
-    setup(canvas);
-    const start = new Point(200, 100);
-    const tip = start.add(new Point(200, 50));
-    const oval1 = new Path.Ellipse(
-      new Rectangle(new Point(80, 10), new Point(180, 70))
-    );
-    const oval2 = new Path.Ellipse(
-      new Rectangle(new Point(100, 50), new Point(300, 150))
-    );
-    Comical.drawTailOnShapes(start, Bubble.defaultMid(start, tip), tip, [
-      oval1,
-      oval2
-    ]);
-    return canvas;
-  })
+// I don't think we need a story for the tail by itself any more
+  // .add("drag tail", () => {
+  //   const canvas = document.createElement("canvas");
+  //   canvas.height = 500;
+  //   canvas.width = 500;
+  //   setup(canvas);
+  //   const start = new Point(100, 100);
+  //   const tip = start.add(new Point(200, -50));
+  //   Bubble.drawTail(start, Bubble.defaultMid(start, tip), tip);
+  //   return canvas;
+  // })
+  // Drop this test for now...drawing multiple connected shapes, including tails,
+  // will come back eventually.
+  // .add("tail on bubbles", () => {
+  //   const canvas = document.createElement("canvas");
+  //   canvas.height = 500;
+  //   canvas.width = 500;
+  //   setup(canvas);
+  //   const start = new Point(200, 100);
+  //   const tip = start.add(new Point(200, 50));
+  //   const oval1 = new Path.Ellipse(
+  //     new Rectangle(new Point(80, 10), new Point(180, 70))
+  //   );
+  //   const oval2 = new Path.Ellipse(
+  //     new Rectangle(new Point(100, 50), new Point(300, 150))
+  //   );
+  //   Bubble.drawTailOnShapes(start, Bubble.defaultMid(start, tip), tip, [
+  //     oval1,
+  //     oval2
+  //   ]);
+  //   return canvas;
+  // })
   .add("svg shapes", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";

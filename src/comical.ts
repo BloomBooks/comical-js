@@ -1,4 +1,4 @@
-import { Path, Point, Color, Item, project, setup } from "paper";
+import { Color, project, setup } from "paper";
 
 import Bubble from "./bubble";
 import { uniqueIds } from "./uniqueId";
@@ -21,29 +21,6 @@ import { uniqueIds } from "./uniqueId";
 // Javascript.
 export default class Comical {
   static backColor = new Color("white");
-
-  // Given a list of shapes, which should initially have no stroke or fill color,
-  // draws them twice, once with a black outline, then again filled with our
-  // backColor. If the shapes overlap, this gives the effect of outlining the
-  // combined shape. Then we draw the draggable tail on top, also with merged outline.
-  public static drawTailOnShapes(
-    start: Point,
-    mid: Point,
-    tip: Point,
-    shapes: Item[],
-    elementToUpdate?: HTMLElement
-  ) {
-    const interiors: Path[] = [];
-    shapes.forEach(s => {
-      var copy = s.clone() as Path;
-      interiors.push(copy);
-      copy.bringToFront(); // already in front of s, want in front of all
-      copy.fillColor = Comical.backColor;
-    });
-    var stroke = new Color("black");
-    shapes.forEach(s => (s.strokeColor = stroke));
-    Bubble.drawTail(start, mid, tip, interiors[0], elementToUpdate);
-  }
 
   public static convertCanvasToSvgImg(parent: HTMLElement) {
     const canvas = parent.getElementsByTagName("canvas")[0];

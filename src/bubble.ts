@@ -190,13 +190,33 @@ export default class Bubble {
 
     this.setBubbleSpec(bubbleSpec);
 
-    Comical.drawTailOnShapes(
-      this.shape.position!,
+    this.drawTailOnShapes(
       mid,
       target,
-      [this.shape],
-      this.content
+      [this.shape]
     );
+  }
+
+  // Given a list of shapes, which should initially have no stroke or fill color,
+  // draws them twice, once with a black outline, then again filled with our
+  // backColor. If the shapes overlap, this gives the effect of outlining the
+  // combined shape. Then we draw the draggable tail on top, also with merged outline.
+  public drawTailOnShapes(
+    mid: Point,
+    tip: Point,
+    shapes: Item[]
+  ) {
+    const start = this.shape.position!;
+    const interiors: Path[] = [];
+    shapes.forEach(s => {
+      var copy = s.clone() as Path;
+      interiors.push(copy);
+      copy.bringToFront(); // already in front of s, want in front of all
+      copy.fillColor = Comical.backColor;
+    });
+    var stroke = new Color("black");
+    shapes.forEach(s => (s.strokeColor = stroke));
+    this.drawTail(start, mid, tip, interiors[0]);
   }
 
   private static getShapeSvgString(bubbleStyle: string): string {
@@ -230,12 +250,11 @@ export default class Bubble {
     });
   }
 
-  public static drawTail(
+  public drawTail(
     start: Point,
     mid: Point,
     tip: Point,
     lineBehind?: Item | null,
-    elementToUpdate?: HTMLElement
   ): void {
     const tipHandle = Bubble.makeHandle(tip);
     const curveHandle = Bubble.makeHandle(mid);
@@ -278,20 +297,16 @@ export default class Bubble {
         lineBehind
       );
       curveHandle.bringToFront();
-      if (elementToUpdate) {
-        const bubble = Bubble.getInstance(elementToUpdate);
-        bubble.spec = Bubble.getBubbleSpec(elementToUpdate); // TODO: IS this line even necessary?
 
-        const newTip: Tip = {
-          targetX: tipHandle!.position!.x!,
-          targetY: tipHandle!.position!.y!,
-          midpointX: curveHandle!.position!.x!,
-          midpointY: curveHandle!.position!.y!
-        };
-        bubble.spec.tips[0] = newTip; // enhance: for multiple tips, need to figure which one to update
+      const newTip: Tip = {
+        targetX: tipHandle!.position!.x!,
+        targetY: tipHandle!.position!.y!,
+        midpointX: curveHandle!.position!.x!,
+        midpointY: curveHandle!.position!.y!
+      };
+      this.spec.tips[0] = newTip; // enhance: for multiple tips, need to figure which one to update
 
-        bubble.setBubbleSpec(bubble.spec);
-      }
+      this.setBubbleSpec(this.spec);
     };
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
       state = "idle";
