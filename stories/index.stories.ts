@@ -91,8 +91,22 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
     const bubble2 = new Bubble(textDiv2);
 
-    bubble1.wrapBubbleAroundDiv("speech");
-    bubble2.wrapBubbleAroundDiv("shout");
+    bubble1.setBubbleSpec({
+      version: "1.0",
+      style: "speech",
+      tips: [],
+      level: 1
+    });
+
+    bubble2.setBubbleSpec({
+      version: "1.0",
+      style: "shout",
+      tips: [],
+      level: 1
+    });
+
+    bubble1.makeShapes();
+    bubble2.makeShapes();
 
     return wrapDiv;
   })
@@ -118,12 +132,16 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
 
     const bubble = new Bubble(textDiv2);
-    bubble.wrapBubbleWithTailAroundDiv("shout", {
-      targetX: 420,
-      targetY: 400,
-      midpointX: 320,
-      midpointY: 375
+    bubble.setBubbleSpec({
+      version: "1.0",
+      style: "shout",
+      tips: [{targetX: 420,
+        targetY: 400,
+        midpointX: 320,
+        midpointY: 375}],
+      level: 1
     });
+    bubble.makeShapes();
     addFinishButton(wrapDiv);
     return wrapDiv;
   })
@@ -148,12 +166,17 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
 
     let bubble = new Bubble(textDiv2);
-    bubble.wrapBubbleWithTailAroundDiv("shout", {
-      targetX: 220,
-      targetY: 250,
-      midpointX: 220,
-      midpointY: 175
+    bubble.setBubbleSpec({
+      version: "1.0",
+      style: "shout",
+      tips: [{targetX: 220,
+        targetY: 250,
+        midpointX: 220,
+        midpointY: 175}],
+      level: 1
     });
+    bubble.makeShapes();
+    
     addReloadButton(wrapDiv, () => {
       bubble = new Bubble(textDiv2);
       Comical.update(wrapDiv);

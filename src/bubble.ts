@@ -19,22 +19,12 @@ export default class Bubble {
   // TODO: This variable is dangerous. You dont' want people modifying this variable directly, cuz we need to persist the changes into bloom
   public spec: BubbleSpec;
   private shape: Shape;
+  //private tails: Tail[] = [];
 
   public constructor(element: HTMLElement) {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
-  }
-
-  public makeShapes() {
-      if (this.spec.tips.length) {
-        this.wrapBubbleWithTailAroundDiv(
-          this.spec.style,
-          this.spec.tips[0]
-        );
-      } else {
-        this.wrapBubbleAroundDiv(this.spec.style);
-      }
   }
 
   // Retrieves the bubble associated with the element
@@ -95,20 +85,8 @@ export default class Bubble {
     this.persistBubbleSpec();
   }
 
-  public wrapBubbleAroundDiv(bubbleStyle: string) {
-    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, []);
-  }
-
-  public wrapBubbleWithTailAroundDiv(bubbleStyle: string, tail: Tip) {
-    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, [tail]);
-  }
-
-  public wrapBubbleAndTailsAroundDiv(
-    bubbleStyle: string, // TODO: Instance var
-    tails: Tip[]
+  public makeShapes(
   ) {
-    this.spec.tips = tails;
-    this.setStyle(bubbleStyle);
     Bubble.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
       this.wrapShapeAroundDiv(newlyLoadedShape);
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
