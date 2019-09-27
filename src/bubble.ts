@@ -25,6 +25,14 @@ export default class Bubble {
     this.spec = Bubble.getBubbleSpec(this.content);
   }
 
+  public makeShapes() {
+    if (this.spec.tips.length) {
+      this.wrapBubbleWithTailAroundDiv(this.spec.style, this.spec.tips[0]);
+    } else {
+      this.wrapBubbleAroundDiv(this.spec.style);
+    }
+  }
+
   private static knownInstances: [HTMLElement, Bubble][] = [];
   public static getInstance(element: HTMLElement): Bubble {
     let bubble: Bubble | undefined = undefined;
@@ -190,22 +198,14 @@ export default class Bubble {
 
     this.setBubbleSpec(bubbleSpec);
 
-    this.drawTailOnShapes(
-      mid,
-      target,
-      [this.shape]
-    );
+    this.drawTailOnShapes(mid, target, [this.shape]);
   }
 
   // Given a list of shapes, which should initially have no stroke or fill color,
   // draws them twice, once with a black outline, then again filled with our
   // backColor. If the shapes overlap, this gives the effect of outlining the
   // combined shape. Then we draw the draggable tail on top, also with merged outline.
-  public drawTailOnShapes(
-    mid: Point,
-    tip: Point,
-    shapes: Item[]
-  ) {
+  public drawTailOnShapes(mid: Point, tip: Point, shapes: Item[]) {
     const start = this.shape.position!;
     const interiors: Path[] = [];
     shapes.forEach(s => {
@@ -254,7 +254,7 @@ export default class Bubble {
     start: Point,
     mid: Point,
     tip: Point,
-    lineBehind?: Item | null,
+    lineBehind?: Item | null
   ): void {
     const tipHandle = Bubble.makeHandle(tip);
     const curveHandle = Bubble.makeHandle(mid);

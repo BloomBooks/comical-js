@@ -61,14 +61,7 @@ export default class Comical {
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
       const bubble = Bubble.getInstance(element);
-      if (bubble.spec.tips.length) {
-        bubble.wrapBubbleWithTailAroundDiv(
-          bubble.spec.style,
-          bubble.spec.tips[0]
-        );
-      } else {
-        bubble.wrapBubbleAroundDiv(bubble.spec.style);
-      }
+      bubble.makeShapes();
     }
   }
 
