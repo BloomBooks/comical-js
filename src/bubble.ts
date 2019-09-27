@@ -1,6 +1,7 @@
 import { Path, Point, Color, ToolEvent, Item, Shape, project } from "paper";
 import { BubbleSpec, Tip } from "bubbleSpec";
 import Comical from "./comical";
+import {Tail} from "./tail";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles
@@ -265,12 +266,14 @@ export default class Bubble {
   ): void {
     const tipHandle = Bubble.makeHandle(tip);
     const curveHandle = Bubble.makeHandle(mid);
-    let tails = Bubble.makeTail(
+    let tail = new Tail(
       start,
       tipHandle.position!,
       curveHandle.position!,
-      lineBehind
     );
+    if (lineBehind) {
+      tail.putStrokeBehind(lineBehind);
+    }
     curveHandle.bringToFront();
 
     let state = "idle";
@@ -296,13 +299,13 @@ export default class Bubble {
       } else {
         return;
       }
-      tails.forEach(t => t.remove());
-      tails = Bubble.makeTail(
+      
+      const updatedTail = new Tail(
         start,
         tipHandle.position!,
-        curveHandle.position!,
-        lineBehind
+        curveHandle.position!
       );
+      tail.replaceWith(updatedTail);
       curveHandle.bringToFront();
 
       const newTip: Tip = {
@@ -318,45 +321,6 @@ export default class Bubble {
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
       state = "idle";
     };
-  }
-
-  static makeTail(
-    root: Point,
-    tip: Point,
-    mid: Point,
-    lineBehind?: Item | null
-  ): Path[] {
-    const tailWidth = 25;
-    // we want to make the base of the tail a line of length tailWidth
-    // at right angles to the line from root to mid
-    // centered at root.
-    const angleBase = new Point(mid.x! - root.x!, mid.y! - root.y!).angle!;
-    const deltaBase = new Point(0, 0);
-    deltaBase.angle = angleBase + 90;
-    deltaBase.length = tailWidth / 2;
-    const begin = root.add(deltaBase);
-    const end = root.subtract(deltaBase);
-
-    // The midpoints of the arcs are a quarter base width either side of mid,
-    // offset at right angles to the root/tip line.
-    const angleMid = new Point(tip.x! - root.x!, tip.y! - root.y!).angle!;
-    const deltaMid = new Point(0, 0);
-    deltaMid.angle = angleMid + 90;
-    deltaMid.length = tailWidth / 4;
-    const mid1 = mid.add(deltaMid);
-    const mid2 = mid.subtract(deltaMid);
-
-    const pathstroke = new Path.Arc(begin, mid1, tip);
-    const pathArc2 = new Path.Arc(tip, mid2, end);
-    pathstroke.addSegments(pathArc2.segments!);
-    pathArc2.remove();
-    const pathFill = pathstroke.clone() as Path;
-    pathstroke.strokeColor = new Color("black");
-    if (lineBehind) {
-      pathstroke.insertBelow(lineBehind);
-    }
-    pathFill.fillColor = Comical.backColor;
-    return [pathstroke, pathFill];
   }
 
   // TODO: Help? where should I be? I think this comes up with unique names.
