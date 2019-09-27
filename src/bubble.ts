@@ -19,10 +19,21 @@ export default class Bubble {
   public spec: BubbleSpec;
   private shape: Shape;
 
-  private constructor(element: HTMLElement) {
+  public constructor(element: HTMLElement) {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
+  }
+
+  public makeShapes() {
+      if (this.spec.tips.length) {
+        this.wrapBubbleWithTailAroundDiv(
+          this.spec.style,
+          this.spec.tips[0]
+        );
+      } else {
+        this.wrapBubbleAroundDiv(this.spec.style);
+      }
   }
 
   private static knownInstances: [HTMLElement, Bubble][] = [];

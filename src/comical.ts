@@ -60,15 +60,8 @@ export default class Comical {
     // Eventually, we should be able to handle more than one tail per bubble.
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
-      const bubble = Bubble.getInstance(element);
-      if (bubble.spec.tips.length) {
-        bubble.wrapBubbleWithTailAroundDiv(
-          bubble.spec.style,
-          bubble.spec.tips[0]
-        );
-      } else {
-        bubble.wrapBubbleAroundDiv(bubble.spec.style);
-      }
+      const bubble = new Bubble(element);
+      bubble.makeShapes();
     }
   }
 
