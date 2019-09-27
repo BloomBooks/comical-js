@@ -1,4 +1,4 @@
-import { Path, Point, Color, ToolEvent, Item, Shape, project } from "paper";
+import { Path, Point, Color, ToolEvent, Item, Shape, project, Layer } from "paper";
 import { BubbleSpec, Tip } from "bubbleSpec";
 import Comical from "./comical";
 import { Tail } from "./tail";
@@ -25,6 +25,10 @@ export default class Bubble {
   private innerShape: Shape;
   private tails: Tail[] = [];
 
+  private lowerLayer: Layer;
+  private upperLayer: Layer;
+  private handleLayer: Layer;
+
   // Don't use new() to create Bubble elements. Use getInstance() instead.
   // The reason why is because if multiple Bubble objects get created which correspond to the same element, they will have different member variables
   // (e.g. different spec variables). If multiple objects are allowed, then a lot more flushing changes and re-reading the HTML will be required to keep them in sync.
@@ -33,6 +37,11 @@ export default class Bubble {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
+    
+    // Just a default placeholder
+    if (project) {
+      this.lowerLayer = this.upperLayer = this.handleLayer = project!.activeLayer;
+    }
   }
 
   private static knownInstances: [HTMLElement, Bubble][] = [];
@@ -114,10 +123,41 @@ export default class Bubble {
     this.persistBubbleSpec();
   }
 
+  public setLayers(newLowerLayer: Layer, newUpperLayer: Layer, newHandleLayer: Layer): void {
+    this.setLowerLayer(newLowerLayer);
+    this.setUpperLayer(newUpperLayer);
+    this.setHandleLayer(newHandleLayer);
+  }
+
+  // Sets the value of lowerLayer. The "outline" shapes are drawn in the lower layer.
+  public setLowerLayer(layer: Layer): void {
+    this.lowerLayer = layer;
+  }
+
+  public getUpperLayer(): Layer {
+    return this.upperLayer;
+  }
+
+  // Sets the value of upperLayer. The "fill" shapes are drawn in the upper layer.
+  public setUpperLayer(layer: Layer): void {
+    this.upperLayer = layer;
+  }
+
+  // The layer containing the tip and midpoint curve handles
+  public setHandleLayer(layer: Layer): void {
+    this.handleLayer = layer;
+  }
+  
+
   public makeShapes() {
-    Bubble.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
-      this.wrapShapeAroundDiv(newlyLoadedShape);
-    }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
+    // TODO: Cleanup if async version proves unnecessary
+    // Async version
+    // this.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
+    //   this.wrapShapeAroundDiv(newlyLoadedShape);
+    // }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
+    
+    var newlyLoadedShape = this.loadShapeSync(this.getStyle());
+    this.wrapShapeAroundDiv(newlyLoadedShape);
   }
 
   private wrapShapeAroundDiv(shape: Shape) {
@@ -140,6 +180,9 @@ export default class Bubble {
     //contentHolder.fillColor = new Color("cyan");
     contentHolder.strokeWidth = 0;
     this.innerShape = shape.clone() as Shape;
+    this.innerShape.remove(); // Removes it from the current (lower) layer.
+    this.upperLayer.addChild(this.innerShape);
+
     //this.innerShape.bringToFront();
     this.innerShape.fillColor = Comical.backColor;
     const adjustSize = () => {
@@ -167,6 +210,9 @@ export default class Bubble {
       this.shape.position = contentCenter;
       this.innerShape.position = contentCenter;
 
+      // TODO: This still produces some minor imperfections in the border. Think of how to make it look prettier.
+      this.innerShape.strokeWidth = 0;  // Get rid of the outline
+  
       // Draw tails, if necessary
       if (this.spec.tips.length > 0) {
         this.spec.tips.forEach(tail => {
@@ -213,11 +259,13 @@ export default class Bubble {
     return svg;
   }
 
-  private static loadShape(
+  public loadShape(
     bubbleStyle: string,
     onShapeLoaded: (s: Shape) => void
   ) {
     const svg = Bubble.getShapeSvgString(bubbleStyle);
+
+    this.lowerLayer.activate();  // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
     project!.importSVG(svg, {
       onLoad: (item: Item) => {
         onShapeLoaded(item as Shape);
@@ -225,13 +273,24 @@ export default class Bubble {
     });
   }
 
+  public loadShapeSync(
+    bubbleStyle: string
+  ): Shape {
+    const svg = Bubble.getShapeSvgString(bubbleStyle);
+
+    this.lowerLayer.activate();  // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
+    const newlyLoadShape = project!.importSVG(svg) as Shape;  // I believe Only async if the string you pass in is a URL instead of the literal string containing the contents of the SVG definition
+    return newlyLoadShape;
+  }
+
   public drawTail(
     start: Point,
     mid: Point,
     tip: Point
   ): Tail {
-    const tipHandle = Bubble.makeHandle(tip);
-    const curveHandle = Bubble.makeHandle(mid);
+    const tipHandle = this.makeHandle(tip);
+    const curveHandle = this.makeHandle(mid);
+    this.upperLayer.activate();
     let tail = new Tail(
       start,
       tipHandle.position!,
@@ -291,7 +350,8 @@ export default class Bubble {
   // TODO: Help? where should I be? I think this comes up with unique names.
   static handleIndex = 0;
 
-  static makeHandle(tip: Point): Path.Circle {
+  private makeHandle(tip: Point): Path.Circle {
+    this.handleLayer.activate();
     const result = new Path.Circle(tip, 8);
     result.strokeColor = new Color("aqua");
     result.strokeWidth = 2;

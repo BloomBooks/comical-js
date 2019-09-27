@@ -1,4 +1,4 @@
-import { Color, project, setup } from "paper";
+import { Color, project, setup, Layer } from "paper";
 
 import Bubble from "./bubble";
 import { uniqueIds } from "./uniqueId";
@@ -46,7 +46,13 @@ export default class Comical {
   // call after adding or deleting elements with data-bubble
   // assumes convertBubbleJsonToCanvas has been called and canvas exists
   public static update(parent: HTMLElement) {
-    project!.activeLayer.removeChildren();
+    while (project!.layers.length > 1) {
+      project!.layers.pop();
+    }
+    if (project!.layers.length > 0) {
+      project!.layers[0].activate();
+    }
+
     const elements = parent.ownerDocument!.evaluate(
       ".//*[@data-bubble]",
       parent,
@@ -54,13 +60,52 @@ export default class Comical {
       XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
       null
     );
+
     // Enhance: we want to be able to make all the bubbles and all the tails
     // as a connected set so that all overlaps happen properly.
     // Eventually, we should make distinct sets for each level.
     // Eventually, we should be able to handle more than one tail per bubble.
+    var zLevelList = [];
+    var bubbleList = [];
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
       const bubble = Bubble.getInstance(element);
+      bubbleList.push(bubble);
+      
+      let zLevel = 0;
+      if (bubble.spec.level) {
+        zLevel = bubble.spec.level;
+      }
+      zLevelList.push(zLevel);
+    }
+
+    // Ensure that they are in ascending order
+    zLevelList.sort();
+
+    // First we need to create all the layers in order. (Because they automatically get added to the end of the project's list of layers
+    const levelToLayer = {};
+    for (let i = 0; i < zLevelList.length; ++i) {
+      // Check if different than previous. (Ignore duplicate z-indices)
+      if (i == 0 || zLevelList[i-1] != zLevelList[i]) {
+        const zLevel = zLevelList[i];
+        var lowerLayer = new Layer();
+        var upperLayer = new Layer();
+        levelToLayer[zLevel] = [lowerLayer, upperLayer];
+      }
+    }
+    const handleLayer = new Layer();
+
+    // Now that the layers are created, we can go back and place objects into the correct layers and ask them to draw themselves.
+    for (let i = 0; i < bubbleList.length; ++i) {
+      const bubble = bubbleList[i];
+
+      let zLevel = 0;
+      if (bubble.spec.level) {
+        zLevel = bubble.spec.level;
+      }
+      
+      const [lowerLayer, upperLayer] = levelToLayer[zLevel];
+      bubble.setLayers(lowerLayer, upperLayer, handleLayer);
       bubble.makeShapes();
     }
   }

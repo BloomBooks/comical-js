@@ -222,6 +222,67 @@ storiesOf("bubble-edit", module)
     button.style.top = "600px";
     button.style.left = "0";
     return wrapDiv;
+  })
+  .add("overlapping bubbles", () => {
+    // A generic picture
+    // Two bubbles that are merged together (at the same layer)
+    // Overlapping non-merged bubbles
+    // Multiple tails on a bubble
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+    wrapDiv.style.height = "600px";
+
+    var div1 = makeTextBlock(wrapDiv, "This should be the highest layer", 130, 80, 100);
+    var div2 = makeTextBlock(wrapDiv, "This should be the lowest layer", 130, 150, 100);
+
+    var div3 = makeTextBlock(wrapDiv, "This should be the middle layer", 250, 80, 200);
+    var div4 = makeTextBlock(wrapDiv, "This should be merged with the other middle layer", 250, 130, 100);
+    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      const bubble1 = Bubble.getInstance(div1);
+      bubble1.spec = {
+        version: "1.0",
+        style: "speech",
+        tips: [Bubble.makeDefaultTip(div1)],
+        level: 3
+      };
+      bubble1.setBubbleSpec(bubble1.spec);
+
+      const bubble2 = Bubble.getInstance(div2);
+      bubble2.spec = {
+        version: "1.0",
+        style: "speech",
+        tips: [Bubble.makeDefaultTip(div2)],
+        level: 1
+      };
+      bubble2.setBubbleSpec(bubble2.spec);
+  
+  
+      const bubble3 = Bubble.getInstance(div3);
+      bubble3.spec = {
+        version: "1.0",
+        style: "speech",
+        tips: [Bubble.makeDefaultTip(div3)],
+        level: 2
+      };
+      bubble3.setBubbleSpec(bubble3.spec);
+
+      const bubble4 = Bubble.getInstance(div4);
+      bubble4.spec = {
+        version: "1.0",
+        style: "speech",
+        tips: [Bubble.makeDefaultTip(div4)],
+        level: 2
+      };
+      bubble4.setBubbleSpec(bubble4.spec);
+
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+    }, 200);
+
+
+    return wrapDiv;
   });
 
 function makeTextBlock(
