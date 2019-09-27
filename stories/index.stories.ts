@@ -77,7 +77,7 @@ storiesOf("bubble-edit", module)
     textDiv.style.top = "50px";
     textDiv.style.left = "80px";
     wrapDiv.appendChild(textDiv);
-    const bubble1 = Bubble.getInstance(textDiv);
+    const bubble1 = new Bubble(textDiv);
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
@@ -89,7 +89,7 @@ storiesOf("bubble-edit", module)
     textDiv2.style.top = "250px";
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
-    const bubble2 = Bubble.getInstance(textDiv2);
+    const bubble2 = new Bubble(textDiv2);
 
     bubble1.wrapBubbleAroundDiv("speech");
     bubble2.wrapBubbleAroundDiv("shout");
@@ -117,7 +117,7 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    const bubble = Bubble.getInstance(textDiv2);
+    const bubble = new Bubble(textDiv2);
     bubble.wrapBubbleWithTailAroundDiv("shout", {
       targetX: 420,
       targetY: 400,
@@ -147,7 +147,7 @@ storiesOf("bubble-edit", module)
     textDiv2.style.left = "120px";
     wrapDiv.appendChild(textDiv2);
 
-    let bubble = Bubble.getInstance(textDiv2);
+    let bubble = new Bubble(textDiv2);
     bubble.wrapBubbleWithTailAroundDiv("shout", {
       targetX: 220,
       targetY: 250,
@@ -155,7 +155,7 @@ storiesOf("bubble-edit", module)
       midpointY: 175
     });
     addReloadButton(wrapDiv, () => {
-      bubble = Bubble.getInstance(textDiv2);
+      bubble = new Bubble(textDiv2);
       Comical.update(wrapDiv);
     });
     return wrapDiv;
@@ -179,7 +179,7 @@ storiesOf("bubble-edit", module)
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
-      const bubble1 = Bubble.getInstance(div1);
+      const bubble1 = new Bubble(div1);
       bubble1.spec = {
         version: "1.0",
         style: "speech",
@@ -188,7 +188,7 @@ storiesOf("bubble-edit", module)
       };
       bubble1.setBubbleSpec(bubble1.spec);
 
-      const bubble2 = Bubble.getInstance(div2);
+      const bubble2 = new Bubble(div2);
       bubble2.spec = {
         version: "1.0",
         style: "speech",

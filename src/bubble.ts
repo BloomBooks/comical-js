@@ -36,24 +36,6 @@ export default class Bubble {
       }
   }
 
-  private static knownInstances: [HTMLElement, Bubble][] = [];
-  public static getInstance(element: HTMLElement): Bubble {
-    let bubble: Bubble | undefined = undefined;
-    for (let i = 0; i < this.knownInstances.length; ++i) {
-      // Check for same reference
-      if (element === this.knownInstances[i][0]) {
-        bubble = this.knownInstances[i][1];
-      }
-    }
-
-    if (bubble == undefined) {
-      bubble = new Bubble(element);
-      this.knownInstances.push([element, bubble]);
-    }
-
-    return bubble;
-  }
-
   // Retrieves the bubble associated with the element
   public static getBubbleSpec(element: HTMLElement): BubbleSpec {
     const escapedJson = element.getAttribute("data-bubble");
