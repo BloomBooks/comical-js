@@ -1,7 +1,7 @@
 import { Path, Point, Color, ToolEvent, Item, Shape, project } from "paper";
 import { BubbleSpec, Tip } from "bubbleSpec";
 import Comical from "./comical";
-import {Tail} from "./tail";
+import { Tail } from "./tail";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles
@@ -19,6 +19,7 @@ export default class Bubble {
   // TODO: This variable is dangerous. You dont' want people modifying this variable directly, cuz we need to persist the changes into bloom
   public spec: BubbleSpec;
   private shape: Shape;
+  //private tails: Tail[] = [];
 
   // Don't use new() to create Bubble elements. Use getInstance() instead.
   // The reason why is because if multiple Bubble objects get created which correspond to the same element, they will have different member variables
@@ -28,14 +29,6 @@ export default class Bubble {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
-  }
-
-  public makeShapes() {
-    if (this.spec.tips.length) {
-      this.wrapBubbleWithTailAroundDiv(this.spec.style, this.spec.tips[0]);
-    } else {
-      this.wrapBubbleAroundDiv(this.spec.style);
-    }
   }
 
   private static knownInstances: [HTMLElement, Bubble][] = [];
@@ -117,20 +110,7 @@ export default class Bubble {
     this.persistBubbleSpec();
   }
 
-  public wrapBubbleAroundDiv(bubbleStyle: string) {
-    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, []);
-  }
-
-  public wrapBubbleWithTailAroundDiv(bubbleStyle: string, tail: Tip) {
-    this.wrapBubbleAndTailsAroundDiv(bubbleStyle, [tail]);
-  }
-
-  public wrapBubbleAndTailsAroundDiv(
-    bubbleStyle: string, // TODO: Instance var
-    tails: Tip[]
-  ) {
-    this.spec.tips = tails;
-    this.setStyle(bubbleStyle);
+  public makeShapes() {
     Bubble.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
       this.wrapShapeAroundDiv(newlyLoadedShape);
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
@@ -266,11 +246,7 @@ export default class Bubble {
   ): void {
     const tipHandle = Bubble.makeHandle(tip);
     const curveHandle = Bubble.makeHandle(mid);
-    let tail = new Tail(
-      start,
-      tipHandle.position!,
-      curveHandle.position!,
-    );
+    let tail = new Tail(start, tipHandle.position!, curveHandle.position!);
     if (lineBehind) {
       tail.putStrokeBehind(lineBehind);
     }
@@ -299,7 +275,7 @@ export default class Bubble {
       } else {
         return;
       }
-      
+
       const updatedTail = new Tail(
         start,
         tipHandle.position!,

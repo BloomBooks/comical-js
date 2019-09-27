@@ -26,7 +26,7 @@ storiesOf("paper", module).add("line", () => {
 });
 
 storiesOf("bubble-edit", module)
-// I don't think we need a story for the tail by itself any more
+  // I don't think we need a story for the tail by itself any more
   // .add("drag tail", () => {
   //   const canvas = document.createElement("canvas");
   //   canvas.height = 500;
@@ -91,8 +91,22 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
     const bubble2 = Bubble.getInstance(textDiv2);
 
-    bubble1.wrapBubbleAroundDiv("speech");
-    bubble2.wrapBubbleAroundDiv("shout");
+    bubble1.setBubbleSpec({
+      version: "1.0",
+      style: "speech",
+      tips: [],
+      level: 1
+    });
+
+    bubble2.setBubbleSpec({
+      version: "1.0",
+      style: "shout",
+      tips: [],
+      level: 1
+    });
+
+    bubble1.makeShapes();
+    bubble2.makeShapes();
 
     return wrapDiv;
   })
@@ -118,12 +132,13 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
 
     const bubble = Bubble.getInstance(textDiv2);
-    bubble.wrapBubbleWithTailAroundDiv("shout", {
-      targetX: 420,
-      targetY: 400,
-      midpointX: 320,
-      midpointY: 375
+    bubble.setBubbleSpec({
+      version: "1.0",
+      style: "shout",
+      tips: [{ targetX: 420, targetY: 400, midpointX: 320, midpointY: 375 }],
+      level: 1
     });
+    bubble.makeShapes();
     addFinishButton(wrapDiv);
     return wrapDiv;
   })
@@ -148,12 +163,14 @@ storiesOf("bubble-edit", module)
     wrapDiv.appendChild(textDiv2);
 
     let bubble = Bubble.getInstance(textDiv2);
-    bubble.wrapBubbleWithTailAroundDiv("shout", {
-      targetX: 220,
-      targetY: 250,
-      midpointX: 220,
-      midpointY: 175
+    bubble.setBubbleSpec({
+      version: "1.0",
+      style: "shout",
+      tips: [{ targetX: 220, targetY: 250, midpointX: 220, midpointY: 175 }],
+      level: 1
     });
+    bubble.makeShapes();
+
     addReloadButton(wrapDiv, () => {
       bubble = Bubble.getInstance(textDiv2);
       Comical.update(wrapDiv);
