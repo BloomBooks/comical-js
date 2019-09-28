@@ -22,6 +22,8 @@ import { uniqueIds } from "./uniqueId";
 export default class Comical {
   static backColor = new Color("white");
 
+  static bubbleLists = new Map<Element, Bubble[]>();
+
   public static convertCanvasToSvgImg(parent: HTMLElement) {
     const canvas = parent.getElementsByTagName("canvas")[0];
     if (!canvas) {
@@ -41,11 +43,22 @@ export default class Comical {
     uniqueIds(svg);
     canvas.parentElement!.insertBefore(svg, canvas);
     canvas.remove();
+    Comical.stopMonitoring(parent);
+  }
+
+  // This logic is designed to prevent accumulating mutation observers.
+  // Not yet fully tested.
+  private static stopMonitoring(parent: HTMLElement) {
+    const bubbles = Comical.bubbleLists.get(parent);
+    if (bubbles) {
+      bubbles.forEach(bubble => bubble.stopMonitoring());
+    }
   }
 
   // call after adding or deleting elements with data-bubble
   // assumes convertBubbleJsonToCanvas has been called and canvas exists
   public static update(parent: HTMLElement) {
+    Comical.stopMonitoring(parent);
     project!.activeLayer.removeChildren();
     const elements = parent.ownerDocument!.evaluate(
       ".//*[@data-bubble]",
@@ -54,6 +67,8 @@ export default class Comical {
       XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
       null
     );
+    const bubbles: Bubble[] = [];
+    Comical.bubbleLists.set(parent, bubbles);
     // Enhance: we want to be able to make all the bubbles and all the tails
     // as a connected set so that all overlaps happen properly.
     // Eventually, we should make distinct sets for each level.
@@ -62,6 +77,7 @@ export default class Comical {
       const element = elements.snapshotItem(i) as HTMLElement;
       const bubble = new Bubble(element);
       bubble.makeShapes();
+      bubbles.push(bubble);
     }
   }
 

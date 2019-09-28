@@ -23,7 +23,22 @@ export default class Bubble {
   // a clone of shape with no border and an appropriate fill; drawn after all shapes
   // to fill them in and erase any overlapping borders.
   private innerShape: Shape;
+    // contentHolder is a shape which is a required part of an SVG object used as
+    // a bubble. It should be a rectangle in the SVG; it comes out as a Shape
+    // when the SVG is converted to a paper.js object.
+    // (We can also cause it to come out as a Path, by setting expandShapes: true
+    // in the getItem options).
+    // It has property size, with height, width as numbers matching the
+    // height and width specified in the SVG for the rectangle.)
+    // Also position, which surprisingly is about 50,50...probably a center.
+    // It is identified by having id="contentHolder". The bubble shape gets stretched
+    // and positioned so this rectangle corresponds to the element that the
+    // bubble is wrapping.
+  private contentHolder: Item;
   private tails: Tail[] = [];
+  private observer: MutationObserver |undefined;
+  private hScale: number = 1;
+  private vScale: number = 1;
 
   public constructor(element: HTMLElement) {
     this.content = element;
@@ -94,6 +109,25 @@ export default class Bubble {
     Bubble.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
       this.wrapShapeAroundDiv(newlyLoadedShape);
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
+    
+    // Make any tails the bubble should have
+    this.spec.tips.forEach(tail => {
+      this.drawTailAfterShapePlaced(tail);
+    });
+
+    this.monitorContent();
+  }
+
+  public stopMonitoring() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = undefined;
+    }
+  }
+
+  monitorContent() {
+    this.observer = new MutationObserver(() => this.adjustSize());
+    this.observer.observe(this.content, {attributes: true, characterData: true, childList:true, subtree:true});
   }
 
   private wrapShapeAroundDiv(shape: Shape) {
@@ -101,60 +135,57 @@ export default class Bubble {
     // recursive: true is required to see any but the root "g" element
     // (apparently contrary to documentation).
     // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
-    const contentHolder = this.shape.getItem({
+    this.contentHolder = this.shape.getItem({
       recursive: true,
       match: (x: any) => {
         return x.name === "content-holder";
       }
     });
-    // contentHolder (which should be a rectangle in SVG) comes out as a Shape.
-    // (can also cause it to come out as a Path, by setting expandShapes: true
-    // in the getItem options).
-    // It has property size, with height, width as numbers matching the
-    // height and width specified in the SVG for the rectangle.)
-    // Also position, which surprisingly is about 50,50...probably a center.
-    //contentHolder.fillColor = new Color("cyan");
-    contentHolder.strokeWidth = 0;
+
+    //this.contentHolder.fillColor = new Color("cyan");
+    this.contentHolder.strokeWidth = 0;
     this.innerShape = shape.clone() as Shape;
     //this.innerShape.bringToFront();
     this.innerShape.fillColor = Comical.backColor;
-    const adjustSize = () => {
-      var contentWidth = this.content.offsetWidth;
-      var contentHeight = this.content.offsetHeight;
-      if (contentWidth < 1 || contentHeight < 1) {
-        // Horrible kludge until I can find an event that fires when the object is ready.
-        window.setTimeout(adjustSize, 100);
-        return;
-      }
-      var holderWidth = (contentHolder as any).size.width;
-      var holderHeight = (contentHolder as any).size.height;
-      this.shape.scale(
-        contentWidth / holderWidth,
-        contentHeight / holderHeight
-      );
-      this.innerShape.scale(contentWidth / holderWidth,
-        contentHeight / holderHeight);
-      const contentLeft = this.content.offsetLeft;
-      const contentTop = this.content.offsetTop;
-      const contentCenter = new Point(
-        contentLeft + contentWidth / 2,
-        contentTop + contentHeight / 2
-      );
-      this.shape.position = contentCenter;
-      this.innerShape.position = contentCenter;
-
-      // Draw tails, if necessary
-      if (this.spec.tips.length > 0) {
-        this.spec.tips.forEach(tail => {
-          this.drawTailAfterShapePlaced(tail);
-        });
-      }
-    };
-    adjustSize();
+    // Any tails we already made need their strokes to be behind the fill shape.
+    // Todo: later each shape will just be made in an appropriate layer.
+    this.tails.forEach(tail => {
+      tail.putStrokeBehind(this.innerShape);
+    });
+    
+    this.adjustSize();
     //window.addEventListener('load', adjustSize);
 
     //var topContent = content.offsetTop;
   }
+
+  adjustSize() {
+    var contentWidth = this.content.offsetWidth;
+    var contentHeight = this.content.offsetHeight;
+    if (contentWidth < 1 || contentHeight < 1) {
+      // Horrible kludge until I can find an event that fires when the object is ready.
+      window.setTimeout(this.adjustSize, 100);
+      return;
+    }
+    var holderWidth = (this.contentHolder as any).size.width;
+    var holderHeight = (this.contentHolder as any).size.height;
+    const desiredHScale = contentWidth / holderWidth;
+    const desiredVScale = contentHeight / holderHeight;
+    const scaleXBy = desiredHScale / this.hScale;
+    const scaleYBy = desiredVScale / this.vScale;
+    this.shape.scale(scaleXBy, scaleYBy);
+    this.innerShape.scale(scaleXBy, scaleYBy);
+    this.hScale = desiredHScale;
+    this.vScale = desiredVScale;
+    const contentLeft = this.content.offsetLeft;
+    const contentTop = this.content.offsetTop;
+    const contentCenter = new Point(
+      contentLeft + contentWidth / 2,
+      contentTop + contentHeight / 2
+    );
+    this.shape.position = contentCenter;
+    this.innerShape.position = contentCenter;
+  };
 
   // A callback for after the shape is loaded/place.
   // Figures out the information for the tail, then draws the shape and tail
@@ -165,7 +196,13 @@ export default class Bubble {
       this.content.offsetTop + this.content.offsetHeight / 2);
 
     const tail = this.drawTail(start, mid, target,);
-    tail.putStrokeBehind(this.innerShape);
+    // the innerShape may not have been made yet...there's async code involved.
+    // if we already have tails by the time it gets made, the code that makes it
+    // will fix their z-order.
+    // Todo: eventually ordering will be managed by layers.
+    if (this.innerShape) {
+      tail.putStrokeBehind(this.innerShape);
+    }
     // keep track of it; eventually adjustSize will adjust its start position.
     this.tails.push(tail);
   }
