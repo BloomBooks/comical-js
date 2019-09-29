@@ -59,13 +59,13 @@ export default class Comical {
   // assumes convertBubbleJsonToCanvas has been called and canvas exists
   public static update(parent: HTMLElement) {
     Comical.stopMonitoring(parent);
-    project!.activeLayer.removeChildren();
     while (project!.layers.length > 1) {
       project!.layers.pop();
     }
     if (project!.layers.length > 0) {
       project!.layers[0].activate();
     }
+    project!.activeLayer.removeChildren();
 
     const elements = parent.ownerDocument!.evaluate(
       ".//*[@data-bubble]",

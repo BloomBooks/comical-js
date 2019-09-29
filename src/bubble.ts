@@ -170,11 +170,17 @@ export default class Bubble {
     // this.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
     //   this.wrapShapeAroundDiv(newlyLoadedShape);
     // }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
-    
+
+    // Because we reuse Bubbles, from one call to convertBubbleJsonToCanvas to another,
+    // a reused bubble might have some tails already, from last time. At one point, as wrapShapeAroundDiv
+    // calls adjustSize, the attempt to adjust the old tails copied parts of them into the new canvas.
+    // To keep things clean we must discard them before we start.
+    this.tails = [];
+
     var newlyLoadedShape = this.loadShapeSync(this.getStyle());
     this.wrapShapeAroundDiv(newlyLoadedShape);
     
-      // Make any tails the bubble should have
+    // Make any tails the bubble should have
     this.spec.tips.forEach(tail => {
       this.drawTailAfterShapePlaced(tail);
     });
@@ -247,6 +253,7 @@ export default class Bubble {
     );
     this.shape.position = contentCenter;
     this.innerShape.position = contentCenter;
+    this.tails.forEach(tail => tail.adjustRoot(contentCenter));
   };
 
   // A callback for after the shape is loaded/place.
@@ -320,6 +327,7 @@ export default class Bubble {
       this.lowerLayer,
       this.upperLayer
     );
+    tail.midHandle = curveHandle;
 
     curveHandle.bringToFront();
 
@@ -346,13 +354,12 @@ export default class Bubble {
       } else {
         return;
       }
-
-      const updatedTail = new Tail(
+      
+      tail.updatePoints(
         start,
         tipHandle.position!,
-        curveHandle.position!, this.lowerLayer, this.upperLayer
+        curveHandle.position!
       );
-      tail.replaceWith(updatedTail);
       curveHandle.bringToFront();
 
       const newTip: Tip = {

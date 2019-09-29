@@ -10,6 +10,14 @@ export class Tail {
     lowerLayer: Layer;
     upperLayer: Layer;
 
+    root: Point;
+    tip: Point;
+    mid: Point;
+    // This may be set to ensure that when the tail's midpoint is moved
+    // automatically (e.g., to adjust for the root moving), the corresponding
+    // handle is moved too.
+    midHandle: Path | undefined;
+
     public constructor(
         root: Point,
         tip: Point,
@@ -19,29 +27,49 @@ export class Tail {
       ) {
         this.lowerLayer = lowerLayer;
         this.upperLayer = upperLayer;
+
+          this.root = root;
+          this.tip = tip;
+          this.mid = mid;
+          this.makeShapes();
+      }
+
+      // Make the shapes that implement the tail.
+      // If there are existing shapes (typically representing an earlier tail position),
+      // remove them after putting the new shapes in the same z-order (and eventually layer).
+      // Todo: might well take layer arguments? Or perhaps constructor does this and saves them?
+      public makeShapes() {
+        const oldFill = this.pathFill;
+        const oldStroke = this.pathstroke;
+        
         this.lowerLayer.activate();
+
         const tailWidth = 25;
         // we want to make the base of the tail a line of length tailWidth
         // at right angles to the line from root to mid
         // centered at root.
-        const angleBase = new Point(mid.x! - root.x!, mid.y! - root.y!).angle!;
+        const angleBase = new Point(this.mid.x! - this.root.x!, this.mid.y! - this.root.y!).angle!;
         const deltaBase = new Point(0, 0);
         deltaBase.angle = angleBase + 90;
         deltaBase.length = tailWidth / 2;
-        const begin = root.add(deltaBase);
-        const end = root.subtract(deltaBase);
+        const begin = this.root.add(deltaBase);
+        const end = this.root.subtract(deltaBase);
     
         // The midpoints of the arcs are a quarter base width either side of mid,
         // offset at right angles to the root/tip line.
-        const angleMid = new Point(tip.x! - root.x!, tip.y! - root.y!).angle!;
+        const angleMid = new Point(this.tip.x! - this.root.x!, this.tip.y! - this.root.y!).angle!;
         const deltaMid = new Point(0, 0);
         deltaMid.angle = angleMid + 90;
         deltaMid.length = tailWidth / 4;
-        const mid1 = mid.add(deltaMid);
-        const mid2 = mid.subtract(deltaMid);
+        const mid1 = this.mid.add(deltaMid);
+        const mid2 = this.mid.subtract(deltaMid);
     
-        this.pathstroke = new Path.Arc(begin, mid1, tip);
-        const pathArc2 = new Path.Arc(tip, mid2, end);
+        this.pathstroke = new Path.Arc(begin, mid1, this.tip);
+        if (oldStroke) {
+            //this.pathstroke.insertBelow(oldStroke);
+            oldStroke.remove();
+        }
+        const pathArc2 = new Path.Arc(this.tip, mid2, end);
         this.pathstroke.addSegments(pathArc2.segments!);
         pathArc2.remove();
         this.upperLayer.activate();
@@ -50,13 +78,29 @@ export class Tail {
         this.upperLayer.addChild(this.pathFill);
         this.pathstroke.strokeColor = new Color("black");
         this.pathFill.fillColor = Comical.backColor;
+        if (oldFill) {
+            //this.pathFill.insertBelow(oldFill);
+            oldFill.remove();
+        }
       }
-      public replaceWith(other: Tail) {
-          other.pathstroke.insertBelow(this.pathstroke);
-          other.pathFill.insertBelow(this.pathFill);
-          this.pathstroke.remove();
-          this.pathFill.remove();
-          this.pathstroke = other.pathstroke;
-          this.pathFill = other.pathFill;
+
+      updatePoints(
+        root: Point,
+        tip: Point,
+        mid: Point,
+      ) {
+          this.root = root;
+          this.tip = tip;
+          this.mid = mid;
+          this.makeShapes();
+      }
+
+      adjustRoot(newRoot: Point) {
+        const delta = newRoot.subtract(this.root!).divide(2);
+        const newMid = this.mid.add(delta);
+        this.updatePoints(newRoot, this.tip, newMid);
+        if (this.midHandle) {
+            this.midHandle.position = newMid;
+        }
       }
 }
