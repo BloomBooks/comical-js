@@ -235,7 +235,6 @@ export default class Bubble {
       this.content.offsetTop + this.content.offsetHeight / 2);
 
     const tail = this.drawTail(start, mid, target,);
-    tail.putStrokeBehind(this.innerShape);
     // keep track of it; eventually adjustSize will adjust its start position.
     this.tails.push(tail);
   }
@@ -295,6 +294,8 @@ export default class Bubble {
       start,
       tipHandle.position!,
       curveHandle.position!,
+      this.lowerLayer,
+      this.upperLayer
     );
 
     curveHandle.bringToFront();
@@ -326,7 +327,7 @@ export default class Bubble {
       const updatedTail = new Tail(
         start,
         tipHandle.position!,
-        curveHandle.position!
+        curveHandle.position!, this.lowerLayer, this.upperLayer
       );
       tail.replaceWith(updatedTail);
       curveHandle.bringToFront();

@@ -166,7 +166,7 @@ storiesOf("bubble-edit", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tips: [{ targetX: 220, targetY: 250, midpointX: 220, midpointY: 175 }],
+      tips: [],
       level: 1
     });
     bubble.makeShapes();
@@ -273,7 +273,12 @@ storiesOf("bubble-edit", module)
       bubble4.spec = {
         version: "1.0",
         style: "speech",
-        tips: [Bubble.makeDefaultTip(div4)],
+        // Give this one a non-default tip so it starts out intersecting the provious bubble.
+        // This lets us easily check on a later tail overlapping an earlier bubble in the same
+        // level (though as a cartoon it looks a bit odd...a more plausible comic might have
+        // a bubble with no tail overlapping one with a tail that merges into a third which has a
+        // regular tail.)
+        tips: [{ targetX: 470, targetY: 100, midpointX: 370, midpointY: 150 }],
         level: 2
       };
       bubble4.setBubbleSpec(bubble4.spec);

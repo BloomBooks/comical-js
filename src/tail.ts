@@ -1,4 +1,4 @@
-import { Path, Point, Color, Item} from "paper";
+import { Path, Point, Color, Layer} from "paper";
 import Comical from "./comical";
 
 export class Tail {
@@ -7,11 +7,19 @@ export class Tail {
     // the path representing the space within the tail
     pathFill: Path;
 
+    lowerLayer: Layer;
+    upperLayer: Layer;
+
     public constructor(
         root: Point,
         tip: Point,
         mid: Point,
+        lowerLayer: Layer,
+        upperLayer: Layer
       ) {
+        this.lowerLayer = lowerLayer;
+        this.upperLayer = upperLayer;
+        this.lowerLayer.activate();
         const tailWidth = 25;
         // we want to make the base of the tail a line of length tailWidth
         // at right angles to the line from root to mid
@@ -36,7 +44,10 @@ export class Tail {
         const pathArc2 = new Path.Arc(tip, mid2, end);
         this.pathstroke.addSegments(pathArc2.segments!);
         pathArc2.remove();
+        this.upperLayer.activate();
         this.pathFill = this.pathstroke.clone() as Path;
+        this.pathFill.remove();
+        this.upperLayer.addChild(this.pathFill);
         this.pathstroke.strokeColor = new Color("black");
         this.pathFill.fillColor = Comical.backColor;
       }
@@ -47,9 +58,5 @@ export class Tail {
           this.pathFill.remove();
           this.pathstroke = other.pathstroke;
           this.pathFill = other.pathFill;
-      }
-
-      public putStrokeBehind(item: Item) {
-        this.pathstroke.insertBelow(item);
       }
 }
