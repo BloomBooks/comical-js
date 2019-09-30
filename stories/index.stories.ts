@@ -107,7 +107,7 @@ storiesOf("bubble-edit", module)
 
     bubble1.makeShapes();
     bubble2.makeShapes();
-    
+
     return wrapDiv;
   })
   .add("shout with tail", () => {
@@ -356,6 +356,42 @@ storiesOf("bubble-edit", module)
         Comical.update(wrapDiv);
       }
     );
+    return wrapDiv;
+  })
+  .add("Multiple tails", () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "300px";
+    const canvas = document.createElement("canvas");
+    canvas.height = 300;
+    canvas.width = 500;
+    wrapDiv.appendChild(canvas);
+    setup(canvas);
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerText =
+      'This box has\nmultiple tails';
+    textDiv2.style.width = "200px";
+    textDiv2.style.textAlign = "center";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "50px";
+    textDiv2.style.left = "120px";
+    wrapDiv.appendChild(textDiv2);
+
+    let bubble = Bubble.getInstance(textDiv2);
+    bubble.setBubbleSpec({
+      version: "1.0",
+      style: "speech",
+      tips: [{ targetX: 300, targetY: 250, midpointX: 250, midpointY: 175},
+        { targetX: 100, targetY: 250, midpointX: 150, midpointY: 175}
+      ],
+      level: 1
+    });
+
+    setTimeout(() => {
+      Comical.update(wrapDiv);
+    }, 200);
+    
     return wrapDiv;
   });
 
