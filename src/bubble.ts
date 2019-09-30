@@ -52,11 +52,6 @@ export default class Bubble {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
-    
-    // Just a default placeholder
-    if (project) {
-      this.lowerLayer = this.upperLayer = this.handleLayer = project!.activeLayer;
-    }
   }
 
   private static knownInstances: [HTMLElement, Bubble][] = [];
@@ -163,22 +158,34 @@ export default class Bubble {
     this.handleLayer = layer;
   }
   
+  // Ensures that this bubble has all the required layers and creates them, if necessary
+  private initializeLayers(): void {
+    if (!this.lowerLayer) {
+      this.lowerLayer = new Layer();  // Note that the constructor automatically adds the newly-created layer to the project
+    }
+    if (!this.upperLayer) {
+      this.upperLayer = new Layer();
+    }
+    if (!this.handleLayer) {
+      this.handleLayer = new Layer();
+    }
+  }
 
   public makeShapes() {
-    // TODO: Cleanup if async version proves unnecessary
-    // Async version
-    // this.loadShape(this.getStyle(), (newlyLoadedShape: Shape) => {
-    //   this.wrapShapeAroundDiv(newlyLoadedShape);
-    // }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
-
+    this.initializeLayers();
     // Because we reuse Bubbles, from one call to convertBubbleJsonToCanvas to another,
     // a reused bubble might have some tails already, from last time. At one point, as wrapShapeAroundDiv
     // calls adjustSize, the attempt to adjust the old tails copied parts of them into the new canvas.
     // To keep things clean we must discard them before we start.
+    for (let i = 0; i < this.tails.length; ++i) {
+      // Erase it off the current canvas
+      this.tails[i].remove();
+    }
     this.tails = [];
 
-    var newlyLoadedShape = this.loadShapeSync(this.getStyle());
-    this.wrapShapeAroundDiv(newlyLoadedShape);
+    this.loadShapeAsync(this.getStyle(), (newlyLoadedShape: Shape) => {
+      this.wrapShapeAroundDiv(newlyLoadedShape);
+    }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
     
     // Make any tails the bubble should have
     this.spec.tips.forEach(tail => {
@@ -228,11 +235,16 @@ export default class Bubble {
   }
 
   adjustSize() {
-    var contentWidth = this.content.offsetWidth;
-    var contentHeight = this.content.offsetHeight;
+    var contentWidth = -1
+    var contentHeight = -1;
+
+    if (this.content) {
+      contentWidth = this.content.offsetWidth;
+      contentHeight = this.content.offsetHeight;
+    }
     if (contentWidth < 1 || contentHeight < 1) {
       // Horrible kludge until I can find an event that fires when the object is ready.
-      window.setTimeout(this.adjustSize, 100);
+      window.setTimeout(() => { this.adjustSize(); }, 100);
       return;
     }
     var holderWidth = (this.contentHolder as any).size.width;
@@ -259,6 +271,10 @@ export default class Bubble {
   // A callback for after the shape is loaded/place.
   // Figures out the information for the tail, then draws the shape and tail
   private drawTailAfterShapePlaced(desiredTip: Tip) {
+    if (this.spec.style === "none") {
+      return;
+    }
+
     const target = new Point(desiredTip.targetX, desiredTip.targetY);
     const mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
     const start = new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
@@ -288,28 +304,21 @@ export default class Bubble {
     return svg;
   }
 
-  public loadShape(
+  private loadShapeAsync(
     bubbleStyle: string,
     onShapeLoaded: (s: Shape) => void
   ) {
     const svg = Bubble.getShapeSvgString(bubbleStyle);
 
     this.lowerLayer.activate();  // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
+
+    // ImportSVG may return asynchronously if the input string is a URL.
+    // Even though the string we pass contains the svg contents directly (not a URL), when I ran it in Bloom I still got a null shape out as the return value, so best to treat it as async.
     project!.importSVG(svg, {
       onLoad: (item: Item) => {
         onShapeLoaded(item as Shape);
       }
     });
-  }
-
-  public loadShapeSync(
-    bubbleStyle: string
-  ): Shape {
-    const svg = Bubble.getShapeSvgString(bubbleStyle);
-
-    this.lowerLayer.activate();  // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
-    const newlyLoadShape = project!.importSVG(svg) as Shape;  // I believe Only async if the string you pass in is a URL instead of the literal string containing the contents of the SVG definition
-    return newlyLoadShape;
   }
 
   public drawTail(

@@ -80,8 +80,8 @@ export default class Comical {
     // as a connected set so that all overlaps happen properly.
     // Eventually, we should make distinct sets for each level.
     // Eventually, we should be able to handle more than one tail per bubble.
-    var zLevelList = [];
-    var bubbleList = [];
+    var zLevelList: number[] = [];
+    var bubbleList: Bubble[] = [];
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
       const bubble = Bubble.getInstance(element);

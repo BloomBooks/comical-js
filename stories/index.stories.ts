@@ -107,7 +107,7 @@ storiesOf("bubble-edit", module)
 
     bubble1.makeShapes();
     bubble2.makeShapes();
-
+    
     return wrapDiv;
   })
   .add("shout with tail", () => {
@@ -138,7 +138,9 @@ storiesOf("bubble-edit", module)
       tips: [{ targetX: 420, targetY: 400, midpointX: 320, midpointY: 375 }],
       level: 1
     });
-    bubble.makeShapes();
+    setTimeout(() => {
+      bubble.makeShapes();
+    }, 200);
     addFinishButton(wrapDiv);
     return wrapDiv;
   })
@@ -166,12 +168,17 @@ storiesOf("bubble-edit", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tips: [],
+      tips: [{ targetX: 220, targetY: 250, midpointX: 220, midpointY: 175}],
       level: 1
     });
-    bubble.makeShapes();
 
-    addReloadButton(wrapDiv, () => {
+    setTimeout(() => {
+      bubble.makeShapes();
+    }, 200);
+
+    addButton(wrapDiv,
+      "Save and Reload",
+      () => {
       bubble = Bubble.getInstance(textDiv2);
       Comical.update(wrapDiv);
     });
@@ -289,6 +296,67 @@ storiesOf("bubble-edit", module)
 
 
     return wrapDiv;
+  })
+  .add("Change bubble style test", () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "300px";
+    const canvas = document.createElement("canvas");
+    canvas.height = 300;
+    canvas.width = 500;
+    wrapDiv.appendChild(canvas);
+    setup(canvas);
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerText =
+      'Change the bubble style to None and make sure the tail goes away';
+    textDiv2.style.width = "200px";
+    textDiv2.style.textAlign = "center";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "50px";
+    textDiv2.style.left = "120px";
+    wrapDiv.appendChild(textDiv2);
+
+    let bubble = Bubble.getInstance(textDiv2);
+    bubble.setBubbleSpec({
+      version: "1.0",
+      style: "shout",
+      tips: [{ targetX: 220, targetY: 250, midpointX: 220, midpointY: 175}],
+      level: 1
+    });
+
+    setTimeout(() => {
+      Comical.update(wrapDiv);
+    }, 200);
+
+    addButton(wrapDiv,
+      "None",
+      () => {
+        const spec = Bubble.getBubbleSpec(textDiv2);
+        spec.style = "none";
+        bubble.setBubbleSpec(spec);
+        Comical.update(wrapDiv);
+      }
+    );
+    addButton(wrapDiv,
+      "Speech",
+      () => {
+        const spec = Bubble.getBubbleSpec(textDiv2);
+        spec.style = "speech";
+        bubble.setBubbleSpec(spec);
+        Comical.update(wrapDiv);
+      }
+    );
+    addButton(wrapDiv,
+      "Shout",
+      () => {
+        const spec = Bubble.getBubbleSpec(textDiv2);
+        spec.style = "shout";
+        bubble.setBubbleSpec(spec);
+        Comical.update(wrapDiv);
+      }
+    );
+    return wrapDiv;
   });
 
 function makeTextBlock(
@@ -331,14 +399,15 @@ function addFinishButton(wrapDiv: HTMLElement): HTMLButtonElement {
   return button;
 }
 
-function addReloadButton(
+function addButton(
   wrapDiv: HTMLElement,
+  buttonText: string,
   clickHandler: () => void
 ): HTMLButtonElement {
   wrapDiv.appendChild(document.createElement("br"));
   const button = document.createElement("button");
-  button.title = "Save and Reload";
-  button.innerText = "Save and Reload";
+  button.title = buttonText;
+  button.innerText = buttonText;
   button.style.zIndex = "100";
   wrapDiv.appendChild(button);
   button.addEventListener("click", () => {

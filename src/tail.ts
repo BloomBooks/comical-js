@@ -103,4 +103,10 @@ export class Tail {
             this.midHandle.position = newMid;
         }
       }
+
+      // Erases the tail from the canvas
+      remove() {
+        this.pathFill.remove();
+        this.pathstroke.remove();
+      }
 }
