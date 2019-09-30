@@ -192,6 +192,7 @@ storiesOf("bubble-edit", module)
       50,
       200
     );
+    div2.setAttribute("contenteditable", "true");
 
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
