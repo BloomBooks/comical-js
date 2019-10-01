@@ -139,6 +139,10 @@ export default class Bubble {
     this.setHandleLayer(newHandleLayer);
   }
 
+  public getLowerLayer(): Layer {
+    return this.lowerLayer;
+  }
+
   // Sets the value of lowerLayer. The "outline" shapes are drawn in the lower layer.
   public setLowerLayer(layer: Layer): void {
     this.lowerLayer = layer;
@@ -222,11 +226,11 @@ export default class Bubble {
 
     //this.contentHolder.fillColor = new Color("cyan");
     this.contentHolder.strokeWidth = 0;
-    this.innerShape = shape.clone() as Shape;
-    this.innerShape.remove(); // Removes it from the current (lower) layer.
+    this.innerShape = shape.clone({insert: false}) as Shape;
+    // this.innerShape.remove(); // Removes it from the current (lower) layer.
     this.upperLayer.addChild(this.innerShape);
-
-    //this.innerShape.bringToFront();
+    this.innerShape.strokeWidth = 0;  // No outline
+        
     this.innerShape.fillColor = Comical.backColor;
     this.adjustSize();
     //window.addEventListener('load', adjustSize);
