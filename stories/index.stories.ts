@@ -406,6 +406,65 @@ storiesOf("bubble-edit", module)
     button.style.left = "0";
 
     return wrapDiv;
+  })
+  .add("Move content element", () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "300px";
+
+    const instructionsDiv = document.createElement("div");
+    instructionsDiv.innerText =
+      'Click the button to move the content element to the right. Then adjust the mid handle. Make sure the tail root goes to the new start, not the original start.';
+    instructionsDiv.style.width = "600px";
+    instructionsDiv.style.position = "absolute";
+    instructionsDiv.style.top = "0px";
+    instructionsDiv.style.left = "0px";
+    wrapDiv.appendChild(instructionsDiv);
+
+    const canvas = document.createElement("canvas");
+    canvas.height = 300;
+    canvas.width = 600;
+    wrapDiv.appendChild(canvas);
+    setup(canvas);
+
+    const textDiv1 = document.createElement("div");
+    textDiv1.innerText =
+      'Text';
+    textDiv1.style.width = "50px";
+    textDiv1.style.textAlign = "center";
+    textDiv1.style.position = "absolute";
+    textDiv1.style.top = "50px";
+    textDiv1.style.left = "200px";
+    wrapDiv.appendChild(textDiv1);
+
+    setTimeout(() => {
+      let bubble = Bubble.getInstance(textDiv1);
+      bubble.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [ { tipX: 300, tipY: 275, midpointX: 300, midpointY: 225} ],
+        level: 1
+      });
+  
+      Comical.update(wrapDiv);
+    }, 200);
+    
+    const buttonLeft = addButton(wrapDiv, "Click to move box left", () => {
+      textDiv1.style.left = "100px";
+    });
+    const buttonRight = addButton(wrapDiv, "Click to move box right", () => {
+      textDiv1.style.left = "300px";
+    });
+    // Force it below the wrapDiv.
+    buttonLeft.style.position = "absolute";
+    buttonLeft.style.top = "400px";
+    buttonLeft.style.left = "0";
+
+    buttonRight.style.position = "absolute";
+    buttonRight.style.top = "400px";
+    buttonRight.style.left = "200px";
+
+    return wrapDiv;
   });
 
 function makeTextBlock(

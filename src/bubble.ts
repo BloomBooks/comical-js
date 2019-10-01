@@ -398,8 +398,7 @@ export default class Bubble {
 
     const tipPoint = new Point(desiredTail.tipX, desiredTail.tipY);
     const midPoint = new Point(desiredTail.midpointX, desiredTail.midpointY);
-    const startPoint = new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
-      this.content.offsetTop + this.content.offsetHeight / 2);
+    let startPoint = this.calculateTailStartPoint();
 
     const tipHandle = this.makeHandle(tipPoint);
     const curveHandle = this.makeHandle(midPoint);
@@ -442,6 +441,8 @@ export default class Bubble {
         return;
       }
       
+      startPoint = this.calculateTailStartPoint();  // Refresh the calculation, in case the content element moved.
+
       tail.updatePoints(
         startPoint,
         tipHandle.position!,
@@ -462,6 +463,11 @@ export default class Bubble {
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
       state = "idle";
     };
+  }
+
+  public calculateTailStartPoint(): Point {
+    return new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
+      this.content.offsetTop + this.content.offsetHeight / 2);
   }
 
   // Helps determine unique names for the handles
