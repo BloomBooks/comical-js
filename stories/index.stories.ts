@@ -246,6 +246,7 @@ storiesOf("bubble-edit", module)
 
     var div3 = makeTextBlock(wrapDiv, "This should be the middle layer", 250, 80, 200);
     var div4 = makeTextBlock(wrapDiv, "This should be merged with the other middle layer", 250, 130, 100);
+
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {

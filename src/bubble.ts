@@ -229,7 +229,9 @@ export default class Bubble {
     this.innerShape = shape.clone({insert: false}) as Shape;
     // this.innerShape.remove(); // Removes it from the current (lower) layer.
     this.upperLayer.addChild(this.innerShape);
+
     this.innerShape.strokeWidth = 0;  // No outline
+    this.innerShape.scale(0.99);  // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
         
     this.innerShape.fillColor = Comical.backColor;
     this.adjustSize();
