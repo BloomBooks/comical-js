@@ -294,6 +294,11 @@ storiesOf("bubble-edit", module)
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
 
+    const button = addFinishButton(wrapDiv);
+    // Force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "600px";
+    button.style.left = "0";
 
     return wrapDiv;
   })
@@ -356,6 +361,13 @@ storiesOf("bubble-edit", module)
         Comical.update(wrapDiv);
       }
     );
+
+    const button = addFinishButton(wrapDiv);
+    // Force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "400px";
+    button.style.left = "0";
+
     return wrapDiv;
   })
   .add("Multiple tails", () => {
@@ -392,6 +404,12 @@ storiesOf("bubble-edit", module)
       Comical.update(wrapDiv);
     }, 200);
     
+    const button = addFinishButton(wrapDiv);
+    // Force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "400px";
+    button.style.left = "0";
+
     return wrapDiv;
   });
 
