@@ -1,45 +1,51 @@
 import { Path, Point, Color, ToolEvent, Item, Shape, project, Layer } from "paper";
-import { BubbleSpec, Tip } from "bubbleSpec";
+import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import Comical from "./comical";
 import { Tail } from "./tail";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
-// and handles
+// and handles:
 // - storing and retrieving the BubbleSpec that represents the persistent state of
 // the Bubble from the element's data-bubble attribute;
 // - creating paper.js shapes representing the bubble and tails
 // - positioning and sizing those shapes based on the position and size of the wrapped element
-// - automatically repostioning them when the wrapped element changes (ToDo)
+// - automatically repositioning them when the wrapped element changes
 // - creating handles on the tails to allow the user to drag them, and updating
 // the data-bubble as well as the paper.js shapes when this happens
 // - allowing the Bubble to be dragged, and updating the wrapped element's position (ToDo)
 export default class Bubble {
+  // The element to wrap with a bubble
   public content: HTMLElement;
-  // TODO: What is the best name for "spec"?
-  // TODO: This variable is dangerous. You dont' want people modifying this variable directly, cuz we need to persist the changes into bloom
-  public spec: BubbleSpec;
+  // Represents the state which is persisted into
+  // It is private because we want to try to ensure that callers go through the saveBubbleSpec() setter method,
+  // because it's important that changes here get persisted not just in this instance's memory but additionally to the HTML as well.
+  private spec: BubbleSpec; 
   // the main shape of the bubble, including its border
   private shape: Shape;
   // a clone of shape with no border and an appropriate fill; drawn after all shapes
   // to fill them in and erase any overlapping borders.
   private innerShape: Shape;
-    // contentHolder is a shape which is a required part of an SVG object used as
-    // a bubble. It should be a rectangle in the SVG; it comes out as a Shape
-    // when the SVG is converted to a paper.js object.
-    // (We can also cause it to come out as a Path, by setting expandShapes: true
-    // in the getItem options).
-    // It has property size, with height, width as numbers matching the
-    // height and width specified in the SVG for the rectangle.)
-    // Also position, which surprisingly is about 50,50...probably a center.
-    // It is identified by having id="contentHolder". The bubble shape gets stretched
-    // and positioned so this rectangle corresponds to the element that the
-    // bubble is wrapping.
+  // contentHolder is a shape which is a required part of an SVG object used as
+  // a bubble. It should be a rectangle in the SVG; it comes out as a Shape
+  // when the SVG is converted to a paper.js object.
+  // (We can also cause it to come out as a Path, by setting expandShapes: true
+  // in the getItem options).
+  // It has property size, with height, width as numbers matching the
+  // height and width specified in the SVG for the rectangle.)
+  // Also position, which surprisingly is about 50,50...probably a center.
+  // It is identified by having id="contentHolder". The bubble shape gets stretched
+  // and positioned so this rectangle corresponds to the element that the
+  // bubble is wrapping.
   private contentHolder: Item;
+  // The tail objects (which include things like its PaperJs underlying objects and how to draw them).
+  // Contains more details than the "tips" array in the spec object
+  // The elements in each array should correspond, though.
   private tails: Tail[] = [];
   private observer: MutationObserver |undefined;
-  private hScale: number = 1;
-  private vScale: number = 1;
+  private hScale: number = 1; // Horizontal scaling
+  private vScale: number = 1; // Vertical scaling
 
+  // The PaperJS layers in which to draw various pieces of the bubble into.
   private lowerLayer: Layer;
   private upperLayer: Layer;
   private handleLayer: Layer;
@@ -87,28 +93,45 @@ export default class Bubble {
 
   public static getDefaultBubbleSpec(
     element: HTMLElement,
-    style: string
+    style?: string
   ): BubbleSpec {
     if (!style || style == "none") {
       return {
         version: Comical.bubbleVersion,
         style: "none",
-        tips: [],
+        tails: [],
         level: 1
       };
     }
     return {
       version: Comical.bubbleVersion,
       style: style,
-      tips: [Bubble.makeDefaultTip(element)],
+      tails: [Bubble.makeDefaultTail(element)],
       level: 1
     };
   }
 
-  // Links the bubbleShape with the content element
+  //
+  // Getter methods for various things saved in the spec field. They are Getters() so that consumers of this class will be encouraged to save them using getters/setters
+  // because we probably need persistBubbleSpec() to be called afterward
+  //
+
+  // Gets the level (z-index) of this object
+  public getSpecLevel(): number | undefined {
+    return this.spec.level;
+  }
+
+  // ENHANCE: Add more getters and setters, as they are needed
+
+  // Returns the spec object. If you modify this object, make sure to use the setter to set the value again or use persistBubbleSpec() in order to get the changes to persist!
+  public getBubbleSpec() {
+    return this.spec;
+  }
+
+  // Setter for the spec field. Also persists the data into the HTML of the content element.
   public setBubbleSpec(spec: BubbleSpec): void {
     console.assert(
-      !!(spec.version && spec.level && spec.tips && spec.style),
+      !!(spec.version && spec.level && spec.tails && spec.style),
       "Bubble lacks minimum fields"
     );
 
@@ -116,12 +139,33 @@ export default class Bubble {
     this.persistBubbleSpec();
   }
 
-  protected persistBubbleSpec() {
+  // Persists the data into the content element's HTML. Should be called after making changes to the underlying spec object.
+  public persistBubbleSpec(): void {
     const json = JSON.stringify(this.spec);
     const escapedJson = json.replace(/"/g, "`");
     this.content.setAttribute("data-bubble", escapedJson);
+  }
 
-    // TODO: Are there any conditions where we might want to remove the data-bubble attribute? It is kinda nice to have the tail information persist even if the style is set to "none"
+  public mergeWithNewBubbleProps(newBubbleProps: BubbleSpecPattern): void {
+    // Figure out a default that will supply any necessary properties not
+    // specified in data, including a tail in a default position
+    const defaultData = Bubble.getDefaultBubbleSpec(this.content, newBubbleProps.style);
+
+    const oldData: BubbleSpec = this.spec;
+
+    // We get the default bubble for this style and parent to provide
+    // any properties that have never before occurred for this bubble,
+    // particularly a default tail placement if it was previously 'none'.
+    // Any values already in oldData override these; for example, if
+    // this bubble has ever had a tail, we'll keep its last known position.
+    // Finally, any values present in data override anything else.
+    const mergedBubble = {
+        ...defaultData,
+        ...oldData,
+        ...(newBubbleProps as BubbleSpec)
+    };
+
+    this.setBubbleSpec(mergedBubble);
   }
 
   public getStyle(): string {
@@ -175,6 +219,7 @@ export default class Bubble {
     }
   }
 
+  // The root method to call to cause this object to draw itself
   public makeShapes() {
     this.initializeLayers();
     // Because we reuse Bubbles, from one call to convertBubbleJsonToCanvas to another,
@@ -187,18 +232,20 @@ export default class Bubble {
     }
     this.tails = [];
 
+    // Make the bubble part of the bubble+tail
     this.loadShapeAsync(this.getStyle(), (newlyLoadedShape: Shape) => {
       this.wrapShapeAroundDiv(newlyLoadedShape);
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
     
     // Make any tails the bubble should have
-    this.spec.tips.forEach(tail => {
+    this.spec.tails.forEach(tail => {
       this.makeTail(tail);
     });
 
     this.monitorContent();
   }
 
+  // Returns the SVG contents string corresponding to the specified input bubble style
   private static getShapeSvgString(bubbleStyle: string): string {
     let svg: string = "";
     switch (bubbleStyle) {
@@ -218,6 +265,7 @@ export default class Bubble {
     return svg;
   }
 
+  // Loads the shape corresponding to the specified bubbleStyle, and calls the onShapeLoadeed() callback once the shape is finished loading (passing it in as the Shape parameter)
   private loadShapeAsync(
     bubbleStyle: string,
     onShapeLoaded: (s: Shape) => void
@@ -235,6 +283,7 @@ export default class Bubble {
     });
   }
 
+  // Attaches the specified shape to this object's content element
   private wrapShapeAroundDiv(shape: Shape) {
     this.shape = shape;
     this.hScale = this.vScale = 1; // haven't scaled it at all yet.
@@ -248,23 +297,19 @@ export default class Bubble {
       }
     });
 
-    //this.contentHolder.fillColor = new Color("cyan");
     this.contentHolder.strokeWidth = 0;
     this.innerShape = shape.clone({insert: false}) as Shape;
-    // this.innerShape.remove(); // Removes it from the current (lower) layer.
     this.upperLayer.addChild(this.innerShape);
 
     this.innerShape.strokeWidth = 0;  // No outline
     this.innerShape.scale(0.99);  // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
         
     this.innerShape.fillColor = Comical.backColor;
-    this.adjustSize();
-    //window.addEventListener('load', adjustSize);
-
-    //var topContent = content.offsetTop;
+    this.adjustSizeAndPosition();
   }
 
-  adjustSize() {
+  // Adjusts the size and position of the shapes/tails to match the content element
+  adjustSizeAndPosition() {
     var contentWidth = -1
     var contentHeight = -1;
 
@@ -274,7 +319,7 @@ export default class Bubble {
     }
     if (contentWidth < 1 || contentHeight < 1) {
       // Horrible kludge until I can find an event that fires when the object is ready.
-      window.setTimeout(() => { this.adjustSize(); }, 100);
+      window.setTimeout(() => { this.adjustSizeAndPosition(); }, 100);
       return;
     }
     var holderWidth = (this.contentHolder as any).size.width;
@@ -303,9 +348,9 @@ export default class Bubble {
     let tailChanged = false;
     this.tails.forEach((tail, index) => {
       if (tail.adjustRoot(contentCenter)) {
-        const tip = this.spec.tips[index];
-        tip.midpointX = tail.mid.x!;
-        tip.midpointY = tail.mid.y!;
+        const tailSpec = this.spec.tails[index];
+        tailSpec.midpointX = tail.mid.x!;
+        tailSpec.midpointY = tail.mid.y!;
         tailChanged = true;
       }
     });
@@ -313,14 +358,23 @@ export default class Bubble {
       // if no tail changed we MUST NOT modify the element,
       // as doing so will trigger the mutation observer.
       // Even if it did, we don't want to trigger a recursive call.
-      const wasMonitoring = !!this.observer;
-      this.stopMonitoring();
-      this.setBubbleSpec(this.spec);
-      if (wasMonitoring){
-        this.monitorContent();
-      }
+      this.callWithMonitoringDisabled(() => {
+        this.setBubbleSpec(this.spec);
+      });
     }
   };
+
+  // Disables monitoring, executes the callback, then returns monitoring back to its previous state
+  private callWithMonitoringDisabled(callback: () => void) {
+    const wasMonitoring = !!this.observer;
+    this.stopMonitoring();
+
+    callback();
+
+    if (wasMonitoring){
+      this.monitorContent();
+    }
+  }
 
   public stopMonitoring() {
     if (this.observer) {
@@ -329,20 +383,21 @@ export default class Bubble {
     }
   }
 
+  // Monitors for changes to the content element, and update this object if the content element is updated
   monitorContent() {
-    this.observer = new MutationObserver(() => this.adjustSize());
+    this.observer = new MutationObserver(() => this.adjustSizeAndPosition());
     this.observer.observe(this.content, {attributes: true, characterData: true, childList:true, subtree:true});
   }
 
   // A callback for after the shape is loaded/place.
   // Figures out the information for the tail, then draws the shape and tail
-  private makeTail(desiredTip: Tip) {
+  private makeTail(desiredTail: TailSpec) {
     if (this.spec.style === "none") {
       return;
     }
 
-    const tipPoint = new Point(desiredTip.targetX, desiredTip.targetY);
-    const midPoint = new Point(desiredTip.midpointX, desiredTip.midpointY);
+    const tipPoint = new Point(desiredTail.tipX, desiredTail.tipY);
+    const midPoint = new Point(desiredTail.midpointX, desiredTail.midpointY);
     const startPoint = new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
       this.content.offsetTop + this.content.offsetHeight / 2);
 
@@ -395,24 +450,21 @@ export default class Bubble {
       curveHandle.bringToFront();
 
       // Update this.spec.tips to reflect the new handle positions
-      desiredTip.targetX = tipHandle!.position!.x!,
-      desiredTip.targetY = tipHandle!.position!.y!,
-      desiredTip.midpointX = curveHandle!.position!.x!,
-      desiredTip.midpointY = curveHandle!.position!.y!
+      desiredTail.tipX = tipHandle!.position!.x!,
+      desiredTail.tipY = tipHandle!.position!.y!,
+      desiredTail.midpointX = curveHandle!.position!.x!,
+      desiredTail.midpointY = curveHandle!.position!.y!
 
-      const wasMonitoring = !!this.observer;
-      this.stopMonitoring();
-      this.persistBubbleSpec();
-      if (wasMonitoring){
-        this.monitorContent();
-      }
+      this.callWithMonitoringDisabled(() => {
+        this.persistBubbleSpec();
+      });
     };
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
       state = "idle";
     };
   }
 
-  // TODO: Help? where should I be? I think this comes up with unique names.
+  // Helps determine unique names for the handles
   static handleIndex = 0;
 
   private makeHandle(tip: Point): Path.Circle {
@@ -430,7 +482,7 @@ export default class Bubble {
     return result;
   }
   
-  public static makeDefaultTip(targetDiv: HTMLElement): Tip {
+  public static makeDefaultTail(targetDiv: HTMLElement): TailSpec {
     const parent: HTMLElement = targetDiv.parentElement as HTMLElement;
     const targetBox = targetDiv.getBoundingClientRect();
     const parentBox = parent.getBoundingClientRect();
@@ -470,9 +522,9 @@ export default class Bubble {
     }
     const target = new Point(targetX, targetY);
     const mid: Point = Bubble.defaultMid(rootCenter, target);
-    const result: Tip = {
-      targetX,
-      targetY,
+    const result: TailSpec = {
+      tipX: targetX,
+      tipY: targetY,
       midpointX: mid.x!,
       midpointY: mid.y!
     };

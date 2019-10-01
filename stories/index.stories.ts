@@ -94,14 +94,14 @@ storiesOf("bubble-edit", module)
     bubble1.setBubbleSpec({
       version: "1.0",
       style: "speech",
-      tips: [],
+      tails: [],
       level: 1
     });
 
     bubble2.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tips: [],
+      tails: [],
       level: 1
     });
 
@@ -135,7 +135,7 @@ storiesOf("bubble-edit", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tips: [{ targetX: 420, targetY: 400, midpointX: 320, midpointY: 375 }],
+      tails: [{ tipX: 420, tipY: 400, midpointX: 320, midpointY: 375 }],
       level: 1
     });
     setTimeout(() => {
@@ -168,7 +168,7 @@ storiesOf("bubble-edit", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tips: [{ targetX: 220, targetY: 250, midpointX: 220, midpointY: 175}],
+      tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175}],
       level: 1
     });
 
@@ -187,16 +187,17 @@ storiesOf("bubble-edit", module)
   .add("two bubbles on picture", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
-    wrapDiv.style.background = "url('7.jpg') no-repeat 0/800px";
+    wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";;
     wrapDiv.style.height = "600px";
 
-    var div1 = makeTextBlock(wrapDiv, "Oh no! He's dead!", 180, 40, 100);
+    var div1 = makeTextBlock(wrapDiv, "Sweet! Rad glasses!", 120, 100, 100);
 
     var div2 = makeTextBlock(
       wrapDiv,
-      "The oxen stumbled! The ark was falling! He touched it! How could God do such a thing?",
-      380,
-      50,
+      //"The oxen stumbled! The ark was falling! He touched it! How could God do such a thing?",
+      "I got a blue hat. I love it! Better not lose it...",
+      300,
+      150,
       200
     );
     div2.setAttribute("contenteditable", "true");
@@ -205,22 +206,20 @@ storiesOf("bubble-edit", module)
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
       const bubble1 = Bubble.getInstance(div1);
-      bubble1.spec = {
+      bubble1.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        tips: [Bubble.makeDefaultTip(div1)],
+        tails: [Bubble.makeDefaultTail(div1)],
         level: 1
-      };
-      bubble1.setBubbleSpec(bubble1.spec);
+      });
 
       const bubble2 = Bubble.getInstance(div2);
-      bubble2.spec = {
+      bubble2.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        tips: [Bubble.makeDefaultTip(div2)],
+        tails: [Bubble.makeDefaultTail(div2)],
         level: 1
-      };
-      bubble2.setBubbleSpec(bubble2.spec);
+      });
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
 
@@ -251,46 +250,41 @@ storiesOf("bubble-edit", module)
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
       const bubble1 = Bubble.getInstance(div1);
-      bubble1.spec = {
+      bubble1.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        tips: [Bubble.makeDefaultTip(div1)],
+        tails: [{ tipX: 400, tipY: 250, midpointX: 350, midpointY: 200 }], // Drawn to go over one of the middle bubbles
         level: 3
-      };
-      bubble1.setBubbleSpec(bubble1.spec);
+      });
 
       const bubble2 = Bubble.getInstance(div2);
-      bubble2.spec = {
+      bubble2.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        tips: [Bubble.makeDefaultTip(div2)],
+        tails: [{ tipX: 450, tipY: 200, midpointX: 350, midpointY: 200 }], // Drawn to go under the tail of the highest layer
         level: 1
-      };
-      bubble2.setBubbleSpec(bubble2.spec);
-  
-  
+      });
+
       const bubble3 = Bubble.getInstance(div3);
-      bubble3.spec = {
+      bubble3.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        tips: [Bubble.makeDefaultTip(div3)],
+        tails: [Bubble.makeDefaultTail(div3)],
         level: 2
-      };
-      bubble3.setBubbleSpec(bubble3.spec);
+      });
 
       const bubble4 = Bubble.getInstance(div4);
-      bubble4.spec = {
+      bubble4.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        // Give this one a non-default tip so it starts out intersecting the provious bubble.
+        // Give this one a non-default tip so it starts out intersecting the previous bubble.
         // This lets us easily check on a later tail overlapping an earlier bubble in the same
         // level (though as a cartoon it looks a bit odd...a more plausible comic might have
         // a bubble with no tail overlapping one with a tail that merges into a third which has a
         // regular tail.)
-        tips: [{ targetX: 470, targetY: 100, midpointX: 370, midpointY: 150 }],
+        tails: [{ tipX: 470, tipY: 100, midpointX: 370, midpointY: 150 }],
         level: 2
-      };
-      bubble4.setBubbleSpec(bubble4.spec);
+      });
 
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
@@ -327,7 +321,7 @@ storiesOf("bubble-edit", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tips: [{ targetX: 220, targetY: 250, midpointX: 220, midpointY: 175}],
+      tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175}],
       level: 1
     });
 
@@ -383,7 +377,7 @@ storiesOf("bubble-edit", module)
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
-      'This box has multiple tails. Try moving the left tail, click Finish, click Edit. Ensure that neither tail (especially the right one!) moves upon clicking Edit.';
+      'This box should have 2 tails. Try moving the left tail, click Finish, click Edit. Ensure that neither tail (especially the right one!) moves upon clicking Edit.';
     textDiv2.style.width = "200px";
     textDiv2.style.textAlign = "center";
     textDiv2.style.position = "absolute";
@@ -395,8 +389,8 @@ storiesOf("bubble-edit", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "speech",
-      tips: [{ targetX: 300, targetY: 250, midpointX: 250, midpointY: 175},
-        { targetX: 100, targetY: 250, midpointX: 150, midpointY: 175}
+      tails: [{ tipX: 300, tipY: 250, midpointX: 250, midpointY: 175},
+        { tipX: 100, tipY: 250, midpointX: 150, midpointY: 175}
       ],
       level: 1
     });

@@ -76,10 +76,7 @@ export default class Comical {
     );
     const bubbles: Bubble[] = [];
     Comical.bubbleLists.set(parent, bubbles);
-    // Enhance: we want to be able to make all the bubbles and all the tails
-    // as a connected set so that all overlaps happen properly.
-    // Eventually, we should make distinct sets for each level.
-    // Eventually, we should be able to handle more than one tail per bubble.
+    
     var zLevelList: number[] = [];
     var bubbleList: Bubble[] = [];
     for (let i = 0; i < elements.snapshotLength; i++) {
@@ -87,9 +84,9 @@ export default class Comical {
       const bubble = Bubble.getInstance(element);
       bubbleList.push(bubble);
       
-      let zLevel = 0;
-      if (bubble.spec.level) {
-        zLevel = bubble.spec.level;
+      let zLevel = bubble.getSpecLevel()
+      if (!zLevel) {
+        zLevel = 0;
       }
       zLevelList.push(zLevel);
     }
@@ -97,7 +94,8 @@ export default class Comical {
     // Ensure that they are in ascending order
     zLevelList.sort();
 
-    // First we need to create all the layers in order. (Because they automatically get added to the end of the project's list of layers
+    // First we need to create all the layers in order. (Because they automatically get added to the end of the project's list of layers)
+    // Precondition: Assumes zLevelList is sorted.
     const levelToLayer = {};
     for (let i = 0; i < zLevelList.length; ++i) {
       // Check if different than previous. (Ignore duplicate z-indices)
@@ -114,9 +112,9 @@ export default class Comical {
     for (let i = 0; i < bubbleList.length; ++i) {
       const bubble = bubbleList[i];
 
-      let zLevel = 0;
-      if (bubble.spec.level) {
-        zLevel = bubble.spec.level;
+      let zLevel = bubble.getSpecLevel()
+      if (!zLevel) {
+        zLevel = 0;
       }
       
       const [lowerLayer, upperLayer] = levelToLayer[zLevel];
@@ -151,8 +149,7 @@ export default class Comical {
 // planned next steps
 // 1. When we wrap a shape around an element, record the shape as the data-bubble attr, a block of json as indicted in the design doc.
 // Tricks will be needed if it is an arbitrary SVG.
-// 2. When a tail is attached or its key points moved, record tip and mid positions as properties in the data-bubble attr.
-// 3. Add function ConvertSvgToCanvas(parent). Does more or less the opposite of ConvertCanvasToSvg,
+// 2. Add function ConvertSvgToCanvas(parent). Does more or less the opposite of ConvertCanvasToSvg,
 // but using the data-X attributes of children of parent that have them to initialize the canvas paper elements.
 // Enhance test code to make Finish button toggle between Save and Edit.
 // (Once the logic to create a canvas as an overlay on a parent is in place, can probably get all the paper.js

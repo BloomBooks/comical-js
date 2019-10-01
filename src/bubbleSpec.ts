@@ -11,7 +11,7 @@
 export interface BubbleSpecPattern {
   version?: string; // currently 1.0
   style?: string; // currently one of speech or shout
-  tips?: Tip[];
+  tails?: TailSpec[];
   level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
   borderStyle?: string; // not implemented or fully designed yet
   backgroundColors?: string[]; //  just 1 color for solid, multiple for gradient. Omit for white. Top to bottom.
@@ -23,14 +23,14 @@ export interface BubbleSpec extends BubbleSpecPattern {
   // The only things overridden here should be to change something from optional to required.
   version: string; // currently 1.0
   style: string; // currently one of speech or shout
-  tips: Tip[];
+  tails: TailSpec[];
 }
 // Design has a parentBubble attribute...not sure whether we need this, so leaving out for now.
 // Do we need to control things like angle of gradient?
 
-export interface Tip {
-  targetX: number; // tip point, relative to the main image on which the bubble is placed
-  targetY: number;
+export interface TailSpec {
+  tipX: number; // tip point, relative to the main image on which the bubble is placed
+  tipY: number;
   midpointX: number; // notionally, tip's curve passes through this point
   midpointY: number;
 }
