@@ -95,13 +95,20 @@ export class Tail {
           this.makeShapes();
       }
 
-      adjustRoot(newRoot: Point) {
+      adjustRoot(newRoot: Point) : boolean {
         const delta = newRoot.subtract(this.root!).divide(2);
+        if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
+            // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
+            // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
+            // freezes the whole page.
+            return false;
+        }
         const newMid = this.mid.add(delta);
         this.updatePoints(newRoot, this.tip, newMid);
         if (this.midHandle) {
             this.midHandle.position = newMid;
         }
+        return true;
       }
 
       // Erases the tail from the canvas
