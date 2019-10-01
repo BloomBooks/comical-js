@@ -193,22 +193,46 @@ export default class Bubble {
     
     // Make any tails the bubble should have
     this.spec.tips.forEach(tail => {
-      this.drawTailAfterShapePlaced(tail);
+      this.makeTail(tail);
     });
 
     this.monitorContent();
   }
 
-  public stopMonitoring() {
-    if (this.observer) {
-      this.observer.disconnect();
-      this.observer = undefined;
+  private static getShapeSvgString(bubbleStyle: string): string {
+    let svg: string = "";
+    switch (bubbleStyle) {
+      case "speech":
+        svg = Bubble.speechBubble();
+        break;
+      case "shout":
+        svg = Bubble.shoutBubble();
+        break;
+      case "none":
+        break;
+      default:
+        console.log("unknown bubble type; using default");
+        svg = Bubble.speechBubble();
     }
+
+    return svg;
   }
 
-  monitorContent() {
-    this.observer = new MutationObserver(() => this.adjustSize());
-    this.observer.observe(this.content, {attributes: true, characterData: true, childList:true, subtree:true});
+  private loadShapeAsync(
+    bubbleStyle: string,
+    onShapeLoaded: (s: Shape) => void
+  ) {
+    const svg = Bubble.getShapeSvgString(bubbleStyle);
+
+    this.lowerLayer.activate();  // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
+
+    // ImportSVG may return asynchronously if the input string is a URL.
+    // Even though the string we pass contains the svg contents directly (not a URL), when I ran it in Bloom I still got a null shape out as the return value, so best to treat it as async.
+    project!.importSVG(svg, {
+      onLoad: (item: Item) => {
+        onShapeLoaded(item as Shape);
+      }
+    });
   }
 
   private wrapShapeAroundDiv(shape: Shape) {
@@ -298,78 +322,47 @@ export default class Bubble {
     }
   };
 
+  public stopMonitoring() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = undefined;
+    }
+  }
+
+  monitorContent() {
+    this.observer = new MutationObserver(() => this.adjustSize());
+    this.observer.observe(this.content, {attributes: true, characterData: true, childList:true, subtree:true});
+  }
+
   // A callback for after the shape is loaded/place.
   // Figures out the information for the tail, then draws the shape and tail
-  private drawTailAfterShapePlaced(desiredTip: Tip) {
+  private makeTail(desiredTip: Tip) {
     if (this.spec.style === "none") {
       return;
     }
 
-    const target = new Point(desiredTip.targetX, desiredTip.targetY);
-    const mid = new Point(desiredTip.midpointX, desiredTip.midpointY);
-    const start = new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
+    const tipPoint = new Point(desiredTip.targetX, desiredTip.targetY);
+    const midPoint = new Point(desiredTip.midpointX, desiredTip.midpointY);
+    const startPoint = new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
       this.content.offsetTop + this.content.offsetHeight / 2);
 
-    const tail = this.drawTail(start, mid, target,);
-    // keep track of it; eventually adjustSize will adjust its start position.
-    this.tails.push(tail);
-  }
-
-  private static getShapeSvgString(bubbleStyle: string): string {
-    let svg: string = "";
-    switch (bubbleStyle) {
-      case "speech":
-        svg = Bubble.speechBubble();
-        break;
-      case "shout":
-        svg = Bubble.shoutBubble();
-        break;
-      case "none":
-        break;
-      default:
-        console.log("unknown bubble type; using default");
-        svg = Bubble.speechBubble();
-    }
-
-    return svg;
-  }
-
-  private loadShapeAsync(
-    bubbleStyle: string,
-    onShapeLoaded: (s: Shape) => void
-  ) {
-    const svg = Bubble.getShapeSvgString(bubbleStyle);
-
-    this.lowerLayer.activate();  // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
-
-    // ImportSVG may return asynchronously if the input string is a URL.
-    // Even though the string we pass contains the svg contents directly (not a URL), when I ran it in Bloom I still got a null shape out as the return value, so best to treat it as async.
-    project!.importSVG(svg, {
-      onLoad: (item: Item) => {
-        onShapeLoaded(item as Shape);
-      }
-    });
-  }
-
-  public drawTail(
-    start: Point,
-    mid: Point,
-    tip: Point
-  ): Tail {
-    const tipHandle = this.makeHandle(tip);
-    const curveHandle = this.makeHandle(mid);
+    const tipHandle = this.makeHandle(tipPoint);
+    const curveHandle = this.makeHandle(midPoint);
     this.upperLayer.activate();
     let tail = new Tail(
-      start,
+      startPoint,
       tipHandle.position!,
       curveHandle.position!,
       this.lowerLayer,
       this.upperLayer
     );
     tail.midHandle = curveHandle;
+    // keep track of the Tail shapes; eventually adjustSize will adjust its start position.
+    this.tails.push(tail);
 
     curveHandle.bringToFront();
 
+    // Setup event handlers
     let state = "idle";
     tipHandle.onMouseDown = () => {
       state = "dragTip";
@@ -395,32 +388,28 @@ export default class Bubble {
       }
       
       tail.updatePoints(
-        start,
+        startPoint,
         tipHandle.position!,
         curveHandle.position!
       );
       curveHandle.bringToFront();
 
-      const newTip: Tip = {
-        targetX: tipHandle!.position!.x!,
-        targetY: tipHandle!.position!.y!,
-        midpointX: curveHandle!.position!.x!,
-        midpointY: curveHandle!.position!.y!
-      };
-      // todo: it isn't necessarily tip 0 that changed.
-      // to fix: there's only one caller of this method, drawTailAfterShapePlaced, which has only one caller,
-      // a loop in makeShapes() which is a foreach over the tips. Collapse that method and this into a single
-      // method (makeTail would be a better name than either)
-      // that takes the tip and tip index. Then use that index to know which tip to update.
-      // Consider turning off the mutation observer while we update the bubble spec, as in adjustSize.
-      this.spec.tips[0] = newTip; // enhance: for multiple tips, need to figure which one to update
+      // Update this.spec.tips to reflect the new handle positions
+      desiredTip.targetX = tipHandle!.position!.x!,
+      desiredTip.targetY = tipHandle!.position!.y!,
+      desiredTip.midpointX = curveHandle!.position!.x!,
+      desiredTip.midpointY = curveHandle!.position!.y!
 
-      this.setBubbleSpec(this.spec);
+      const wasMonitoring = !!this.observer;
+      this.stopMonitoring();
+      this.persistBubbleSpec();
+      if (wasMonitoring){
+        this.monitorContent();
+      }
     };
     tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
       state = "idle";
     };
-    return tail;
   }
 
   // TODO: Help? where should I be? I think this comes up with unique names.
@@ -440,7 +429,7 @@ export default class Bubble {
     result.name = "handle" + Bubble.handleIndex++;
     return result;
   }
-
+  
   public static makeDefaultTip(targetDiv: HTMLElement): Tip {
     const parent: HTMLElement = targetDiv.parentElement as HTMLElement;
     const targetBox = targetDiv.getBoundingClientRect();
@@ -498,6 +487,7 @@ export default class Bubble {
     return new Point(xmid - deltaY / 10, ymid + deltaX / 10);
   }
 
+  // The SVG contents of a round speech bubble
   public static speechBubble() {
     return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
       <svg
@@ -547,6 +537,7 @@ export default class Bubble {
       </svg>`;
   }
 
+  // The SVG contents of a shout bubble (jagged / exploding segments coming out)
   public static shoutBubble() {
     return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <svg

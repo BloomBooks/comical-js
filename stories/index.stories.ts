@@ -383,7 +383,7 @@ storiesOf("bubble-edit", module)
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
-      'This box has\nmultiple tails';
+      'This box has multiple tails. Try moving the left tail, click Finish, click Edit. Ensure that neither tail (especially the right one!) moves upon clicking Edit.';
     textDiv2.style.width = "200px";
     textDiv2.style.textAlign = "center";
     textDiv2.style.position = "absolute";
