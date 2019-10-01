@@ -265,7 +265,31 @@ export default class Bubble {
     );
     this.shape.position = contentCenter;
     this.innerShape.position = contentCenter;
-    this.tails.forEach(tail => tail.adjustRoot(contentCenter));
+    // Enhance: I think we could extract from this a method updateTailSpec
+    // which loops over all the tails and if any tail's spec doesn't match the tail,
+    // it turns off the mutation observer while updating the spec to match.
+    // Such a method would be useful for updating the spec when the tail is dragged,
+    // and perhaps for other things.
+    let tailChanged = false;
+    this.tails.forEach((tail, index) => {
+      if (tail.adjustRoot(contentCenter)) {
+        const tip = this.spec.tips[index];
+        tip.midpointX = tail.mid.x!;
+        tip.midpointY = tail.mid.y!;
+        tailChanged = true;
+      }
+    });
+    if (tailChanged) {
+      // if no tail changed we MUST NOT modify the element,
+      // as doing so will trigger the mutation observer.
+      // Even if it did, we don't want to trigger a recursive call.
+      const wasMonitoring = !!this.observer;
+      this.stopMonitoring();
+      this.setBubbleSpec(this.spec);
+      if (wasMonitoring){
+        this.monitorContent();
+      }
+    }
   };
 
   // A callback for after the shape is loaded/place.
@@ -377,6 +401,12 @@ export default class Bubble {
         midpointX: curveHandle!.position!.x!,
         midpointY: curveHandle!.position!.y!
       };
+      // todo: it isn't necessarily tip 0 that changed.
+      // to fix: there's only one caller of this method, drawTailAfterShapePlaced, which has only one caller,
+      // a loop in makeShapes() which is a foreach over the tips. Collapse that method and this into a single
+      // method (makeTail would be a better name than either)
+      // that takes the tip and tip index. Then use that index to know which tip to update.
+      // Consider turning off the mutation observer while we update the bubble spec, as in adjustSize.
       this.spec.tips[0] = newTip; // enhance: for multiple tips, need to figure which one to update
 
       this.setBubbleSpec(this.spec);
