@@ -1,9 +1,9 @@
 {
-  "name": "bubble-edit",
+  "name": "comical-js",
   "version": "0.1.0",
   "description": "Edit cartoon bubble frames around an HTML element",
   "main": "index.js",
-  "repository": "https://github.com/BloomBooks/bubble-edit.git",
+  "repository": "https://github.com/BloomBooks/comical-js.git",
   "author": "John Thomson <john_thomson@sil.org>",
   "license": "MIT",
   "private": false,
@@ -26,7 +26,8 @@
   "scripts": {
     "storybook": "start-storybook -s ./storyStatic -p 6006",
     "build-storybook": "build-storybook",
-    "makdbloomdesktopdir": "shx mkdir ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\bubble-edit",
-    "tobloomdesktop": "shx cp src\\*.ts ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\bubble-edit"
+    "makebloomdesktopdir": "shx mkdir ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\comical-js",
+    "cleanbloomdesktopdir": "shx rm ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\comical-js\\*",
+    "tobloomdesktop": "shx cp src\\*.ts ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\comical-js"
   }
 }
