@@ -60,7 +60,10 @@ export default class Comical {
   public static update(parent: HTMLElement) {
     Comical.stopMonitoring(parent);
     while (project!.layers.length > 1) {
-      project!.layers.pop();
+      const layer = project!.layers.pop();
+      if (layer) {
+        layer.remove(); // Erase this layer
+      }
     }
     if (project!.layers.length > 0) {
       project!.layers[0].activate();
@@ -81,7 +84,7 @@ export default class Comical {
     var bubbleList: Bubble[] = [];
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
-      const bubble = Bubble.getInstance(element);
+      const bubble = new Bubble(element);
       bubbleList.push(bubble);
       
       let zLevel = bubble.getSpecLevel()

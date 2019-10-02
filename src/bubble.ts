@@ -50,35 +50,10 @@ export default class Bubble {
   private upperLayer: Layer;
   private handleLayer: Layer;
 
-  // Don't use new() to create Bubble elements. Use getInstance() instead.
-  // The reason why is because if multiple Bubble objects get created which correspond to the same element, they will have different member variables
-  // (e.g. different spec variables). If multiple objects are allowed, then a lot more flushing changes and re-reading the HTML will be required to keep them in sync.
-  // Instead, if we assume that only one instance is passed out per element, the code is much simpler.
-  private constructor(element: HTMLElement) {
+  public constructor(element: HTMLElement) {
     this.content = element;
 
     this.spec = Bubble.getBubbleSpec(this.content);
-  }
-
-  private static knownInstances: [HTMLElement, Bubble][] = [];
-
-  // Gets an existing Bubble instance corresponding to the element if available,
-  // or creates a new instance if necessary
-  public static getInstance(element: HTMLElement): Bubble {
-    let bubble: Bubble | undefined = undefined;
-    for (let i = 0; i < this.knownInstances.length; ++i) {
-      // Check for same reference
-      if (element === this.knownInstances[i][0]) {
-        bubble = this.knownInstances[i][1];
-      }
-    }
-
-    if (bubble == undefined) {
-      bubble = new Bubble(element); // This function is the only place where new Bubble() should be called, in order to enforce only 1 Bubble instance per HTMLElement
-      this.knownInstances.push([element, bubble]);
-    }
-
-    return bubble;
   }
 
   // Retrieves the bubble associated with the element
@@ -222,10 +197,8 @@ export default class Bubble {
   // The root method to call to cause this object to draw itself
   public makeShapes() {
     this.initializeLayers();
-    // Because we reuse Bubbles, from one call to convertBubbleJsonToCanvas to another,
-    // a reused bubble might have some tails already, from last time. At one point, as wrapShapeAroundDiv
-    // calls adjustSize, the attempt to adjust the old tails copied parts of them into the new canvas.
-    // To keep things clean we must discard them before we start.
+
+    // To keep things clean we discard old tails before we start.
     for (let i = 0; i < this.tails.length; ++i) {
       // Erase it off the current canvas
       this.tails[i].remove();
@@ -451,10 +424,10 @@ export default class Bubble {
       curveHandle.bringToFront();
 
       // Update this.spec.tips to reflect the new handle positions
-      desiredTail.tipX = tipHandle!.position!.x!,
-      desiredTail.tipY = tipHandle!.position!.y!,
-      desiredTail.midpointX = curveHandle!.position!.x!,
-      desiredTail.midpointY = curveHandle!.position!.y!
+      desiredTail.tipX = tipHandle!.position!.x!;
+      desiredTail.tipY = tipHandle!.position!.y!;
+      desiredTail.midpointX = curveHandle!.position!.x!;
+      desiredTail.midpointY = curveHandle!.position!.y!;
 
       this.callWithMonitoringDisabled(() => {
         this.persistBubbleSpec();
