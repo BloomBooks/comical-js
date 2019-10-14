@@ -24,6 +24,12 @@ export default class Comical {
 
   static bubbleLists = new Map<Element, Bubble[]>();
 
+  static allBubbles: Bubble[];
+
+  static activeBubble: Bubble | undefined;
+
+  static handleLayer: Layer;
+
   public static convertCanvasToSvgImg(parent: HTMLElement) {
     const canvas = parent.getElementsByTagName("canvas")[0];
     if (!canvas) {
@@ -55,6 +61,37 @@ export default class Comical {
     }
   }
 
+  // Make the bubble for the specified element (if any) active. This means
+  // showing its edit handles. Must first call convertBubbleJsonToCanvas(),
+  // passing the appropriate parent element.
+  public static activateElement(contentElement: Element) {
+    let newActiveBubble: Bubble | undefined = undefined;
+    if (contentElement) {
+      newActiveBubble = Comical.allBubbles.find(
+        x => x.content === contentElement
+      );
+    }
+    Comical.activateBubble(newActiveBubble);
+  }
+
+  // Make active (show handles) the specified bubble.
+  public static activateBubble(newActiveBubble: Bubble | undefined) {
+    if (newActiveBubble == Comical.activeBubble) {
+      return;
+    }
+    Comical.hideHandles();
+    Comical.activeBubble = newActiveBubble;
+    if (Comical.activeBubble) {
+      Comical.activeBubble.showHandles();
+    }
+  }
+
+  public static hideHandles() {
+    if (Comical.handleLayer) {
+      Comical.handleLayer.removeChildren();
+    }
+  }
+
   // call after adding or deleting elements with data-bubble
   // assumes convertBubbleJsonToCanvas has been called and canvas exists
   public static update(parent: HTMLElement) {
@@ -79,15 +116,15 @@ export default class Comical {
     );
     const bubbles: Bubble[] = [];
     Comical.bubbleLists.set(parent, bubbles);
-    
+
     var zLevelList: number[] = [];
-    var bubbleList: Bubble[] = [];
+    Comical.allBubbles = [];
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
       const bubble = new Bubble(element);
-      bubbleList.push(bubble);
-      
-      let zLevel = bubble.getSpecLevel()
+      Comical.allBubbles.push(bubble);
+
+      let zLevel = bubble.getSpecLevel();
       if (!zLevel) {
         zLevel = 0;
       }
@@ -102,26 +139,26 @@ export default class Comical {
     const levelToLayer = {};
     for (let i = 0; i < zLevelList.length; ++i) {
       // Check if different than previous. (Ignore duplicate z-indices)
-      if (i == 0 || zLevelList[i-1] != zLevelList[i]) {
+      if (i == 0 || zLevelList[i - 1] != zLevelList[i]) {
         const zLevel = zLevelList[i];
         var lowerLayer = new Layer();
         var upperLayer = new Layer();
         levelToLayer[zLevel] = [lowerLayer, upperLayer];
       }
     }
-    const handleLayer = new Layer();
+    Comical.handleLayer = new Layer();
 
     // Now that the layers are created, we can go back and place objects into the correct layers and ask them to draw themselves.
-    for (let i = 0; i < bubbleList.length; ++i) {
-      const bubble = bubbleList[i];
+    for (let i = 0; i < Comical.allBubbles.length; ++i) {
+      const bubble = Comical.allBubbles[i];
 
-      let zLevel = bubble.getSpecLevel()
+      let zLevel = bubble.getSpecLevel();
       if (!zLevel) {
         zLevel = 0;
       }
-      
+
       const [lowerLayer, upperLayer] = levelToLayer[zLevel];
-      bubble.setLayers(lowerLayer, upperLayer, handleLayer);
+      bubble.setLayers(lowerLayer, upperLayer, Comical.handleLayer);
       bubble.makeShapes();
       bubbles.push(bubble);
     }
