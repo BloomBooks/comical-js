@@ -105,6 +105,24 @@ export default class Bubble {
     return this.spec.level;
   }
 
+  public getFullSpec(): BubbleSpec {
+    const parents = Comical.findParents(this);
+    if (parents.length == 0) {
+      return this.spec;
+    }
+    const parent: Bubble = parents[0];
+    // We probably don't need to be this careful, since functions that want
+    // this bubble's tails or order go to its own spec. But these are
+    // things that should NOT be inherited from parent, so let's get them right.
+    const result: BubbleSpec = { ...parent.spec, tails: this.spec.tails };
+    if (this.spec.hasOwnProperty("order")) {
+      result.order = this.spec.order;
+    } else {
+      delete result.order;
+    }
+    return result;
+  }
+
   // ENHANCE: Add more getters and setters, as they are needed
 
   // Returns the spec object. If you modify this object, make sure to use the setter to set the value again or use persistBubbleSpec() in order to get the changes to persist!
@@ -156,7 +174,7 @@ export default class Bubble {
   }
 
   public getStyle(): string {
-    return this.spec.style;
+    return this.getFullSpec().style;
   }
   public setStyle(style: string): void {
     // TODO: Consider validating
@@ -296,8 +314,19 @@ export default class Bubble {
     this.innerShape.strokeWidth = 0; // No outline
     this.innerShape.scale(0.99); // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
 
-    this.innerShape.fillColor = Comical.backColor;
+    this.innerShape.fillColor = this.backgroundColor();
     this.adjustSizeAndPosition();
+  }
+
+  public backgroundColor(): Color {
+    const spec = this.getFullSpec();
+    // enhance: we want to do gradients if the spec calls for it by having more than one color.
+    // Issue: sharing the gradation process with any tails (and maybe
+    // other bubbles in family??)
+    if (spec.backgroundColors && spec.backgroundColors.length) {
+      return new Color(spec.backgroundColors[0]);
+    }
+    return Comical.backColor;
   }
 
   // Adjusts the size and position of the shapes/tails to match the content element
@@ -356,6 +385,19 @@ export default class Bubble {
         this.setBubbleSpec(this.spec);
       });
     }
+    // Now, look for a child whose joiner should be our center, and adjust that.
+    const child = Comical.findChild(this);
+    if (child) {
+      child.adjustJoiners(contentCenter);
+    }
+  }
+
+  private adjustJoiners(newTip: Point): void {
+    this.tails.forEach((tail: Tail) => {
+      if (tail.spec.joiner && tail.adjustTip(newTip)) {
+        this.persistBubbleSpec();
+      }
+    });
   }
 
   // Disables monitoring, executes the callback, then returns monitoring back to its previous state
@@ -406,7 +448,8 @@ export default class Bubble {
       midPoint,
       this.lowerLayer,
       this.upperLayer,
-      desiredTail
+      desiredTail,
+      this
     );
     tail.onClick(() => {
       Comical.activateBubble(this);
@@ -418,7 +461,6 @@ export default class Bubble {
 
   public showHandles() {
     this.tails.forEach((tail: Tail) => {
-      const tipHandle = this.makeHandle(tail.tip);
       const curveHandle = this.makeHandle(tail.mid);
 
       tail.midHandle = curveHandle;
@@ -427,16 +469,15 @@ export default class Bubble {
 
       // Setup event handlers
       let state = "idle";
-      tipHandle.onMouseDown = () => {
-        state = "dragTip";
-      };
       curveHandle.onMouseDown = () => {
         state = "dragCurve";
       };
-      tipHandle.onMouseDrag = curveHandle.onMouseDrag = (event: ToolEvent) => {
+      let tipHandle: Path.Circle | undefined;
+      curveHandle.onMouseDrag = (event: ToolEvent) => {
         if (state === "dragTip") {
-          const delta = event.point!.subtract(tipHandle.position!).divide(2);
-          tipHandle.position = event.point;
+          // tipHandle can't be undefined at this point
+          const delta = event.point!.subtract(tipHandle!.position!).divide(2);
+          tipHandle!.position = event.point;
           // moving the curve handle half as much is intended to keep
           // the curve roughly the same shape as the tip moves.
           // It might be more precise if we moved it a distance
@@ -452,16 +493,13 @@ export default class Bubble {
 
         const startPoint = this.calculateTailStartPoint(); // Refresh the calculation, in case the content element moved.
 
-        tail.updatePoints(
-          startPoint,
-          tipHandle.position!,
-          curveHandle.position!
-        );
+        const newTipPosition = tipHandle ? tipHandle.position! : tail.tip;
+        tail.updatePoints(startPoint, newTipPosition, curveHandle.position!);
         curveHandle.bringToFront();
 
         // Update this.spec.tips to reflect the new handle positions
-        tail.spec.tipX = tipHandle!.position!.x!;
-        tail.spec.tipY = tipHandle!.position!.y!;
+        tail.spec.tipX = newTipPosition.x!;
+        tail.spec.tipY = newTipPosition.y!;
         tail.spec.midpointX = curveHandle!.position!.x!;
         tail.spec.midpointY = curveHandle!.position!.y!;
 
@@ -469,9 +507,17 @@ export default class Bubble {
           this.persistBubbleSpec();
         });
       };
-      tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
-        state = "idle";
-      };
+      if (!tail.spec.joiner) {
+        // usual case...we want a handle for the tip as well.
+        tipHandle = this.makeHandle(tail.tip);
+        tipHandle.onMouseDown = () => {
+          state = "dragTip";
+        };
+        tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
+          state = "idle";
+        };
+        tipHandle.onMouseDrag = curveHandle.onMouseDrag;
+      }
     });
   }
 

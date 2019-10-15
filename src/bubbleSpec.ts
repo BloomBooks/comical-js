@@ -16,6 +16,10 @@ export interface BubbleSpecPattern {
   borderStyle?: string; // not implemented or fully designed yet
   backgroundColors?: string[]; //  just 1 color for solid, multiple for gradient. Omit for white. Top to bottom.
   outerBorderColor?: string; // omit for black; not implemented.
+  // bubbles on the same level with this property are linked in an order specified by this.
+  // bubbles without order (or with order zero) are not linked.
+  // Do not use negative numbers or zero as an order.
+  order?: number;
 }
 
 export interface BubbleSpec extends BubbleSpecPattern {
@@ -33,6 +37,7 @@ export interface TailSpec {
   tipY: number;
   midpointX: number; // notionally, tip's curve passes through this point
   midpointY: number;
+  joiner?: boolean;
 }
 // Do we need to specify a width? Other attributes for bezier curve?
 // Current design: start with three points, the target, midpoint, and the root (center of the text block).

@@ -1,6 +1,7 @@
 import { Path, Point, Color, Layer } from "paper";
 import Comical from "./comical";
 import { TailSpec } from "bubbleSpec";
+import Bubble from "./bubble";
 
 export class Tail {
   // the path representing the line around the tail
@@ -19,6 +20,7 @@ export class Tail {
   // handle is moved too.
   midHandle: Path | undefined;
   spec: TailSpec;
+  bubble: Bubble | undefined;
 
   public constructor(
     root: Point,
@@ -26,7 +28,8 @@ export class Tail {
     mid: Point,
     lowerLayer: Layer,
     upperLayer: Layer,
-    spec: TailSpec
+    spec: TailSpec,
+    bubble: Bubble | undefined
   ) {
     this.lowerLayer = lowerLayer;
     this.upperLayer = upperLayer;
@@ -35,7 +38,15 @@ export class Tail {
     this.root = root;
     this.tip = tip;
     this.mid = mid;
+    this.bubble = bubble;
     this.makeShapes();
+  }
+
+  private getFillColor(): Color {
+    if (this.bubble) {
+      return this.bubble.backgroundColor();
+    }
+    return Comical.backColor;
   }
 
   // Make the shapes that implement the tail.
@@ -86,7 +97,7 @@ export class Tail {
     this.pathFill.remove();
     this.upperLayer.addChild(this.pathFill);
     this.pathstroke.strokeColor = new Color("black");
-    this.pathFill.fillColor = Comical.backColor;
+    this.pathFill.fillColor = this.getFillColor();
     if (oldFill) {
       oldFill.remove();
     }
@@ -113,6 +124,22 @@ export class Tail {
     }
     const newMid = this.mid.add(delta);
     this.updatePoints(newRoot, this.tip, newMid);
+    if (this.midHandle) {
+      this.midHandle.position = newMid;
+    }
+    return true;
+  }
+
+  adjustTip(newTip: Point): boolean {
+    const delta = newTip.subtract(this.tip!).divide(2);
+    if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
+      // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
+      // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
+      // freezes the whole page.
+      return false;
+    }
+    const newMid = this.mid.add(delta);
+    this.updatePoints(this.root, newTip, newMid);
     if (this.midHandle) {
       this.midHandle.position = newMid;
     }
