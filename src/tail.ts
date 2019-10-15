@@ -1,5 +1,6 @@
-import { Path, Point, Color, Layer} from "paper";
+import { Path, Point, Color, Layer } from "paper";
 import Comical from "./comical";
+import { TailSpec } from "bubbleSpec";
 
 export class Tail {
   // the path representing the line around the tail
@@ -17,21 +18,24 @@ export class Tail {
   // automatically (e.g., to adjust for the root moving), the corresponding
   // handle is moved too.
   midHandle: Path | undefined;
+  spec: TailSpec;
 
   public constructor(
     root: Point,
     tip: Point,
     mid: Point,
     lowerLayer: Layer,
-    upperLayer: Layer
+    upperLayer: Layer,
+    spec: TailSpec
   ) {
     this.lowerLayer = lowerLayer;
     this.upperLayer = upperLayer;
+    this.spec = spec;
 
-      this.root = root;
-      this.tip = tip;
-      this.mid = mid;
-      this.makeShapes();
+    this.root = root;
+    this.tip = tip;
+    this.mid = mid;
+    this.makeShapes();
   }
 
   // Make the shapes that implement the tail.
@@ -41,14 +45,17 @@ export class Tail {
   public makeShapes() {
     const oldFill = this.pathFill;
     const oldStroke = this.pathstroke;
-    
+
     this.lowerLayer.activate();
 
     const tailWidth = 25;
     // we want to make the base of the tail a line of length tailWidth
     // at right angles to the line from root to mid
     // centered at root.
-    const angleBase = new Point(this.mid.x! - this.root.x!, this.mid.y! - this.root.y!).angle!;
+    const angleBase = new Point(
+      this.mid.x! - this.root.x!,
+      this.mid.y! - this.root.y!
+    ).angle!;
     const deltaBase = new Point(0, 0);
     deltaBase.angle = angleBase + 90;
     deltaBase.length = tailWidth / 2;
@@ -57,7 +64,10 @@ export class Tail {
 
     // The midpoints of the arcs are a quarter base width either side of mid,
     // offset at right angles to the root/tip line.
-    const angleMid = new Point(this.tip.x! - this.root.x!, this.tip.y! - this.root.y!).angle!;
+    const angleMid = new Point(
+      this.tip.x! - this.root.x!,
+      this.tip.y! - this.root.y!
+    ).angle!;
     const deltaMid = new Point(0, 0);
     deltaMid.angle = angleMid + 90;
     deltaMid.length = tailWidth / 4;
@@ -66,7 +76,7 @@ export class Tail {
 
     this.pathstroke = new Path.Arc(begin, mid1, this.tip);
     if (oldStroke) {
-        oldStroke.remove();
+      oldStroke.remove();
     }
     const pathArc2 = new Path.Arc(this.tip, mid2, end);
     this.pathstroke.addSegments(pathArc2.segments!);
@@ -78,33 +88,33 @@ export class Tail {
     this.pathstroke.strokeColor = new Color("black");
     this.pathFill.fillColor = Comical.backColor;
     if (oldFill) {
-        oldFill.remove();
+      oldFill.remove();
     }
   }
 
-  updatePoints(
-    root: Point,
-    tip: Point,
-    mid: Point,
-  ) {
-      this.root = root;
-      this.tip = tip;
-      this.mid = mid;
-      this.makeShapes();
+  updatePoints(root: Point, tip: Point, mid: Point) {
+    this.root = root;
+    this.tip = tip;
+    this.mid = mid;
+    this.makeShapes();
   }
 
-  adjustRoot(newRoot: Point) : boolean {
+  public onClick(action: () => void) {
+    this.pathFill.onClick = action;
+  }
+
+  adjustRoot(newRoot: Point): boolean {
     const delta = newRoot.subtract(this.root!).divide(2);
     if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
-        // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
-        // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
-        // freezes the whole page.
-        return false;
+      // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
+      // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
+      // freezes the whole page.
+      return false;
     }
     const newMid = this.mid.add(delta);
     this.updatePoints(newRoot, this.tip, newMid);
     if (this.midHandle) {
-        this.midHandle.position = newMid;
+      this.midHandle.position = newMid;
     }
     return true;
   }

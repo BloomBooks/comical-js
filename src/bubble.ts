@@ -1,4 +1,13 @@
-import { Path, Point, Color, ToolEvent, Item, Shape, project, Layer } from "paper";
+import {
+  Path,
+  Point,
+  Color,
+  ToolEvent,
+  Item,
+  Shape,
+  project,
+  Layer
+} from "paper";
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import Comical from "./comical";
 import { Tail } from "./tail";
@@ -19,7 +28,7 @@ export default class Bubble {
   // Represents the state which is persisted into
   // It is private because we want to try to ensure that callers go through the saveBubbleSpec() setter method,
   // because it's important that changes here get persisted not just in this instance's memory but additionally to the HTML as well.
-  private spec: BubbleSpec; 
+  private spec: BubbleSpec;
   // the main shape of the bubble, including its border
   private shape: Shape;
   // a clone of shape with no border and an appropriate fill; drawn after all shapes
@@ -41,7 +50,7 @@ export default class Bubble {
   // Contains more details than the "tips" array in the spec object
   // The elements in each array should correspond, though.
   private tails: Tail[] = [];
-  private observer: MutationObserver |undefined;
+  private observer: MutationObserver | undefined;
   private hScale: number = 1; // Horizontal scaling
   private vScale: number = 1; // Vertical scaling
 
@@ -124,7 +133,10 @@ export default class Bubble {
   public mergeWithNewBubbleProps(newBubbleProps: BubbleSpecPattern): void {
     // Figure out a default that will supply any necessary properties not
     // specified in data, including a tail in a default position
-    const defaultData = Bubble.getDefaultBubbleSpec(this.content, newBubbleProps.style);
+    const defaultData = Bubble.getDefaultBubbleSpec(
+      this.content,
+      newBubbleProps.style
+    );
 
     const oldData: BubbleSpec = this.spec;
 
@@ -135,9 +147,9 @@ export default class Bubble {
     // this bubble has ever had a tail, we'll keep its last known position.
     // Finally, any values present in data override anything else.
     const mergedBubble = {
-        ...defaultData,
-        ...oldData,
-        ...(newBubbleProps as BubbleSpec)
+      ...defaultData,
+      ...oldData,
+      ...(newBubbleProps as BubbleSpec)
     };
 
     this.setBubbleSpec(mergedBubble);
@@ -152,7 +164,11 @@ export default class Bubble {
     this.persistBubbleSpec();
   }
 
-  public setLayers(newLowerLayer: Layer, newUpperLayer: Layer, newHandleLayer: Layer): void {
+  public setLayers(
+    newLowerLayer: Layer,
+    newUpperLayer: Layer,
+    newHandleLayer: Layer
+  ): void {
     this.setLowerLayer(newLowerLayer);
     this.setUpperLayer(newUpperLayer);
     this.setHandleLayer(newHandleLayer);
@@ -180,11 +196,11 @@ export default class Bubble {
   public setHandleLayer(layer: Layer): void {
     this.handleLayer = layer;
   }
-  
+
   // Ensures that this bubble has all the required layers and creates them, if necessary
   private initializeLayers(): void {
     if (!this.lowerLayer) {
-      this.lowerLayer = new Layer();  // Note that the constructor automatically adds the newly-created layer to the project
+      this.lowerLayer = new Layer(); // Note that the constructor automatically adds the newly-created layer to the project
     }
     if (!this.upperLayer) {
       this.upperLayer = new Layer();
@@ -209,7 +225,7 @@ export default class Bubble {
     this.loadShapeAsync(this.getStyle(), (newlyLoadedShape: Shape) => {
       this.wrapShapeAroundDiv(newlyLoadedShape);
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
-    
+
     // Make any tails the bubble should have
     this.spec.tails.forEach(tail => {
       this.makeTail(tail);
@@ -245,7 +261,7 @@ export default class Bubble {
   ) {
     const svg = Bubble.getShapeSvgString(bubbleStyle);
 
-    this.lowerLayer.activate();  // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
+    this.lowerLayer.activate(); // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
 
     // ImportSVG may return asynchronously if the input string is a URL.
     // Even though the string we pass contains the svg contents directly (not a URL), when I ran it in Bloom I still got a null shape out as the return value, so best to treat it as async.
@@ -271,19 +287,22 @@ export default class Bubble {
     });
 
     this.contentHolder.strokeWidth = 0;
-    this.innerShape = shape.clone({insert: false}) as Shape;
+    this.innerShape = shape.clone({ insert: false }) as Shape;
+    this.innerShape.onClick = () => {
+      Comical.activateBubble(this);
+    };
     this.upperLayer.addChild(this.innerShape);
 
-    this.innerShape.strokeWidth = 0;  // No outline
-    this.innerShape.scale(0.99);  // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
-        
+    this.innerShape.strokeWidth = 0; // No outline
+    this.innerShape.scale(0.99); // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
+
     this.innerShape.fillColor = Comical.backColor;
     this.adjustSizeAndPosition();
   }
 
   // Adjusts the size and position of the shapes/tails to match the content element
   adjustSizeAndPosition() {
-    var contentWidth = -1
+    var contentWidth = -1;
     var contentHeight = -1;
 
     if (this.content) {
@@ -292,7 +311,9 @@ export default class Bubble {
     }
     if (contentWidth < 1 || contentHeight < 1) {
       // Horrible kludge until I can find an event that fires when the object is ready.
-      window.setTimeout(() => { this.adjustSizeAndPosition(); }, 100);
+      window.setTimeout(() => {
+        this.adjustSizeAndPosition();
+      }, 100);
       return;
     }
     var holderWidth = (this.contentHolder as any).size.width;
@@ -335,7 +356,7 @@ export default class Bubble {
         this.setBubbleSpec(this.spec);
       });
     }
-  };
+  }
 
   // Disables monitoring, executes the callback, then returns monitoring back to its previous state
   private callWithMonitoringDisabled(callback: () => void) {
@@ -344,7 +365,7 @@ export default class Bubble {
 
     callback();
 
-    if (wasMonitoring){
+    if (wasMonitoring) {
       this.monitorContent();
     }
   }
@@ -359,7 +380,12 @@ export default class Bubble {
   // Monitors for changes to the content element, and update this object if the content element is updated
   monitorContent() {
     this.observer = new MutationObserver(() => this.adjustSizeAndPosition());
-    this.observer.observe(this.content, {attributes: true, characterData: true, childList:true, subtree:true});
+    this.observer.observe(this.content, {
+      attributes: true,
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
   }
 
   // A callback for after the shape is loaded/place.
@@ -373,74 +399,87 @@ export default class Bubble {
     const midPoint = new Point(desiredTail.midpointX, desiredTail.midpointY);
     let startPoint = this.calculateTailStartPoint();
 
-    const tipHandle = this.makeHandle(tipPoint);
-    const curveHandle = this.makeHandle(midPoint);
     this.upperLayer.activate();
     let tail = new Tail(
       startPoint,
-      tipHandle.position!,
-      curveHandle.position!,
+      tipPoint,
+      midPoint,
       this.lowerLayer,
-      this.upperLayer
+      this.upperLayer,
+      desiredTail
     );
-    tail.midHandle = curveHandle;
+    tail.onClick(() => {
+      Comical.activateBubble(this);
+    });
+
     // keep track of the Tail shapes; eventually adjustSize will adjust its start position.
     this.tails.push(tail);
+  }
 
-    curveHandle.bringToFront();
+  public showHandles() {
+    this.tails.forEach((tail: Tail) => {
+      const tipHandle = this.makeHandle(tail.tip);
+      const curveHandle = this.makeHandle(tail.mid);
 
-    // Setup event handlers
-    let state = "idle";
-    tipHandle.onMouseDown = () => {
-      state = "dragTip";
-    };
-    curveHandle.onMouseDown = () => {
-      state = "dragCurve";
-    };
-    tipHandle.onMouseDrag = curveHandle.onMouseDrag = (event: ToolEvent) => {
-      if (state === "dragTip") {
-        const delta = event.point!.subtract(tipHandle.position!).divide(2);
-        tipHandle.position = event.point;
-        // moving the curve handle half as much is intended to keep
-        // the curve roughly the same shape as the tip moves.
-        // It might be more precise if we moved it a distance
-        // proportional to how close it is to the tip to begin with.
-        // Then again, we may decide to constrain it to stay
-        // equidistant from the root and tip.
-        curveHandle.position = curveHandle.position!.add(delta);
-      } else if (state === "dragCurve") {
-        curveHandle.position = event.point;
-      } else {
-        return;
-      }
-      
-      startPoint = this.calculateTailStartPoint();  // Refresh the calculation, in case the content element moved.
+      tail.midHandle = curveHandle;
 
-      tail.updatePoints(
-        startPoint,
-        tipHandle.position!,
-        curveHandle.position!
-      );
       curveHandle.bringToFront();
 
-      // Update this.spec.tips to reflect the new handle positions
-      desiredTail.tipX = tipHandle!.position!.x!;
-      desiredTail.tipY = tipHandle!.position!.y!;
-      desiredTail.midpointX = curveHandle!.position!.x!;
-      desiredTail.midpointY = curveHandle!.position!.y!;
+      // Setup event handlers
+      let state = "idle";
+      tipHandle.onMouseDown = () => {
+        state = "dragTip";
+      };
+      curveHandle.onMouseDown = () => {
+        state = "dragCurve";
+      };
+      tipHandle.onMouseDrag = curveHandle.onMouseDrag = (event: ToolEvent) => {
+        if (state === "dragTip") {
+          const delta = event.point!.subtract(tipHandle.position!).divide(2);
+          tipHandle.position = event.point;
+          // moving the curve handle half as much is intended to keep
+          // the curve roughly the same shape as the tip moves.
+          // It might be more precise if we moved it a distance
+          // proportional to how close it is to the tip to begin with.
+          // Then again, we may decide to constrain it to stay
+          // equidistant from the root and tip.
+          curveHandle.position = curveHandle.position!.add(delta);
+        } else if (state === "dragCurve") {
+          curveHandle.position = event.point;
+        } else {
+          return;
+        }
 
-      this.callWithMonitoringDisabled(() => {
-        this.persistBubbleSpec();
-      });
-    };
-    tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
-      state = "idle";
-    };
+        const startPoint = this.calculateTailStartPoint(); // Refresh the calculation, in case the content element moved.
+
+        tail.updatePoints(
+          startPoint,
+          tipHandle.position!,
+          curveHandle.position!
+        );
+        curveHandle.bringToFront();
+
+        // Update this.spec.tips to reflect the new handle positions
+        tail.spec.tipX = tipHandle!.position!.x!;
+        tail.spec.tipY = tipHandle!.position!.y!;
+        tail.spec.midpointX = curveHandle!.position!.x!;
+        tail.spec.midpointY = curveHandle!.position!.y!;
+
+        this.callWithMonitoringDisabled(() => {
+          this.persistBubbleSpec();
+        });
+      };
+      tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
+        state = "idle";
+      };
+    });
   }
 
   public calculateTailStartPoint(): Point {
-    return new Point(this.content.offsetLeft + this.content.offsetWidth / 2,
-      this.content.offsetTop + this.content.offsetHeight / 2);
+    return new Point(
+      this.content.offsetLeft + this.content.offsetWidth / 2,
+      this.content.offsetTop + this.content.offsetHeight / 2
+    );
   }
 
   // Helps determine unique names for the handles
@@ -460,7 +499,7 @@ export default class Bubble {
     result.name = "handle" + Bubble.handleIndex++;
     return result;
   }
-  
+
   public static makeDefaultTail(targetDiv: HTMLElement): TailSpec {
     const parent: HTMLElement = targetDiv.parentElement as HTMLElement;
     const targetBox = targetDiv.getBoundingClientRect();
