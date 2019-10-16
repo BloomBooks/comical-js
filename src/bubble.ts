@@ -21,10 +21,10 @@ export default class Bubble {
   // because it's important that changes here get persisted not just in this instance's memory but additionally to the HTML as well.
   private spec: BubbleSpec;
   // the main shape of the bubble, including its border
-  private shape: Shape;
+  private shape: Item;
   // a clone of shape with no border and an appropriate fill; drawn after all shapes
   // to fill them in and erase any overlapping borders.
-  private innerShape: Shape;
+  private innerShape: Item;
   // contentHolder is a shape which is a required part of an SVG object used as
   // a bubble. It should be a rectangle in the SVG; it comes out as a Shape
   // when the SVG is converted to a paper.js object.
@@ -70,7 +70,7 @@ export default class Bubble {
     element: HTMLElement,
     style?: string
   ): BubbleSpec {
-    if (!style || style == "none") {
+    if (!style || style === "none") {
       return {
         version: Comical.bubbleVersion,
         style: "none",
@@ -78,12 +78,17 @@ export default class Bubble {
         level: 1
       };
     }
-    return {
+    const result: BubbleSpec = {
       version: Comical.bubbleVersion,
       style: style,
       tails: [Bubble.makeDefaultTail(element)],
       level: 1
     };
+    if (style === "caption") {
+      result.backgroundColors = ["#FFFFFF", "#DFB28B"];
+      result.tails = [];
+    }
+    return result;
   }
 
   //
@@ -250,7 +255,7 @@ export default class Bubble {
   }
 
   // Returns the SVG contents string corresponding to the specified input bubble style
-  private static getShapeSvgString(bubbleStyle: string): string {
+  public static getShapeSvgString(bubbleStyle: string): string {
     let svg: string = "";
     switch (bubbleStyle) {
       case "speech":
@@ -258,6 +263,9 @@ export default class Bubble {
         break;
       case "shout":
         svg = Bubble.shoutBubble();
+        break;
+      case "caption":
+        svg = Bubble.captionBubble();
         break;
       case "none":
         break;
@@ -272,7 +280,7 @@ export default class Bubble {
   // Loads the shape corresponding to the specified bubbleStyle, and calls the onShapeLoadeed() callback once the shape is finished loading (passing it in as the Shape parameter)
   private loadShapeAsync(
     bubbleStyle: string,
-    onShapeLoaded: (s: Shape) => void
+    onShapeLoaded: (s: Item) => void
   ) {
     const svg = Bubble.getShapeSvgString(bubbleStyle);
 
@@ -282,19 +290,47 @@ export default class Bubble {
     // Even though the string we pass contains the svg contents directly (not a URL), when I ran it in Bloom I still got a null shape out as the return value, so best to treat it as async.
     project!.importSVG(svg, {
       onLoad: (item: Item) => {
-        onShapeLoaded(item as Shape);
+        onShapeLoaded(item);
       }
     });
   }
 
   // Attaches the specified shape to this object's content element
-  private wrapShapeAroundDiv(shape: Shape) {
+  private wrapShapeAroundDiv(shape: Item) {
     this.shape = shape;
+
+    // if the SVG contains a single shape (marked with an ID) that is all
+    // we need to draw, we can replace the whole-svg item with a path derived
+    // from that one shape. Some benefits:
+    // - paths painted with gradient colors convert correctly to SVG;
+    // complex groups do not.
+    // - simpler shape may help performance
+    // - (future) it's possible to subtract one path from another, offering an
+    // alternative way to hide overlapping line segments that is
+    // compatible with bubbles having partly transparent fill colors.
+    // Enhance: we could also look for a child, like the one in the shout
+    // bubble, that is already a path, possibly by giving such elements
+    // an outlinePath id. The only difference would be that the result from
+    // getItem is already a path, so we don't need to cast it to shape and
+    // call toPath().
+    // If we add that, all our current bubbles can be converted to a single
+    // path each. We may, however, not want to have the code assume that will
+    // always be the case. For example, a bubble with a shadow or double outline
+    // might not be doable with a single path.
+    const outlineShape = shape.getItem({
+      recursive: true,
+      match: (x: any) => x.name === "outlineShape"
+    });
+    if (outlineShape) {
+      shape.remove();
+      this.shape = (outlineShape as Shape).toPath();
+      project!.activeLayer.addChild(this.shape);
+    }
     this.hScale = this.vScale = 1; // haven't scaled it at all yet.
     // recursive: true is required to see any but the root "g" element
     // (apparently contrary to documentation).
     // The 'name' of a paper item corresponds to the 'id' of an element in the SVG
-    this.contentHolder = this.shape.getItem({
+    this.contentHolder = shape.getItem({
       recursive: true,
       match: (x: any) => {
         return x.name === "content-holder";
@@ -302,7 +338,7 @@ export default class Bubble {
     });
 
     this.contentHolder.strokeWidth = 0;
-    this.innerShape = shape.clone({ insert: false }) as Shape;
+    this.innerShape = this.shape.clone({ insert: false });
     this.innerShape.onClick = () => {
       Comical.activateBubble(this);
     };
@@ -321,7 +357,34 @@ export default class Bubble {
     // Issue: sharing the gradation process with any tails (and maybe
     // other bubbles in family??)
     if (spec.backgroundColors && spec.backgroundColors.length) {
-      return new Color(spec.backgroundColors[0]);
+      if (spec.backgroundColors.length == 1) {
+        return new Color(spec.backgroundColors[0]);
+      }
+      const result = {
+        gradient: {
+          stops: spec.backgroundColors,
+          radial: false
+        },
+        // enhance: this is too dependent on innerShape being created, sized, and positioned before
+        // backgroundColor is called for. It's not guaranteed, for example,
+        // that innerShape is ready before tail shapes are made.
+        // Thus, this is really only good enough for a single bubble, without tails:
+        // although experimentally it seems to work with tails, there's no guarantee.
+        // Even if we figured out some alternative to return in case this.innerShape
+        // is null, we have no way to know whether it's already been sized and positioned.
+        // For linked bubbles, we need to either hide the part of the child tail
+        // that is inside the parent (but using a differently positioned gradient),
+        // or else use a single gradient for all the linked bubbles, which would
+        // require finding all the siblings, determining an overall bounding rectangle,
+        // and somehow making sure we don't use the background color until all the shapes are made.
+        // Fortunately, our current needs only require gradients for single bubbles without tails.
+        origin: this.innerShape!.bounds!.topCenter,
+        destination: this.innerShape!.bounds!.bottomCenter
+      };
+      // The above seems to work, and is what the paper.js documentation says to use as fillColor
+      // for gradients. However, the typescript definitions we're using don't allow it,
+      // so I'm just defying them.
+      return (result as any) as Color;
     }
     return Comical.backColor;
   }
@@ -549,7 +612,7 @@ export default class Bubble {
              rx="49.608364"
              cy="247.10715"
              cx="50.36533"
-             id="path3715"
+             id="outlineShape"
              style="fill:#ffffff;stroke:#000000;stroke-width:0.26660731;stroke-opacity:1" />
           <rect
             id="content-holder"
@@ -558,6 +621,54 @@ export default class Bubble {
              x="13.229166"
              height="65.956848"
              width="74.461304"
+             style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
+        </g>
+      </svg>`;
+  }
+
+  public static captionBubble() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+      <svg
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:cc="http://creativecommons.org/ns#"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns="http://www.w3.org/2000/svg"
+         id="svg8"
+         version="1.1"
+         viewBox="0 0 100 50"
+         height="50mm"
+         width="100mm">
+        <defs
+           id="defs2" />
+        <metadata
+           id="metadata5">
+          <rdf:RDF>
+            <cc:Work
+               rdf:about="">
+              <dc:format>image/svg+xml</dc:format>
+              <dc:type
+                 rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+              <dc:title></dc:title>
+            </cc:Work>
+          </rdf:RDF>
+        </metadata>
+        <g
+            id="layer1">
+          <rect
+             y="2"
+             x="2"
+             height="46"
+             width="96"
+             id="outlineShape"
+             style="fill:#ffffff;stroke:#000000;stroke-width:1;stroke-opacity:1" />
+          <rect
+            id="content-holder"
+            class="content-holder"
+             y="3"
+             x="3"
+             height="44"
+             width="94"
              style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
         </g>
       </svg>`;

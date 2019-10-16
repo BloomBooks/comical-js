@@ -1,11 +1,99 @@
 //import { document, console } from 'global';
 import { storiesOf } from "@storybook/html";
-import { setup, Point, project, Layer } from "paper";
+import {
+  setup,
+  Point,
+  project,
+  Layer,
+  //Path,
+  Color,
+  //Rectangle,
+  Item,
+  Shape
+} from "paper";
 import Comical from "../src/comical";
 import Bubble from "../src/bubble";
 import { Tail } from "../src/tail";
 
 storiesOf("comical", module)
+  .add("export gradient svg of scaled group broken", () => {
+    // const wrapDiv = document.createElement("div");
+    // const canvas = document.createElement("canvas");
+    // canvas.height = 200;
+    // canvas.width = 200;
+    // setup(canvas);
+    // wrapDiv.appendChild(canvas);
+    // const circle = new Path.Rectangle(new Rectangle(40, 40, 120, 120));
+    // const color = {
+    //   gradient: {
+    //     stops: ["white", "yellow", "cyan"]
+    //   },
+    //   origin: new Point(100, 50),
+    //   destination: new Point(100, 160)
+    // };
+    // circle.fillColor = (color as any) as Color;
+    // circle.scale(0.8, 0.5);
+    // const svg = project!.exportSVG() as SVGElement;
+    // wrapDiv.appendChild(svg);
+    // return wrapDiv;
+    const wrapDiv = document.createElement("div");
+    const canvas = document.createElement("canvas");
+    canvas.height = 200;
+    canvas.width = 200;
+    setup(canvas);
+    wrapDiv.appendChild(canvas);
+    const svgIn = Bubble.getShapeSvgString("caption");
+    project!.importSVG(svgIn, {
+      onLoad: (item: Item) => {
+        const color = {
+          gradient: {
+            stops: ["white", "yellow", "cyan"]
+          },
+          origin: new Point(100, 0),
+          destination: new Point(100, 60)
+        };
+        item.fillColor = (color as any) as Color;
+        item.scale(0.8, 0.5);
+      }
+    });
+
+    const svg = project!.exportSVG() as SVGElement;
+    wrapDiv.appendChild(svg);
+    return wrapDiv;
+  })
+  .add("export gradient fixed", () => {
+    const wrapDiv = document.createElement("div");
+    const canvas = document.createElement("canvas");
+    canvas.height = 200;
+    canvas.width = 200;
+    setup(canvas);
+    wrapDiv.appendChild(canvas);
+    const svgIn = Bubble.getShapeSvgString("caption");
+    project!.importSVG(svgIn, {
+      onLoad: (item: Item) => {
+        const color = {
+          gradient: {
+            stops: ["white", "yellow", "cyan"]
+          },
+          origin: new Point(100, 0),
+          destination: new Point(100, 60)
+        };
+        const outlineShape = item.getItem({
+          recursive: true,
+          match: (x: any) => x.name === "outlineShape"
+        });
+        item.remove();
+        const outlinePath = (outlineShape as Shape).toPath();
+        project!.activeLayer.addChild(outlinePath);
+        outlinePath.fillColor = (color as any) as Color;
+        outlinePath.scale(0.8, 0.5);
+      }
+    });
+
+    const svg = project!.exportSVG() as SVGElement;
+    wrapDiv.appendChild(svg);
+    return wrapDiv;
+  })
   // I don't think we need a story for the tail by itself any more
   .add("drag tail", () => {
     const canvas = document.createElement("canvas");
@@ -220,6 +308,61 @@ storiesOf("comical", module)
         style: "speech",
         tails: [Bubble.makeDefaultTail(div2)],
         level: 1
+      });
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+    }, 200);
+
+    const button = addFinishButton(wrapDiv);
+    // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "600px";
+    button.style.left = "0";
+    return wrapDiv;
+  })
+  .add("two captions on picture", () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.background =
+      "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+    wrapDiv.style.height = "600px";
+
+    var div1 = makeTextBlock(
+      wrapDiv,
+      "Joe got some fancy glasses",
+      120,
+      100,
+      100
+    );
+
+    var div2 = makeTextBlock(
+      wrapDiv,
+      "Bill got a blue hat that he really loves",
+      300,
+      150,
+      200
+    );
+    div2.setAttribute("contenteditable", "true");
+
+    // convertBubbleJsonToCanvas needs to see the divs laid out in their eventual positions
+    window.setTimeout(() => {
+      const bubble1 = new Bubble(div1);
+      bubble1.setBubbleSpec({
+        version: "1.0",
+        style: "caption",
+        tails: [],
+        level: 1,
+        backgroundColors: ["white", "yellow", "cyan"]
+      });
+
+      const bubble2 = new Bubble(div2);
+      bubble2.setBubbleSpec({
+        version: "1.0",
+        style: "caption",
+        tails: [],
+        level: 1,
+        // this is roughly the light-blue to almost-white used in some of the design document captions
+        //backgroundColors: ["#B9E4FA", "#F6FAFF"]
+        backgroundColors: ["#FFFFFF", "#DFB28B"]
       });
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
@@ -462,7 +605,7 @@ storiesOf("comical", module)
         style: "speech",
         tails: [Bubble.makeDefaultTail(div4)],
         level: 2,
-        backgroundColors: ["yellow"]
+        backgroundColors: ["white", "yellow", "cyan"]
       });
       // To get the right behaviour from initializeChild,
       // convertCanvasToSvgImg must have been called with
