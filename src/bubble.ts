@@ -1,13 +1,4 @@
-import {
-  Path,
-  Point,
-  Color,
-  ToolEvent,
-  Item,
-  Shape,
-  project,
-  Layer
-} from "paper";
+import { Point, Color, Item, Shape, project, Layer } from "paper";
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import Comical from "./comical";
 import { Tail } from "./tail";
@@ -105,6 +96,24 @@ export default class Bubble {
     return this.spec.level;
   }
 
+  public getFullSpec(): BubbleSpec {
+    const parents = Comical.findParents(this);
+    if (parents.length == 0) {
+      return this.spec;
+    }
+    const parent: Bubble = parents[0];
+    // We probably don't need to be this careful, since functions that want
+    // this bubble's tails or order go to its own spec. But these are
+    // things that should NOT be inherited from parent, so let's get them right.
+    const result: BubbleSpec = { ...parent.spec, tails: this.spec.tails };
+    if (this.spec.hasOwnProperty("order")) {
+      result.order = this.spec.order;
+    } else {
+      delete result.order;
+    }
+    return result;
+  }
+
   // ENHANCE: Add more getters and setters, as they are needed
 
   // Returns the spec object. If you modify this object, make sure to use the setter to set the value again or use persistBubbleSpec() in order to get the changes to persist!
@@ -121,6 +130,12 @@ export default class Bubble {
 
     this.spec = spec;
     this.persistBubbleSpec();
+  }
+
+  public persistBubbleSpecWithoutMonitoring() {
+    this.callWithMonitoringDisabled(() => {
+      this.persistBubbleSpec();
+    });
   }
 
   // Persists the data into the content element's HTML. Should be called after making changes to the underlying spec object.
@@ -156,7 +171,7 @@ export default class Bubble {
   }
 
   public getStyle(): string {
-    return this.spec.style;
+    return this.getFullSpec().style;
   }
   public setStyle(style: string): void {
     // TODO: Consider validating
@@ -296,8 +311,19 @@ export default class Bubble {
     this.innerShape.strokeWidth = 0; // No outline
     this.innerShape.scale(0.99); // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
 
-    this.innerShape.fillColor = Comical.backColor;
+    this.innerShape.fillColor = this.getBackgroundColor();
     this.adjustSizeAndPosition();
+  }
+
+  public getBackgroundColor(): Color {
+    const spec = this.getFullSpec();
+    // enhance: we want to do gradients if the spec calls for it by having more than one color.
+    // Issue: sharing the gradation process with any tails (and maybe
+    // other bubbles in family??)
+    if (spec.backgroundColors && spec.backgroundColors.length) {
+      return new Color(spec.backgroundColors[0]);
+    }
+    return Comical.backColor;
   }
 
   // Adjusts the size and position of the shapes/tails to match the content element
@@ -339,23 +365,22 @@ export default class Bubble {
     // it turns off the mutation observer while updating the spec to match.
     // Such a method would be useful for updating the spec when the tail is dragged,
     // and perhaps for other things.
-    let tailChanged = false;
-    this.tails.forEach((tail, index) => {
-      if (tail.adjustRoot(contentCenter)) {
-        const tailSpec = this.spec.tails[index];
-        tailSpec.midpointX = tail.mid.x!;
-        tailSpec.midpointY = tail.mid.y!;
-        tailChanged = true;
+    this.tails.forEach(tail => {
+      tail.adjustRoot(contentCenter);
+    });
+    // Now, look for a child whose joiner should be our center, and adjust that.
+    const child = Comical.findChild(this);
+    if (child) {
+      child.adjustJoiners(contentCenter);
+    }
+  }
+
+  private adjustJoiners(newTip: Point): void {
+    this.tails.forEach((tail: Tail) => {
+      if (tail.spec.joiner && tail.adjustTip(newTip)) {
+        this.persistBubbleSpecWithoutMonitoring();
       }
     });
-    if (tailChanged) {
-      // if no tail changed we MUST NOT modify the element,
-      // as doing so will trigger the mutation observer.
-      // Even if it did, we don't want to trigger a recursive call.
-      this.callWithMonitoringDisabled(() => {
-        this.setBubbleSpec(this.spec);
-      });
-    }
   }
 
   // Disables monitoring, executes the callback, then returns monitoring back to its previous state
@@ -406,7 +431,9 @@ export default class Bubble {
       midPoint,
       this.lowerLayer,
       this.upperLayer,
-      desiredTail
+      this.handleLayer,
+      desiredTail,
+      this
     );
     tail.onClick(() => {
       Comical.activateBubble(this);
@@ -418,60 +445,7 @@ export default class Bubble {
 
   public showHandles() {
     this.tails.forEach((tail: Tail) => {
-      const tipHandle = this.makeHandle(tail.tip);
-      const curveHandle = this.makeHandle(tail.mid);
-
-      tail.midHandle = curveHandle;
-
-      curveHandle.bringToFront();
-
-      // Setup event handlers
-      let state = "idle";
-      tipHandle.onMouseDown = () => {
-        state = "dragTip";
-      };
-      curveHandle.onMouseDown = () => {
-        state = "dragCurve";
-      };
-      tipHandle.onMouseDrag = curveHandle.onMouseDrag = (event: ToolEvent) => {
-        if (state === "dragTip") {
-          const delta = event.point!.subtract(tipHandle.position!).divide(2);
-          tipHandle.position = event.point;
-          // moving the curve handle half as much is intended to keep
-          // the curve roughly the same shape as the tip moves.
-          // It might be more precise if we moved it a distance
-          // proportional to how close it is to the tip to begin with.
-          // Then again, we may decide to constrain it to stay
-          // equidistant from the root and tip.
-          curveHandle.position = curveHandle.position!.add(delta);
-        } else if (state === "dragCurve") {
-          curveHandle.position = event.point;
-        } else {
-          return;
-        }
-
-        const startPoint = this.calculateTailStartPoint(); // Refresh the calculation, in case the content element moved.
-
-        tail.updatePoints(
-          startPoint,
-          tipHandle.position!,
-          curveHandle.position!
-        );
-        curveHandle.bringToFront();
-
-        // Update this.spec.tips to reflect the new handle positions
-        tail.spec.tipX = tipHandle!.position!.x!;
-        tail.spec.tipY = tipHandle!.position!.y!;
-        tail.spec.midpointX = curveHandle!.position!.x!;
-        tail.spec.midpointY = curveHandle!.position!.y!;
-
-        this.callWithMonitoringDisabled(() => {
-          this.persistBubbleSpec();
-        });
-      };
-      tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
-        state = "idle";
-      };
+      tail.showHandles();
     });
   }
 
@@ -480,24 +454,6 @@ export default class Bubble {
       this.content.offsetLeft + this.content.offsetWidth / 2,
       this.content.offsetTop + this.content.offsetHeight / 2
     );
-  }
-
-  // Helps determine unique names for the handles
-  static handleIndex = 0;
-
-  private makeHandle(tip: Point): Path.Circle {
-    this.handleLayer.activate();
-    const result = new Path.Circle(tip, 8);
-    result.strokeColor = new Color("aqua");
-    result.strokeWidth = 2;
-    result.fillColor = new Color("white");
-    // We basically want the bubbles transparent, especially for the tip, so
-    // you can see where the tip actually ends up. But if it's perfectly transparent,
-    // paper.js doesn't register hit tests on the transparent part. So go for a very
-    // small alpha.
-    result.fillColor.alpha = 0.01;
-    result.name = "handle" + Bubble.handleIndex++;
-    return result;
   }
 
   public static makeDefaultTail(targetDiv: HTMLElement): TailSpec {

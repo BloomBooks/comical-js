@@ -2,6 +2,7 @@ import { Color, project, setup, Layer } from "paper";
 
 import Bubble from "./bubble";
 import { uniqueIds } from "./uniqueId";
+import { BubbleSpec } from "bubbleSpec";
 
 // Manages a collection of comic bubbles warpped around HTML elements that share a common parent.
 // Each element that has a comic bubble has a data-bubble attribute specifying the appearance
@@ -181,6 +182,122 @@ export default class Comical {
     canvas.height = parent.clientHeight;
     setup(canvas);
     Comical.update(parent);
+  }
+
+  // Make appropriate JSON changes so that childElement becomes a child of parentElement.
+  // This means they are at the same level and, if they don't overlap, a joiner is drawn
+  // between them.
+  // The conceptual model is that all elements at the same level form a family, provided
+  // they have distinct order properties. The one with the lowest order is considered
+  // the overall parent. A child can be added to a family by specifying any member of the
+  // family as a parentElement. It is expected that both elements are children of
+  // the root element most recently configured for Comical with convertBubbleJsonToCanvas().
+  public static initializeChild(
+    childElement: HTMLElement,
+    parentElement: HTMLElement
+  ) {
+    const parentBubble = Comical.allBubbles.find(
+      x => x.content === parentElement
+    );
+    if (!parentBubble) {
+      console.error(
+        "trying to make child of element not already active in Comical"
+      );
+      return;
+    }
+    const parentSpec = parentBubble.getBubbleSpec();
+    let familyLevel = parentSpec.level;
+    if (!parentSpec.order) {
+      // It's important not to use zero for order, since that will be treated
+      // as an unspecified order.
+      parentSpec.order = 1;
+      parentBubble.persistBubbleSpec();
+    }
+    // enhance: if familyLevel is undefined, set it to a number one greater than
+    // any level that occurs in allBubbles.
+    let childBubble = Comical.allBubbles.find(x => x.content === childElement);
+    if (!childBubble) {
+      childBubble = new Bubble(childElement);
+    }
+    const lastInFamily = Comical.getLastInFamily(familyLevel);
+    const maxOrder = lastInFamily.getBubbleSpec().order || 1;
+    const tip = lastInFamily.calculateTailStartPoint();
+    const root = childBubble.calculateTailStartPoint();
+    const mid = Bubble.defaultMid(root, tip);
+    // We deliberately do NOT keep any properties the child bubble already has.
+    // Apart from the necessary properties for being a child, it will take
+    // all its properties from the parent.
+    const newBubbleSpec: BubbleSpec = {
+      version: Comical.bubbleVersion,
+      style: parentSpec.style,
+      tails: [
+        {
+          tipX: tip.x!,
+          tipY: tip.y!,
+          midpointX: mid.x!,
+          midpointY: mid.y!,
+          joiner: true
+        }
+      ],
+      level: parentSpec.level,
+      order: maxOrder + 1
+    };
+    childBubble.setBubbleSpec(newBubbleSpec);
+    // enhance: we could possibly do something here to make the appropriate
+    // shapes for childBubble and the tail that links it to the previous bubble.
+    // However, currently our only client always does a fresh convertBubbleJsonToCanvas
+    // after making a new child. That will automatically sort things out.
+    // Note that getting all the shapes updated properly could be nontrivial
+    // if childElement already has a bubble...it may need to change shape, lose tails,
+    // change other properties,...
+  }
+
+  private static getLastInFamily(familyLevel: number | undefined): Bubble {
+    const family = Comical.allBubbles
+      .filter(
+        x => x.getBubbleSpec().level === familyLevel && x.getBubbleSpec().order
+      )
+      .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
+    // we set order on parentBubble, so there is at least one in the family.
+    return family[family.length - 1];
+  }
+
+  public static findChild(bubble: Bubble): Bubble | undefined {
+    const familyLevel = bubble.getSpecLevel();
+    const orderWithinFamily = bubble.getBubbleSpec().order;
+    if (!orderWithinFamily) {
+      return undefined;
+    }
+    const family = Comical.allBubbles
+      .filter(
+        x =>
+          x.getBubbleSpec().level === familyLevel &&
+          x.getBubbleSpec().order &&
+          x.getBubbleSpec().order! > orderWithinFamily
+      )
+      .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
+    if (family.length > 0) {
+      return family[0];
+    }
+    return undefined;
+  }
+
+  // Return the parents of the bubble. The first item in the array
+  // is the earliest ancestor (if any); any intermediate bubbles are returned too.
+  public static findParents(bubble: Bubble): Bubble[] {
+    const familyLevel = bubble.getSpecLevel();
+    const orderWithinFamily = bubble.getBubbleSpec().order;
+    if (!orderWithinFamily) {
+      return [];
+    }
+    return Comical.allBubbles
+      .filter(
+        x =>
+          x.getBubbleSpec().level === familyLevel &&
+          x.getBubbleSpec().order &&
+          x.getBubbleSpec().order! < orderWithinFamily
+      )
+      .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
   }
 
   public static bubbleVersion = "1.0";

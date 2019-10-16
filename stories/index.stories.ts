@@ -147,7 +147,7 @@ storiesOf("comical", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175}],
+      tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }],
       level: 1
     });
 
@@ -155,9 +155,7 @@ storiesOf("comical", module)
       bubble.makeShapes();
     }, 200);
 
-    addButton(wrapDiv,
-      "Save and Reload",
-      () => {
+    addButton(wrapDiv, "Save and Reload", () => {
       bubble = new Bubble(textDiv2);
       Comical.update(wrapDiv);
     });
@@ -166,7 +164,8 @@ storiesOf("comical", module)
   .add("two bubbles on picture", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
-    wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";;
+    wrapDiv.style.background =
+      "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
     wrapDiv.style.height = "600px";
 
     var div1 = makeTextBlock(wrapDiv, "Sweet! Rad glasses!", 120, 100, 100);
@@ -216,14 +215,39 @@ storiesOf("comical", module)
     // Multiple tails on a bubble
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
-    wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+    wrapDiv.style.background =
+      "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
     wrapDiv.style.height = "600px";
 
-    var div1 = makeTextBlock(wrapDiv, "This should be the highest layer", 130, 80, 100);
-    var div2 = makeTextBlock(wrapDiv, "This should be the lowest layer", 130, 150, 100);
+    var div1 = makeTextBlock(
+      wrapDiv,
+      "This should be the highest layer",
+      130,
+      80,
+      100
+    );
+    var div2 = makeTextBlock(
+      wrapDiv,
+      "This should be the lowest layer",
+      130,
+      150,
+      100
+    );
 
-    var div3 = makeTextBlock(wrapDiv, "This should be the middle layer", 250, 80, 200);
-    var div4 = makeTextBlock(wrapDiv, "This should be merged with the other middle layer", 250, 130, 100);
+    var div3 = makeTextBlock(
+      wrapDiv,
+      "This should be the middle layer",
+      250,
+      80,
+      200
+    );
+    var div4 = makeTextBlock(
+      wrapDiv,
+      "This should be merged with the other middle layer",
+      250,
+      130,
+      100
+    );
 
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
@@ -288,7 +312,7 @@ storiesOf("comical", module)
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
-      'Change the bubble style to None and make sure the tail goes away';
+      "Change the bubble style to None and make sure the tail goes away";
     textDiv2.style.width = "200px";
     textDiv2.style.textAlign = "center";
     textDiv2.style.position = "absolute";
@@ -300,7 +324,7 @@ storiesOf("comical", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "shout",
-      tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175}],
+      tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }],
       level: 1
     });
 
@@ -308,33 +332,24 @@ storiesOf("comical", module)
       Comical.update(wrapDiv);
     }, 200);
 
-    addButton(wrapDiv,
-      "None",
-      () => {
-        const spec = Bubble.getBubbleSpec(textDiv2);
-        spec.style = "none";
-        bubble.setBubbleSpec(spec);
-        Comical.update(wrapDiv);
-      }
-    );
-    addButton(wrapDiv,
-      "Speech",
-      () => {
-        const spec = Bubble.getBubbleSpec(textDiv2);
-        spec.style = "speech";
-        bubble.setBubbleSpec(spec);
-        Comical.update(wrapDiv);
-      }
-    );
-    addButton(wrapDiv,
-      "Shout",
-      () => {
-        const spec = Bubble.getBubbleSpec(textDiv2);
-        spec.style = "shout";
-        bubble.setBubbleSpec(spec);
-        Comical.update(wrapDiv);
-      }
-    );
+    addButton(wrapDiv, "None", () => {
+      const spec = Bubble.getBubbleSpec(textDiv2);
+      spec.style = "none";
+      bubble.setBubbleSpec(spec);
+      Comical.update(wrapDiv);
+    });
+    addButton(wrapDiv, "Speech", () => {
+      const spec = Bubble.getBubbleSpec(textDiv2);
+      spec.style = "speech";
+      bubble.setBubbleSpec(spec);
+      Comical.update(wrapDiv);
+    });
+    addButton(wrapDiv, "Shout", () => {
+      const spec = Bubble.getBubbleSpec(textDiv2);
+      spec.style = "shout";
+      bubble.setBubbleSpec(spec);
+      Comical.update(wrapDiv);
+    });
 
     const button = addFinishButton(wrapDiv);
     // Force it below the wrapDiv.
@@ -356,7 +371,7 @@ storiesOf("comical", module)
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
-      'This box should have 2 tails. Try moving the left tail, click Finish, click Edit. Ensure that neither tail (especially the right one!) moves upon clicking Edit.';
+      "This box should have 2 tails. Try moving the left tail, click Finish, click Edit. Ensure that neither tail (especially the right one!) moves upon clicking Edit.";
     textDiv2.style.width = "200px";
     textDiv2.style.textAlign = "center";
     textDiv2.style.position = "absolute";
@@ -368,8 +383,9 @@ storiesOf("comical", module)
     bubble.setBubbleSpec({
       version: "1.0",
       style: "speech",
-      tails: [{ tipX: 300, tipY: 250, midpointX: 250, midpointY: 175},
-        { tipX: 100, tipY: 250, midpointX: 150, midpointY: 175}
+      tails: [
+        { tipX: 300, tipY: 250, midpointX: 250, midpointY: 175 },
+        { tipX: 100, tipY: 250, midpointX: 150, midpointY: 175 }
       ],
       level: 1
     });
@@ -377,12 +393,105 @@ storiesOf("comical", module)
     setTimeout(() => {
       Comical.update(wrapDiv);
     }, 200);
-    
+
     const button = addFinishButton(wrapDiv);
     // Force it below the wrapDiv.
     button.style.position = "absolute";
     button.style.top = "400px";
     button.style.left = "0";
+
+    return wrapDiv;
+  })
+  .add("child bubbles", () => {
+    // A generic picture
+    // Four bubbles in the same layer, two overlapping
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.background =
+      "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+    wrapDiv.style.height = "600px";
+
+    var div1 = makeTextBlock(wrapDiv, "Top left, last in chain", 30, 40, 100);
+    var div2 = makeTextBlock(
+      wrapDiv,
+      "Top right, third in chain, a bit bigger",
+      280,
+      50,
+      150
+    );
+
+    var div3 = makeTextBlock(
+      wrapDiv,
+      "Lower right, overlaps top right",
+      250,
+      100,
+      100
+    );
+    var div4 = makeTextBlock(wrapDiv, "Lower left, parent", 120, 180, 100);
+
+    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      // the parent div
+      const bubble4 = new Bubble(div4);
+      bubble4.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(div4)],
+        level: 2,
+        backgroundColors: ["yellow"]
+      });
+      // To get the right behaviour from initializeChild,
+      // convertCanvasToSvgImg must have been called with
+      // all the previous bubbles in the family defined.
+      // So we turn it off and on again between each call.
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(div3, div4);
+      Comical.convertCanvasToSvgImg(wrapDiv);
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(div2, div3);
+      Comical.convertCanvasToSvgImg(wrapDiv);
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(div1, div4);
+      Comical.convertCanvasToSvgImg(wrapDiv);
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+    }, 200);
+
+    const button = addFinishButton(wrapDiv);
+    // Force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "600px";
+    button.style.left = "0";
+
+    const buttonLeft = addButton(wrapDiv, "Click to move box left", () => {
+      div4.style.left = "50px";
+    });
+    const buttonRight = addButton(wrapDiv, "Click to move box right", () => {
+      div4.style.left = "250px";
+    });
+    buttonLeft.style.position = "absolute";
+    buttonLeft.style.top = "600px";
+    buttonLeft.style.left = "100px";
+
+    buttonRight.style.position = "absolute";
+    buttonRight.style.top = "600px";
+    buttonRight.style.left = "300px";
+
+    let toggle = false;
+    const buttonThird = addButton(wrapDiv, "Click to move middle box", () => {
+      if (toggle) {
+        div3.style.left = "250px";
+        div3.style.top = "100px";
+      } else {
+        div3.style.left = "350px";
+        div3.style.top = "150px";
+      }
+      toggle = !toggle;
+    });
+
+    buttonThird.style.position = "absolute";
+    buttonThird.style.top = "600px";
+    buttonThird.style.left = "500px";
 
     return wrapDiv;
   })
@@ -393,7 +502,7 @@ storiesOf("comical", module)
 
     const instructionsDiv = document.createElement("div");
     instructionsDiv.innerText =
-      'Click the button to move the content element to the right. Then adjust the mid handle. Make sure the tail root goes to the new start, not the original start.';
+      "Click the button to move the content element to the right. Then adjust the mid handle. Make sure the tail root goes to the new start, not the original start.";
     instructionsDiv.style.width = "600px";
     instructionsDiv.style.position = "absolute";
     instructionsDiv.style.top = "0px";
@@ -407,8 +516,7 @@ storiesOf("comical", module)
     setup(canvas);
 
     const textDiv1 = document.createElement("div");
-    textDiv1.innerText =
-      'Text';
+    textDiv1.innerText = "Text";
     textDiv1.style.width = "50px";
     textDiv1.style.textAlign = "center";
     textDiv1.style.position = "absolute";
@@ -421,13 +529,13 @@ storiesOf("comical", module)
       bubble.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        tails: [ { tipX: 300, tipY: 275, midpointX: 300, midpointY: 225} ],
+        tails: [{ tipX: 300, tipY: 275, midpointX: 300, midpointY: 225 }],
         level: 1
       });
-  
+
       Comical.update(wrapDiv);
     }, 200);
-    
+
     const buttonLeft = addButton(wrapDiv, "Click to move box left", () => {
       textDiv1.style.left = "100px";
     });

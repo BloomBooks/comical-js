@@ -1,6 +1,7 @@
-import { Path, Point, Color, Layer } from "paper";
+import { Path, Point, Color, Layer, ToolEvent } from "paper";
 import Comical from "./comical";
 import { TailSpec } from "bubbleSpec";
+import Bubble from "./bubble";
 
 export class Tail {
   // the path representing the line around the tail
@@ -10,6 +11,7 @@ export class Tail {
 
   lowerLayer: Layer;
   upperLayer: Layer;
+  handleLayer: Layer;
 
   root: Point;
   tip: Point;
@@ -19,6 +21,7 @@ export class Tail {
   // handle is moved too.
   midHandle: Path | undefined;
   spec: TailSpec;
+  bubble: Bubble | undefined;
 
   public constructor(
     root: Point,
@@ -26,16 +29,27 @@ export class Tail {
     mid: Point,
     lowerLayer: Layer,
     upperLayer: Layer,
-    spec: TailSpec
+    handleLayer: Layer,
+    spec: TailSpec,
+    bubble: Bubble | undefined
   ) {
     this.lowerLayer = lowerLayer;
     this.upperLayer = upperLayer;
+    this.handleLayer = handleLayer;
     this.spec = spec;
 
     this.root = root;
     this.tip = tip;
     this.mid = mid;
+    this.bubble = bubble;
     this.makeShapes();
+  }
+
+  private getFillColor(): Color {
+    if (this.bubble) {
+      return this.bubble.getBackgroundColor();
+    }
+    return Comical.backColor;
   }
 
   // Make the shapes that implement the tail.
@@ -86,7 +100,7 @@ export class Tail {
     this.pathFill.remove();
     this.upperLayer.addChild(this.pathFill);
     this.pathstroke.strokeColor = new Color("black");
-    this.pathFill.fillColor = Comical.backColor;
+    this.pathFill.fillColor = this.getFillColor();
     if (oldFill) {
       oldFill.remove();
     }
@@ -103,25 +117,139 @@ export class Tail {
     this.pathFill.onClick = action;
   }
 
-  adjustRoot(newRoot: Point): boolean {
+  adjustRoot(newRoot: Point): void {
     const delta = newRoot.subtract(this.root!).divide(2);
     if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
       // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
       // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
       // freezes the whole page.
-      return false;
+      return;
     }
     const newMid = this.mid.add(delta);
     this.updatePoints(newRoot, this.tip, newMid);
     if (this.midHandle) {
       this.midHandle.position = newMid;
     }
-    return true;
+    if (this.spec) {
+      this.spec.midpointX = this.mid.x!;
+      this.spec.midpointY = this.mid.y!;
+    }
+    this.persistSpecChanges();
+  }
+
+  adjustTip(newTip: Point): void {
+    const delta = newTip.subtract(this.tip!).divide(2);
+    if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
+      // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
+      // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
+      // freezes the whole page.
+      return;
+    }
+    const newMid = this.mid.add(delta);
+    this.updatePoints(this.root, newTip, newMid);
+    if (this.midHandle) {
+      this.midHandle.position = newMid;
+    }
+    if (this.spec) {
+      this.spec.midpointX = this.mid.x!;
+      this.spec.midpointY = this.mid.y!;
+      this.spec.tipX = this.tip.x!;
+      this.spec.tipY = this.tip.y!;
+    }
+    this.persistSpecChanges();
   }
 
   // Erases the tail from the canvas
   remove() {
     this.pathFill.remove();
     this.pathstroke.remove();
+  }
+
+  currentStartPoint(): Point {
+    if (this.bubble) {
+      return this.bubble.calculateTailStartPoint();
+    }
+    return this.root;
+  }
+
+  public showHandles() {
+    const curveHandle = this.makeHandle(this.mid);
+
+    this.midHandle = curveHandle;
+
+    curveHandle.bringToFront();
+
+    // Setup event handlers
+    let state = "idle";
+    curveHandle.onMouseDown = () => {
+      state = "dragCurve";
+    };
+    let tipHandle: Path.Circle | undefined;
+    curveHandle.onMouseDrag = (event: ToolEvent) => {
+      if (state === "dragTip") {
+        // tipHandle can't be undefined at this point
+        const delta = event.point!.subtract(tipHandle!.position!).divide(2);
+        tipHandle!.position = event.point;
+        // moving the curve handle half as much is intended to keep
+        // the curve roughly the same shape as the tip moves.
+        // It might be more precise if we moved it a distance
+        // proportional to how close it is to the tip to begin with.
+        // Then again, we may decide to constrain it to stay
+        // equidistant from the root and tip.
+        curveHandle.position = curveHandle.position!.add(delta);
+      } else if (state === "dragCurve") {
+        curveHandle.position = event.point;
+      } else {
+        return;
+      }
+
+      const startPoint = this.currentStartPoint(); // Refresh the calculation, in case the content element moved.
+
+      const newTipPosition = tipHandle ? tipHandle.position! : this.tip;
+      this.updatePoints(startPoint, newTipPosition, curveHandle.position!);
+      curveHandle.bringToFront();
+
+      // Update this.spec.tips to reflect the new handle positions
+      this.spec.tipX = newTipPosition.x!;
+      this.spec.tipY = newTipPosition.y!;
+      this.spec.midpointX = curveHandle!.position!.x!;
+      this.spec.midpointY = curveHandle!.position!.y!;
+      this.persistSpecChanges();
+    };
+    if (!this.spec.joiner) {
+      // usual case...we want a handle for the tip as well.
+      tipHandle = this.makeHandle(this.tip);
+      tipHandle.onMouseDown = () => {
+        state = "dragTip";
+      };
+      tipHandle.onMouseUp = curveHandle.onMouseUp = () => {
+        state = "idle";
+      };
+      tipHandle.onMouseDrag = curveHandle.onMouseDrag;
+    }
+  }
+
+  private persistSpecChanges() {
+    if (this.bubble) {
+      this.bubble.persistBubbleSpecWithoutMonitoring();
+    }
+  }
+
+  // Helps determine unique names for the handles
+  static handleIndex = 0;
+
+  private makeHandle(tip: Point): Path.Circle {
+    this.handleLayer.activate();
+    const result = new Path.Circle(tip, 8);
+    result.strokeColor = new Color("aqua");
+    result.strokeWidth = 2;
+    result.fillColor = new Color("white");
+    // We basically want the bubbles transparent, especially for the tip, so
+    // you can see where the tip actually ends up. But if it's perfectly transparent,
+    // paper.js doesn't register hit tests on the transparent part. So go for a very
+    // small alpha.
+    result.fillColor.alpha = 0.01;
+    result.name = "handle" + Tail.handleIndex++;
+    return result;
   }
 }
