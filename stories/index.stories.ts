@@ -1,21 +1,44 @@
 //import { document, console } from 'global';
 import { storiesOf } from "@storybook/html";
-import { setup } from "paper";
+import { setup, Point, project, Layer } from "paper";
 import Comical from "../src/comical";
 import Bubble from "../src/bubble";
+import { Tail } from "../src/tail";
 
 storiesOf("comical", module)
   // I don't think we need a story for the tail by itself any more
-  // .add("drag tail", () => {
-  //   const canvas = document.createElement("canvas");
-  //   canvas.height = 500;
-  //   canvas.width = 500;
-  //   setup(canvas);
-  //   const start = new Point(100, 100);
-  //   const tip = start.add(new Point(200, -50));
-  //   Bubble.drawTail(start, Bubble.defaultMid(start, tip), tip);
-  //   return canvas;
-  // })
+  .add("drag tail", () => {
+    const canvas = document.createElement("canvas");
+    canvas.height = 500;
+    canvas.width = 500;
+    setup(canvas);
+    const start = new Point(100, 100);
+    const tip = start.add(new Point(200, 150));
+    const layer1 = project!.activeLayer;
+    const layer2 = new Layer();
+    const handleLayer = new Layer();
+    project!.addLayer(layer2);
+    project!.addLayer(handleLayer);
+    const mid = Bubble.defaultMid(start, tip);
+    const tail = new Tail(
+      start,
+      tip,
+      mid,
+      layer1,
+      layer2,
+      handleLayer,
+      {
+        tipX: tip.x!,
+        tipY: tip.y!,
+        midpointX: mid.x!,
+        midpointY: mid.y!
+      },
+      undefined
+    );
+    tail.debugMode = true;
+    tail.showHandles();
+    return canvas;
+  })
   // Drop this test for now...drawing multiple connected shapes, including tails,
   // will come back eventually.
   // .add("tail on bubbles", () => {
