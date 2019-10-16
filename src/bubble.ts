@@ -311,11 +311,11 @@ export default class Bubble {
     this.innerShape.strokeWidth = 0; // No outline
     this.innerShape.scale(0.99); // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
 
-    this.innerShape.fillColor = this.backgroundColor();
+    this.innerShape.fillColor = this.getBackgroundColor();
     this.adjustSizeAndPosition();
   }
 
-  public backgroundColor(): Color {
+  public getBackgroundColor(): Color {
     const spec = this.getFullSpec();
     // enhance: we want to do gradients if the spec calls for it by having more than one color.
     // Issue: sharing the gradation process with any tails (and maybe
@@ -365,20 +365,9 @@ export default class Bubble {
     // it turns off the mutation observer while updating the spec to match.
     // Such a method would be useful for updating the spec when the tail is dragged,
     // and perhaps for other things.
-    let tailChanged = false;
-    this.tails.forEach((tail, index) => {
-      if (tail.adjustRoot(contentCenter)) {
-        tailChanged = true;
-      }
+    this.tails.forEach(tail => {
+      tail.adjustRoot(contentCenter);
     });
-    if (tailChanged) {
-      // if no tail changed we MUST NOT modify the element,
-      // as doing so will trigger the mutation observer.
-      // Even if it did, we don't want to trigger a recursive call.
-      this.callWithMonitoringDisabled(() => {
-        this.setBubbleSpec(this.spec);
-      });
-    }
     // Now, look for a child whose joiner should be our center, and adjust that.
     const child = Comical.findChild(this);
     if (child) {
@@ -389,7 +378,7 @@ export default class Bubble {
   private adjustJoiners(newTip: Point): void {
     this.tails.forEach((tail: Tail) => {
       if (tail.spec.joiner && tail.adjustTip(newTip)) {
-        this.persistBubbleSpec();
+        this.persistBubbleSpecWithoutMonitoring();
       }
     });
   }

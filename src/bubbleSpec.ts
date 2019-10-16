@@ -14,7 +14,11 @@ export interface BubbleSpecPattern {
   tails?: TailSpec[];
   level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
   borderStyle?: string; // not implemented or fully designed yet
-  backgroundColors?: string[]; //  just 1 color for solid, multiple for gradient. Omit for white. Top to bottom.
+  // Just 1 color for solid, multiple for gradient (top to bottom). Omit for white.
+  // Individual strings can be things that can be passed to paper.js to define colors.
+  // Typical CSS color names are supported, and also #RRGGBB. Possibly others, but lets not
+  // count on any more options yet.
+  backgroundColors?: string[];
   outerBorderColor?: string; // omit for black; not implemented.
   // bubbles on the same level with this property are linked in an order specified by this.
   // bubbles without order (or with order zero) are not linked.

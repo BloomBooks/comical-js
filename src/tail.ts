@@ -47,7 +47,7 @@ export class Tail {
 
   private getFillColor(): Color {
     if (this.bubble) {
-      return this.bubble.backgroundColor();
+      return this.bubble.getBackgroundColor();
     }
     return Comical.backColor;
   }
@@ -117,13 +117,13 @@ export class Tail {
     this.pathFill.onClick = action;
   }
 
-  adjustRoot(newRoot: Point): boolean {
+  adjustRoot(newRoot: Point): void {
     const delta = newRoot.subtract(this.root!).divide(2);
     if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
       // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
       // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
       // freezes the whole page.
-      return false;
+      return;
     }
     const newMid = this.mid.add(delta);
     this.updatePoints(newRoot, this.tip, newMid);
@@ -134,16 +134,16 @@ export class Tail {
       this.spec.midpointX = this.mid.x!;
       this.spec.midpointY = this.mid.y!;
     }
-    return true;
+    this.persistSpecChanges();
   }
 
-  adjustTip(newTip: Point): boolean {
+  adjustTip(newTip: Point): void {
     const delta = newTip.subtract(this.tip!).divide(2);
     if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
       // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
       // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
       // freezes the whole page.
-      return false;
+      return;
     }
     const newMid = this.mid.add(delta);
     this.updatePoints(this.root, newTip, newMid);
@@ -156,7 +156,7 @@ export class Tail {
       this.spec.tipX = this.tip.x!;
       this.spec.tipY = this.tip.y!;
     }
-    return true;
+    this.persistSpecChanges();
   }
 
   // Erases the tail from the canvas
@@ -214,10 +214,7 @@ export class Tail {
       this.spec.tipY = newTipPosition.y!;
       this.spec.midpointX = curveHandle!.position!.x!;
       this.spec.midpointY = curveHandle!.position!.y!;
-
-      if (this.bubble) {
-        this.bubble.persistBubbleSpecWithoutMonitoring();
-      }
+      this.persistSpecChanges();
     };
     if (!this.spec.joiner) {
       // usual case...we want a handle for the tip as well.
@@ -229,6 +226,12 @@ export class Tail {
         state = "idle";
       };
       tipHandle.onMouseDrag = curveHandle.onMouseDrag;
+    }
+  }
+
+  private persistSpecChanges() {
+    if (this.bubble) {
+      this.bubble.persistBubbleSpecWithoutMonitoring();
     }
   }
 

@@ -219,16 +219,7 @@ export default class Comical {
     if (!childBubble) {
       childBubble = new Bubble(childElement);
     }
-    const family = Comical.allBubbles
-      .filter(
-        x => x.getBubbleSpec().level === familyLevel && x.getBubbleSpec().order
-      )
-      .sort(
-        (a, b) =>
-          (a.getBubbleSpec().order || -1) - (b.getBubbleSpec().order || -1)
-      );
-    // we set order on parentBubble, so there is at least one in the family.
-    const lastInFamily = family[family.length - 1];
+    const lastInFamily = Comical.getLastInFamily(familyLevel);
     const maxOrder = lastInFamily.getBubbleSpec().order || 1;
     const tip = lastInFamily.calculateTailStartPoint();
     const root = childBubble.calculateTailStartPoint();
@@ -261,10 +252,20 @@ export default class Comical {
     // change other properties,...
   }
 
+  private static getLastInFamily(familyLevel: number | undefined): Bubble {
+    const family = Comical.allBubbles
+      .filter(
+        x => x.getBubbleSpec().level === familyLevel && x.getBubbleSpec().order
+      )
+      .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
+    // we set order on parentBubble, so there is at least one in the family.
+    return family[family.length - 1];
+  }
+
   public static findChild(bubble: Bubble): Bubble | undefined {
     const familyLevel = bubble.getSpecLevel();
-    const familyOrder = bubble.getBubbleSpec().order || -1;
-    if (familyOrder < 0) {
+    const orderWithinFamily = bubble.getBubbleSpec().order;
+    if (!orderWithinFamily) {
       return undefined;
     }
     const family = Comical.allBubbles
@@ -272,24 +273,21 @@ export default class Comical {
         x =>
           x.getBubbleSpec().level === familyLevel &&
           x.getBubbleSpec().order &&
-          (x.getBubbleSpec().order || -1) > familyOrder
+          x.getBubbleSpec().order! > orderWithinFamily
       )
-      .sort(
-        (a, b) =>
-          (a.getBubbleSpec().order || -1) - (b.getBubbleSpec().order || -1)
-      );
-    if (family.length) {
+      .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
+    if (family.length > 0) {
       return family[0];
     }
     return undefined;
   }
 
   // Return the parents of the bubble. The first item in the array
-  // is the ultimate parent (if any); any intermediate bubbles are returned too.
+  // is the earliest ancestor (if any); any intermediate bubbles are returned too.
   public static findParents(bubble: Bubble): Bubble[] {
     const familyLevel = bubble.getSpecLevel();
-    const familyOrder = bubble.getBubbleSpec().order || -1;
-    if (familyOrder < 0) {
+    const orderWithinFamily = bubble.getBubbleSpec().order;
+    if (!orderWithinFamily) {
       return [];
     }
     return Comical.allBubbles
@@ -297,12 +295,9 @@ export default class Comical {
         x =>
           x.getBubbleSpec().level === familyLevel &&
           x.getBubbleSpec().order &&
-          (x.getBubbleSpec().order || Number.MAX_VALUE) < familyOrder
+          x.getBubbleSpec().order! < orderWithinFamily
       )
-      .sort(
-        (a, b) =>
-          (a.getBubbleSpec().order || -1) - (b.getBubbleSpec().order || -1)
-      );
+      .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
   }
 
   public static bubbleVersion = "1.0";
