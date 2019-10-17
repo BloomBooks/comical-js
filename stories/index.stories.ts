@@ -360,7 +360,8 @@ storiesOf("comical", module)
         style: "caption",
         tails: [],
         level: 1,
-        backgroundColors: ["#FFFFFF", "#DFB28B"]
+        backgroundColors: ["#FFFFFF", "#DFB28B"],
+        shadowOffset: 5
       });
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
