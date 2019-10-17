@@ -10,7 +10,7 @@
 // for a finished HTML document that doesn't depend on Javascript.
 export interface BubbleSpecPattern {
   version?: string; // currently 1.0
-  style?: string; // currently one of speech or shout
+  style?: string; // currently one of speech or shout or caption
   tails?: TailSpec[];
   level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
   borderStyle?: string; // not implemented or fully designed yet
@@ -43,6 +43,7 @@ export interface TailSpec {
   midpointX: number; // notionally, tip's curve passes through this point
   midpointY: number;
   joiner?: boolean;
+  style?: string; // currently one of arc or straight
 }
 // Do we need to specify a width? Other attributes for bezier curve?
 // Current design: start with three points, the target, midpoint, and the root (center of the text block).

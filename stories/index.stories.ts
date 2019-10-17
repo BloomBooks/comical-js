@@ -13,7 +13,7 @@ import {
 } from "paper";
 import Comical from "../src/comical";
 import Bubble from "../src/bubble";
-import { Tail } from "../src/tail";
+import { ArcTail } from "../src/arcTail";
 
 storiesOf("comical", module)
   .add("export gradient svg of scaled group broken", () => {
@@ -108,7 +108,7 @@ storiesOf("comical", module)
     project!.addLayer(layer2);
     project!.addLayer(handleLayer);
     const mid = Bubble.defaultMid(start, tip);
-    const tail = new Tail(
+    const tail = new ArcTail(
       start,
       tip,
       mid,
@@ -124,6 +124,7 @@ storiesOf("comical", module)
       undefined
     );
     tail.debugMode = true;
+    tail.makeShapes();
     tail.showHandles();
     return canvas;
   })
@@ -295,10 +296,12 @@ storiesOf("comical", module)
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
       const bubble1 = new Bubble(div1);
+      var tail = Bubble.makeDefaultTail(div1);
+      tail.style = "straight";
       bubble1.setBubbleSpec({
         version: "1.0",
         style: "speech",
-        tails: [Bubble.makeDefaultTail(div1)],
+        tails: [tail],
         level: 1
       });
 
