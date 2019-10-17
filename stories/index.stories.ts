@@ -322,7 +322,7 @@ storiesOf("comical", module)
     button.style.left = "0";
     return wrapDiv;
   })
-  .add("two captions on picture", () => {
+  .add("three captions on picture", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
     wrapDiv.style.background =
@@ -346,6 +346,15 @@ storiesOf("comical", module)
     );
     div2.setAttribute("contenteditable", "true");
 
+    var div3 = makeTextBlock(
+      wrapDiv,
+      "This is someone outside speaking.",
+      100,
+      250,
+      150
+    );
+    div3.setAttribute("contenteditable", "true");
+
     // convertBubbleJsonToCanvas needs to see the divs laid out in their eventual positions
     window.setTimeout(() => {
       const bubble1 = new Bubble(div1);
@@ -366,6 +375,15 @@ storiesOf("comical", module)
         backgroundColors: ["#FFFFFF", "#DFB28B"],
         shadowOffset: 5
       });
+
+      const bubble3 = new Bubble(div3);
+      bubble3.setBubbleSpec({
+        version: "1.0",
+        style: "pointedArcs",
+        tails: [],
+        level: 1
+      });
+
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
 
