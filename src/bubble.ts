@@ -1,4 +1,13 @@
-import { Point, Color, Item, Shape, project, Layer } from "paper";
+import {
+  Point,
+  Color,
+  Item,
+  Shape,
+  project,
+  Layer,
+  Gradient,
+  GradientStop
+} from "paper";
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import Comical from "./comical";
 import { Tail } from "./tail";
@@ -7,11 +16,11 @@ import { Tail } from "./tail";
 // and handles:
 // - storing and retrieving the BubbleSpec that represents the persistent state of
 // the Bubble from the element's data-bubble attribute;
-// - creating paper.js shapes representing the bubble and tails
+// - creating paper.js shapes (technically Items) representing the shapes of the bubble and tails
 // - positioning and sizing those shapes based on the position and size of the wrapped element
 // - automatically repositioning them when the wrapped element changes
 // - creating handles on the tails to allow the user to drag them, and updating
-// the data-bubble as well as the paper.js shapes when this happens
+// the data-bubble as well as the shapes when this happens
 // - allowing the Bubble to be dragged, and updating the wrapped element's position (ToDo)
 export default class Bubble {
   // The element to wrap with a bubble
@@ -20,13 +29,17 @@ export default class Bubble {
   // It is private because we want to try to ensure that callers go through the saveBubbleSpec() setter method,
   // because it's important that changes here get persisted not just in this instance's memory but additionally to the HTML as well.
   private spec: BubbleSpec;
-  // the main shape of the bubble, including its border
-  private shape: Item;
-  // a clone of shape with no border and an appropriate fill; drawn after all shapes
+  // the main shape of the bubble, including its border. Although we think of this as a shape,
+  // and it determines the shape of the bubble, it may not actually be a paper.js Shape.
+  // When it's simply obtained from an svg, it's usually some kind of group.
+  // When we extract a single outline from the svg (or eventually make one algorithmically),
+  // it will most likely be a Path.
+  private outline: Item;
+  // a clone of this.outline with no border and an appropriate fill; drawn after all outlines
   // to fill them in and erase any overlapping borders.
-  private innerShape: Item;
+  private fillArea: Item;
   // contentHolder is a shape which is a required part of an SVG object used as
-  // a bubble. It should be a rectangle in the SVG; it comes out as a Shape
+  // a bubble. It should be a rectangle in the SVG; it currently comes out as a Shape
   // when the SVG is converted to a paper.js object.
   // (We can also cause it to come out as a Path, by setting expandShapes: true
   // in the getItem options).
@@ -230,8 +243,11 @@ export default class Bubble {
     }
   }
 
-  // The root method to call to cause this object to draw itself
-  public makeShapes() {
+  // The root method to call to cause this object to make its shapes,
+  // adjust their sizes to match the content,
+  // and sets up monitoring so the shapes continue to adjust as the content
+  // element size and position change.
+  public initialize() {
     this.initializeLayers();
 
     // To keep things clean we discard old tails before we start.
@@ -242,8 +258,9 @@ export default class Bubble {
     this.tails = [];
 
     // Make the bubble part of the bubble+tail
-    this.loadShapeAsync(this.getStyle(), (newlyLoadedShape: Shape) => {
-      this.wrapShapeAroundDiv(newlyLoadedShape);
+    this.loadShapeAsync(this.getStyle(), (newlyLoadedShape: Item) => {
+      this.makeShapes(newlyLoadedShape);
+      this.adjustSizeAndPosition();
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
 
     // Make any tails the bubble should have
@@ -277,10 +294,12 @@ export default class Bubble {
     return svg;
   }
 
-  // Loads the shape corresponding to the specified bubbleStyle, and calls the onShapeLoadeed() callback once the shape is finished loading (passing it in as the Shape parameter)
+  // Loads the shape (technically Item) corresponding to the specified bubbleStyle,
+  // and calls the onShapeLoadeed() callback once the shape is finished loading
+  // (passing it in as the shape parameter)
   private loadShapeAsync(
     bubbleStyle: string,
-    onShapeLoaded: (s: Item) => void
+    onShapeLoaded: (shape: Item) => void
   ) {
     const svg = Bubble.getShapeSvgString(bubbleStyle);
 
@@ -296,8 +315,8 @@ export default class Bubble {
   }
 
   // Attaches the specified shape to this object's content element
-  private wrapShapeAroundDiv(shape: Item) {
-    this.shape = shape;
+  private makeShapes(shape: Item) {
+    this.outline = shape; // should be in lower layer
 
     // if the SVG contains a single shape (marked with an ID) that is all
     // we need to draw, we can replace the whole-svg item with a path derived
@@ -323,8 +342,8 @@ export default class Bubble {
     });
     if (outlineShape) {
       shape.remove();
-      this.shape = (outlineShape as Shape).toPath();
-      project!.activeLayer.addChild(this.shape);
+      this.outline = (outlineShape as Shape).toPath();
+      this.lowerLayer.addChild(this.outline);
     }
     this.hScale = this.vScale = 1; // haven't scaled it at all yet.
     // recursive: true is required to see any but the root "g" element
@@ -338,17 +357,17 @@ export default class Bubble {
     });
 
     this.contentHolder.strokeWidth = 0;
-    this.innerShape = this.shape.clone({ insert: false });
-    this.innerShape.onClick = () => {
+    this.fillArea = this.outline.clone({ insert: false });
+    this.fillArea.onClick = () => {
       Comical.activateBubble(this);
     };
-    this.upperLayer.addChild(this.innerShape);
 
-    this.innerShape.strokeWidth = 0; // No outline
-    this.innerShape.scale(0.99); // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
+    this.fillArea.strokeWidth = 0; // No outline
+    this.fillArea.scale(0.99); // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
 
-    this.innerShape.fillColor = this.getBackgroundColor();
-    this.adjustSizeAndPosition();
+    this.fillArea.fillColor = this.getBackgroundColor();
+
+    this.upperLayer.addChild(this.fillArea);
   }
 
   public getBackgroundColor(): Color {
@@ -357,34 +376,46 @@ export default class Bubble {
     // Issue: sharing the gradation process with any tails (and maybe
     // other bubbles in family??)
     if (spec.backgroundColors && spec.backgroundColors.length) {
-      if (spec.backgroundColors.length == 1) {
+      // The checks for fillArea and bounds relate to the comment below in creating a gradient.
+      if (
+        spec.backgroundColors.length === 1 ||
+        !this.fillArea ||
+        !this.fillArea.bounds
+      ) {
         return new Color(spec.backgroundColors[0]);
       }
-      const result = {
-        gradient: {
-          stops: spec.backgroundColors,
-          radial: false
-        },
-        // enhance: this is too dependent on innerShape being created, sized, and positioned before
-        // backgroundColor is called for. It's not guaranteed, for example,
-        // that innerShape is ready before tail shapes are made.
-        // Thus, this is really only good enough for a single bubble, without tails:
-        // although experimentally it seems to work with tails, there's no guarantee.
-        // Even if we figured out some alternative to return in case this.innerShape
-        // is null, we have no way to know whether it's already been sized and positioned.
-        // For linked bubbles, we need to either hide the part of the child tail
-        // that is inside the parent (but using a differently positioned gradient),
-        // or else use a single gradient for all the linked bubbles, which would
-        // require finding all the siblings, determining an overall bounding rectangle,
-        // and somehow making sure we don't use the background color until all the shapes are made.
-        // Fortunately, our current needs only require gradients for single bubbles without tails.
-        origin: this.innerShape!.bounds!.topCenter,
-        destination: this.innerShape!.bounds!.bottomCenter
-      };
-      // The above seems to work, and is what the paper.js documentation says to use as fillColor
-      // for gradients. However, the typescript definitions we're using don't allow it,
-      // so I'm just defying them.
-      return (result as any) as Color;
+
+      const gradient = new Gradient();
+      const stops: GradientStop[] = [];
+      spec.backgroundColors!.forEach(x =>
+        stops.push(new GradientStop(new Color(x)))
+      );
+      gradient.stops = stops;
+
+      // enhance: this is too dependent on fillArea being created, sized, and positioned before
+      // backgroundColor is called for. It's not guaranteed, for example,
+      // that fillArea is ready before tail shapes are made.
+      // Thus, this is really only good enough for a single bubble, without tails:
+      // although experimentally it seems to work with tails, there's no guarantee.
+      // So, if somehow we don't have a fillArea or fillArea.bounds, we arrange
+      // above to just return the first color.
+      // But note, even if we have fillArea and fillArea.bounds,
+      // we have no way to know whether it's already been sized and positioned in complex cases.
+      // For linked bubbles, we need to either hide the part of the child tail
+      // that is inside the parent (but using a differently positioned gradient),
+      // or else use a single gradient for all the linked bubbles, which would
+      // require finding all the siblings, determining an overall bounding rectangle,
+      // and somehow making sure we don't use the background color until all the shapes are made.
+      // Fortunately, our current needs only require gradients for single bubbles without tails.
+      const gradientOrigin = this.fillArea.bounds.topCenter!;
+      const gradientDestination = this.fillArea.bounds.bottomCenter!;
+
+      const result: Color = new Color(
+        gradient,
+        gradientOrigin,
+        gradientDestination
+      );
+      return result;
     }
     return Comical.backColor;
   }
@@ -411,8 +442,8 @@ export default class Bubble {
     const desiredVScale = contentHeight / holderHeight;
     const scaleXBy = desiredHScale / this.hScale;
     const scaleYBy = desiredVScale / this.vScale;
-    this.shape.scale(scaleXBy, scaleYBy);
-    this.innerShape.scale(scaleXBy, scaleYBy);
+    this.outline.scale(scaleXBy, scaleYBy);
+    this.fillArea.scale(scaleXBy, scaleYBy);
     this.hScale = desiredHScale;
     this.vScale = desiredVScale;
     const contentLeft = this.content.offsetLeft;
@@ -421,8 +452,8 @@ export default class Bubble {
       contentLeft + contentWidth / 2,
       contentTop + contentHeight / 2
     );
-    this.shape.position = contentCenter;
-    this.innerShape.position = contentCenter;
+    this.outline.position = contentCenter;
+    this.fillArea.position = contentCenter;
     // Enhance: I think we could extract from this a method updateTailSpec
     // which loops over all the tails and if any tail's spec doesn't match the tail,
     // it turns off the mutation observer while updating the spec to match.

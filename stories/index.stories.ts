@@ -195,8 +195,8 @@ storiesOf("comical", module)
       level: 1
     });
 
-    bubble1.makeShapes();
-    bubble2.makeShapes();
+    bubble1.initialize();
+    bubble2.initialize();
 
     return wrapDiv;
   })
@@ -229,7 +229,7 @@ storiesOf("comical", module)
       level: 1
     });
     setTimeout(() => {
-      bubble.makeShapes();
+      bubble.initialize();
     }, 200);
     addFinishButton(wrapDiv);
     return wrapDiv;
@@ -263,7 +263,7 @@ storiesOf("comical", module)
     });
 
     setTimeout(() => {
-      bubble.makeShapes();
+      bubble.initialize();
     }, 200);
 
     addButton(wrapDiv, "Save and Reload", () => {
@@ -360,8 +360,6 @@ storiesOf("comical", module)
         style: "caption",
         tails: [],
         level: 1,
-        // this is roughly the light-blue to almost-white used in some of the design document captions
-        //backgroundColors: ["#B9E4FA", "#F6FAFF"]
         backgroundColors: ["#FFFFFF", "#DFB28B"]
       });
       Comical.convertBubbleJsonToCanvas(wrapDiv);

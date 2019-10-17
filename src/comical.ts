@@ -160,7 +160,7 @@ export default class Comical {
 
       const [lowerLayer, upperLayer] = levelToLayer[zLevel];
       bubble.setLayers(lowerLayer, upperLayer, Comical.handleLayer);
-      bubble.makeShapes();
+      bubble.initialize();
       bubbles.push(bubble);
     }
   }
