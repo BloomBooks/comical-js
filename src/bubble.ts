@@ -11,6 +11,8 @@ import {
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import Comical from "./comical";
 import { Tail } from "./tail";
+import { ArcTail } from "./arcTail";
+import { StraightTail } from "./straightTail";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles:
@@ -540,16 +542,35 @@ export default class Bubble {
     let startPoint = this.calculateTailStartPoint();
 
     this.upperLayer.activate();
-    let tail = new Tail(
-      startPoint,
-      tipPoint,
-      midPoint,
-      this.lowerLayer,
-      this.upperLayer,
-      this.handleLayer,
-      desiredTail,
-      this
-    );
+    let tail: Tail;
+    switch (desiredTail.style) {
+      case "straight":
+        tail = new StraightTail(
+          startPoint,
+          tipPoint,
+          this.lowerLayer,
+          this.upperLayer,
+          this.handleLayer,
+          desiredTail,
+          this
+        );
+        break;
+      case "arc":
+      default:
+        tail = new ArcTail(
+          startPoint,
+          tipPoint,
+          midPoint,
+          this.lowerLayer,
+          this.upperLayer,
+          this.handleLayer,
+          desiredTail,
+          this
+        );
+        break;
+    }
+
+    tail.makeShapes();
     tail.onClick(() => {
       Comical.activateBubble(this);
     });
