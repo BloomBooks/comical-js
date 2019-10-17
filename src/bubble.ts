@@ -6,7 +6,10 @@ import {
   project,
   Layer,
   Gradient,
-  GradientStop
+  GradientStop,
+  Path,
+  Rectangle,
+  Group
 } from "paper";
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import { Comical } from "./comical";
@@ -68,6 +71,13 @@ export class Bubble {
   private lowerLayer: Layer;
   private upperLayer: Layer;
   private handleLayer: Layer;
+
+  // true if we computed a shape for the bubble (in such a way that more than just
+  // its size depends on the shape and size of the content element).
+  private shapeIsComputed: boolean;
+  // Remember the size of the content element when we last computed the bubble shape.
+  oldContentWidth: number = 0;
+  oldContentHeight: number = 0;
 
   public constructor(element: HTMLElement) {
     this.content = element;
@@ -265,7 +275,7 @@ export class Bubble {
     this.tails = [];
 
     // Make the bubble part of the bubble+tail
-    this.loadShapeAsync(this.getStyle(), (newlyLoadedShape: Item) => {
+    this.loadShapeAsync((newlyLoadedShape: Item) => {
       this.makeShapes(newlyLoadedShape);
       this.adjustSizeAndPosition();
     }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
@@ -301,13 +311,34 @@ export class Bubble {
     return svg;
   }
 
+  // Get the main shape immediately if computed.
+  // return undefined if the current bubble style is not a computed shape.
+  private getComputedShape(): Item | undefined {
+    if (this.content) {
+      // remember the shape of the content from the most recent call.
+      this.oldContentHeight = this.content.offsetHeight;
+      this.oldContentWidth = this.content.offsetWidth;
+    }
+    const bubbleStyle = this.getStyle();
+    this.lowerLayer.activate(); // at least for now, the main shape always goes in this layer.
+    if (bubbleStyle === "pointedArcs") {
+      return this.makePointedArcBubble();
+    }
+    return undefined;
+  }
+
   // Loads the shape (technically Item) corresponding to the specified bubbleStyle,
   // and calls the onShapeLoadeed() callback once the shape is finished loading
   // (passing it in as the shape parameter)
-  private loadShapeAsync(
-    bubbleStyle: string,
-    onShapeLoaded: (shape: Item) => void
-  ) {
+  private loadShapeAsync(onShapeLoaded: (shape: Item) => void) {
+    const bubbleStyle = this.getStyle();
+    this.shapeIsComputed = false;
+    var shape = this.getComputedShape();
+    if (shape) {
+      this.shapeIsComputed = true;
+      onShapeLoaded(shape);
+      return;
+    }
     const svg = Bubble.getShapeSvgString(bubbleStyle);
 
     this.lowerLayer.activate(); // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
@@ -323,7 +354,10 @@ export class Bubble {
 
   // Attaches the specified shape to this object's content element
   private makeShapes(shape: Item) {
-    this.outline = shape; // should be in lower layer
+    var oldOutline = this.outline;
+    var oldFillArea = this.fillArea;
+    this.lowerLayer.activate();
+    this.outline = shape;
 
     // if the SVG contains a single shape (marked with an ID) that is all
     // we need to draw, we can replace the whole-svg item with a path derived
@@ -352,6 +386,10 @@ export class Bubble {
       this.outline = (outlineShape as Shape).toPath();
       this.lowerLayer.addChild(this.outline);
     }
+    if (oldOutline) {
+      this.outline.insertBelow(oldOutline);
+      oldOutline.remove();
+    }
     this.hScale = this.vScale = 1; // haven't scaled it at all yet.
     // recursive: true is required to see any but the root "g" element
     // (apparently contrary to documentation).
@@ -363,6 +401,9 @@ export class Bubble {
       }
     });
     if (this.spec.shadowOffset) {
+      if (this.shadowShape) {
+        this.shadowShape.remove();
+      }
       this.shadowShape = this.outline.clone({ deep: true });
       this.shadowShape.insertBelow(this.outline);
       this.shadowShape.fillColor = this.shadowShape.strokeColor;
@@ -374,12 +415,22 @@ export class Bubble {
       Comical.activateBubble(this);
     };
 
-    this.fillArea.strokeWidth = 0; // No outline
-    this.fillArea.scale(0.99); // Make the top layer (which has no outline) slightly smaller (to prevent the upper fill layer from encroaching on the outline from the lower layer
+    // If we get rid of the stroke of the fill area, then it hides the outline
+    // completely. Then we have to try to guess how much to shrink it so it
+    // doesn't hide the outline. And if the outline border is thicker, we
+    // have to shrink it more. Better to leave the border properties,
+    // but make that part of the fill area transparent.
+    this.fillArea.strokeColor = new Color("white");
+    this.fillArea.strokeColor.alpha = 0;
 
     this.fillArea.fillColor = this.getBackgroundColor();
 
-    this.upperLayer.addChild(this.fillArea);
+    if (oldFillArea) {
+      this.fillArea.insertBelow(oldFillArea);
+      oldFillArea.remove();
+    } else {
+      this.upperLayer.addChild(this.fillArea);
+    }
   }
 
   public getBackgroundColor(): Color {
@@ -453,6 +504,15 @@ export class Bubble {
         this.adjustSizeAndPosition();
       }, 100);
       return;
+    }
+    if (
+      this.shapeIsComputed &&
+      Math.abs(contentWidth - this.oldContentWidth) +
+        Math.abs(contentHeight - this.oldContentHeight) >
+        0.001
+    ) {
+      const shape = this.getComputedShape()!;
+      this.makeShapes(shape);
     }
     if (this.contentHolder) {
       var holderWidth = (this.contentHolder as any).size.width;
@@ -655,6 +715,114 @@ export class Bubble {
     const deltaX = target.x! - start.x!;
     const deltaY = target.y! - start.y!;
     return new Point(xmid - deltaY / 10, ymid + deltaX / 10);
+  }
+
+  // This is a helper method which, possibly with some enhancements,
+  // should be useful for making a variety of computed bubble types.
+  // It returns a Group containing a path and a content-holder rectangle
+  // as makeShapes requires, given a function that makes a path from
+  // an array of points and a center.
+  // The content-holder rectangle is made the size of the content element
+  // and placed at (borderWidth, borderWidth).
+  // Then the array of points is constructed in an area of width borderWidth
+  // around that rectangle, at least padWidth away from the inner rectangle.
+  // They are roughly, but not exactly, equally spaced and the number of them
+  // is proportional to the size of the content block.
+  // Enhance: could provide some parameter to control the ratio between
+  // the border length and the number of points.
+  // Fix/enhance: for smaller blocks, the spacing may be a bit too irregular.
+  // Fix/enhance: for larger blocks, the points nearest the four corners tend to be
+  // too far apart, and the line between them may come inside the padding area.
+  makeBubbleItem(
+    borderWidth: number,
+    padWidth: number,
+    pathMaker: (points: Point[], center: Point) => Path
+  ): Item {
+    console.assert(
+      padWidth < borderWidth,
+      "padWidth is supposed to be an inner part of borderWidth and should be less than it."
+    );
+    const width = this.content.clientWidth;
+    const height = this.content.clientHeight;
+    // aiming for arcs ~40px long, but fewer than 5 would look weird.
+    const computedArcCount = Math.round(((width + height) * 2) / 40);
+    const arcCount = Math.max(computedArcCount, 5);
+    const center = new Point(width / 2 + borderWidth, height / 2 + borderWidth);
+    const contentHolder = new Shape.Rectangle(
+      new Rectangle(borderWidth, borderWidth, width, height)
+    );
+    contentHolder.remove();
+    contentHolder.name = "content-holder";
+    const angleDelta = 360 / arcCount;
+    const points: Point[] = [];
+    const widthOfSpaceForPoints = borderWidth - padWidth;
+    const heightOfSpaceForPoints = widthOfSpaceForPoints;
+    for (let i = 0; i < arcCount; i++) {
+      const delta = new Point(0, 0);
+      delta.angle = angleDelta * i;
+      delta.length = Math.max(center.x!, center.y!);
+      // Without modification, adding delta to center would make a regular
+      // polyhedron around the center.
+      // We want the points outside the contentHolder rectangle and padWidth,
+      // but closer to it as they get away from the center, putting the points on
+      // a somewhat oval shape.
+      // There's definitely room to enhance this algorithm!
+      const isXInContentArea = Math.abs(delta.x!) <= width / 2;
+      let isYInContentArea = Math.abs(delta.y!) <= height / 2;
+      // Adjust the y value of delta so it is in the space above or below the
+      // content box and its padding, unless the point is already in the area
+      // left or right of the content. It seems to work better to make this
+      // adjustment before we fiddle with the x coordinates.
+      if (isXInContentArea || !isYInContentArea) {
+        // point needs to be above or below the content box, but not outside
+        // the content + borderWidth box. For a more nearly oval shape,
+        // we put them along a slope from the center to the outside of the whole
+        // shape. So the delta.y depends inversely on how far it is horizontally
+        // from the center.
+        const xDistanceFromCenter = Math.abs(delta.x!);
+        const heightProportion = 1 - xDistanceFromCenter / width;
+        const distanceFromText =
+          heightOfSpaceForPoints * heightProportion + padWidth;
+        delta.y = (height / 2 + distanceFromText) * (delta.y! > 0 ? 1 : -1);
+      }
+      isYInContentArea = Math.abs(delta.y!) <= height / 2; // update since we changed delta.y
+      if (isYInContentArea || !isXInContentArea) {
+        // point needs to be left or right of the box (but not TOO far from it).
+        const yDistanceFromCenter = Math.abs(delta.y!);
+        const widthProportion = 1 - yDistanceFromCenter / height;
+        const distanceFromText =
+          widthOfSpaceForPoints * widthProportion + padWidth;
+        delta.x = (width / 2 + distanceFromText) * (delta.x! > 0 ? 1 : -1);
+      }
+      points.push(center.add(delta));
+    }
+    const outline = pathMaker(points, center);
+    return new Group([outline, contentHolder]);
+  }
+
+  // Make a computed bubble shape by drawing an inward arc between each pair of points
+  // in the array produced by makeBubbleItem.
+  makePointedArcBubble(): Item {
+    const borderWidth = 30;
+    const arcDepth = 10;
+    return this.makeBubbleItem(borderWidth, arcDepth, (points, center) => {
+      const outline = new Path();
+      for (let i = 0; i < points.length; i++) {
+        const start = points[i];
+        const end = i < points.length - 1 ? points[i + 1] : points[0];
+        const mid = new Point((start.x! + end.x!) / 2, (start.y! + end.y!) / 2);
+        const deltaCenter = mid.subtract(center);
+        deltaCenter.length = arcDepth;
+        const arcPoint = mid.subtract(deltaCenter);
+        const arc = new Path.Arc(start, arcPoint, end);
+        arc.remove();
+        outline.addSegments(arc.segments!);
+      }
+      outline.strokeWidth = 1;
+      outline.strokeColor = new Color("black");
+      outline.closed = true; // It should already be, but may help paper.js to treat it so.
+      return outline;
+    });
   }
 
   // The SVG contents of a round speech bubble
