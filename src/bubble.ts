@@ -35,6 +35,10 @@ export default class Bubble {
   // When we extract a single outline from the svg (or eventually make one algorithmically),
   // it will most likely be a Path.
   private outline: Item;
+  // If the item has a shadow, this makes it.
+  // We would prefer to do this with the paper.js shadow properties applied to shape,
+  // but experiment indicates that such shadows do not convert to SVG.
+  private shadowShape: Item;
   // a clone of this.outline with no border and an appropriate fill; drawn after all outlines
   // to fill them in and erase any overlapping borders.
   private fillArea: Item;
@@ -100,6 +104,7 @@ export default class Bubble {
     if (style === "caption") {
       result.backgroundColors = ["#FFFFFF", "#DFB28B"];
       result.tails = [];
+      result.shadowOffset = 5;
     }
     return result;
   }
@@ -355,6 +360,11 @@ export default class Bubble {
         return x.name === "content-holder";
       }
     });
+    if (this.spec.shadowOffset) {
+      this.shadowShape = this.outline.clone({ deep: true });
+      this.shadowShape.insertBelow(this.outline);
+      this.shadowShape.fillColor = this.shadowShape.strokeColor;
+    }
 
     this.contentHolder.strokeWidth = 0;
     this.fillArea = this.outline.clone({ insert: false });
@@ -443,6 +453,9 @@ export default class Bubble {
     const scaleXBy = desiredHScale / this.hScale;
     const scaleYBy = desiredVScale / this.vScale;
     this.outline.scale(scaleXBy, scaleYBy);
+    if (this.shadowShape) {
+      this.shadowShape.scale(scaleXBy, scaleYBy);
+    }
     this.fillArea.scale(scaleXBy, scaleYBy);
     this.hScale = desiredHScale;
     this.vScale = desiredVScale;
@@ -454,6 +467,14 @@ export default class Bubble {
     );
     this.outline.position = contentCenter;
     this.fillArea.position = contentCenter;
+    if (this.shadowShape) {
+      // We shouldn't have a shadowShape at all unless we have a shadowOffset.
+      // In case somehow we do, hide the shadow completely when that offset is
+      // falsy by putting it entirely behind the main shapes.
+      this.shadowShape.position = this.outline.position.add(
+        this.spec.shadowOffset || 0
+      );
+    }
     // Enhance: I think we could extract from this a method updateTailSpec
     // which loops over all the tails and if any tail's spec doesn't match the tail,
     // it turns off the mutation observer while updating the spec to match.
