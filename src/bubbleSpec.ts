@@ -24,6 +24,7 @@ export interface BubbleSpecPattern {
   // bubbles without order (or with order zero) are not linked.
   // Do not use negative numbers or zero as an order.
   order?: number;
+  shadowOffset?: number;
 }
 
 export interface BubbleSpec extends BubbleSpecPattern {
