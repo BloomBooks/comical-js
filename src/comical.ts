@@ -31,6 +31,8 @@ export default class Comical {
 
   static handleLayer: Layer;
 
+  static canvasParent: HTMLElement;
+
   public static convertCanvasToSvgImg(parent: HTMLElement) {
     const canvas = parent.getElementsByTagName("canvas")[0];
     if (!canvas) {
@@ -166,6 +168,7 @@ export default class Comical {
   }
 
   public static convertBubbleJsonToCanvas(parent: HTMLElement) {
+    Comical.canvasParent = parent;
     const canvas = parent.ownerDocument!.createElement("canvas");
     canvas.style.position = "absolute";
     canvas.style.top = "0";
@@ -250,6 +253,56 @@ export default class Comical {
     // Note that getting all the shapes updated properly could be nontrivial
     // if childElement already has a bubble...it may need to change shape, lose tails,
     // change other properties,...
+  }
+
+  public static getInitialChildOffset(parentElement: HTMLElement, childWidth: number, childHeight: number): number[] {
+    let offsetX = parentElement.clientWidth;
+    let offsetY = parentElement.clientHeight;
+
+    const parentBubbleSpec = Bubble.getBubbleSpec(parentElement);
+    if (parentBubbleSpec && parentBubbleSpec.tails && parentBubbleSpec.tails.length > 0) {
+      const tail = parentBubbleSpec.tails[0];
+
+      const bubbleCenterX = parentElement.offsetLeft + (parentElement.clientWidth / 2.0);
+      const bubbleCenterY = parentElement.offsetTop + (parentElement.clientHeight / 2.0);
+
+      const deltaX = tail.tipX - bubbleCenterX;
+      const deltaY = tail.tipY - bubbleCenterY;
+
+      // Place the new child in the opposite quandrant of the tail
+      if (deltaX > 0) {
+        // The tail is to the right. Place child such that its right border lines up with the parent's left border
+        offsetX = -childWidth;
+      } else {
+        // The tail is to the left. Place child to the right of the parent.
+        offsetX = parentElement.clientWidth;
+      }
+
+      if (deltaY > 0) {
+        // The tail is below the parent. Place the child above the parent.
+        offsetY = -childHeight;
+      } else {
+        // The tail is above the parent. Place the child below the parent.
+        offsetY = parentElement.clientHeight;
+      }
+    }
+
+    let positionX = parentElement.offsetLeft + offsetX;
+    let positionY = parentElement.offsetTop + offsetY;
+
+    if (positionX < 0) {
+      positionX = 0;
+    } else if (positionX  + childWidth > Comical.canvasParent.clientWidth) {
+      positionX = Comical.canvasParent.clientWidth - childWidth;
+    }
+
+    if (positionY < 0) {
+      positionY = 0;
+    } else if (positionY + childHeight > Comical.canvasParent.clientHeight) {
+      positionY = Comical.canvasParent.clientHeight - childHeight;
+    }
+
+    return [positionX, positionY];
   }
 
   private static getLastInFamily(familyLevel: number | undefined): Bubble {
