@@ -46,7 +46,7 @@ export default class Comical {
       })
       .forEach(x => x.remove());
     const svg = project!.exportSVG() as SVGElement;
-    svg.classList.add("bubble-edit-generated");
+    svg.classList.add("comical-generated");
     uniqueIds(svg);
     canvas.parentElement!.insertBefore(svg, canvas);
     canvas.remove();
@@ -170,8 +170,9 @@ export default class Comical {
     canvas.style.position = "absolute";
     canvas.style.top = "0";
     canvas.style.left = "0";
-    canvas.classList.add("bubble-edit-generated");
-    const oldSvg = parent.getElementsByClassName("bubble-edit-generated")[0];
+    canvas.classList.add("comical-generated");
+    canvas.classList.add("comical-editing");
+    const oldSvg = parent.getElementsByClassName("comical-generated")[0];
     if (oldSvg) {
       oldSvg.parentElement!.insertBefore(canvas, oldSvg);
       oldSvg.remove();

@@ -1,6 +1,6 @@
 // modify an SVG element to use unique internal IDs.
 // based on ideas from https://github.com/elderapo/react-svg-unique-id
-// This seems to do enough for what bubble-edit currently needs;
+// This seems to do enough for what Comical currently needs;
 // it's not clear that it's enough for any conceivable svg that might be
 // used to define a bubble.
 
