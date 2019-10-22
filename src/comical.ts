@@ -165,6 +165,17 @@ export default class Comical {
     }
   }
 
+  public static getMaxLevel(): number {
+    if (!Comical.allBubbles || Comical.allBubbles.length === 0) {
+      return 0;
+    }
+    let maxLevel = Number.MIN_VALUE;
+    Comical.allBubbles.forEach(
+      b => (maxLevel = Math.max(maxLevel, b.getBubbleSpec().level || 0))
+    );
+    return maxLevel;
+  }
+
   public static convertBubbleJsonToCanvas(parent: HTMLElement) {
     const canvas = parent.ownerDocument!.createElement("canvas");
     canvas.style.position = "absolute";
