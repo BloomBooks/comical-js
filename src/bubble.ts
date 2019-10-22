@@ -94,14 +94,14 @@ export default class Bubble {
         version: Comical.bubbleVersion,
         style: "none",
         tails: [],
-        level: 1
+        level: Comical.getMaxLevel() + 1
       };
     }
     const result: BubbleSpec = {
       version: Comical.bubbleVersion,
       style: style,
       tails: [Bubble.makeDefaultTail(element)],
-      level: 1
+      level: Comical.getMaxLevel() + 1
     };
     if (style === "caption") {
       result.backgroundColors = ["#FFFFFF", "#DFB28B"];
