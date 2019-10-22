@@ -2,7 +2,10 @@
   "name": "comical-js",
   "version": "0.1.0",
   "description": "Edit cartoon bubble frames around an HTML element",
-  "main": "index.js",
+  "main": "comical.min.js",
+  "types": "comical-root.d.ts",
+  // TODO: Add files {}
+
   "repository": "https://github.com/BloomBooks/comical-js.git",
   "author": "John Thomson <john_thomson@sil.org>",
   "license": "MIT",
@@ -14,20 +17,24 @@
     "@types/svg.js": "^2.3.1",
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.0.6",
+    "babel-preset-env": "^1.7.0",
+    "copy-webpack-plugin": "^5.0.4",
+    "globule": "^1.2.1",
     "npx": "^10.2.0",
     "shx": "^0.3.2",
+    "ts-loader": "^6.2.0",
     "typescript": "^3.5.3",
     "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.6"
+    "webpack-cli": "^3.3.6",
+    "webpack-merge": "^4.2.2"
   },
   "dependencies": {
+    "babel-preset-react": "^6.24.1",
     "paper": "^0.12.3"
   },
   "scripts": {
     "storybook": "start-storybook -s ./storyStatic -p 6006",
     "build-storybook": "build-storybook",
-    "makebloomdesktopdir": "shx mkdir ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\comical-js",
-    "cleanbloomdesktopdir": "shx rm ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\comical-js\\*",
-    "tobloomdesktop": "shx cp src\\*.ts ..\\BloomDesktop\\src\\BloomBrowserUI\\node_modules\\comical-js"
+    "build": "webpack --config webpack.config-prod.js"
   }
 }

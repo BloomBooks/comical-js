@@ -1,6 +1,8 @@
 {
     "compilerOptions": {
-      "outDir": "build/lib",
+      // "outDir": "build/lib",
+      // TODO: Should the d.ts files get dropped in here? All of them? One of them?
+      "outDir": "dist",
       "module": "commonjs",
       "target": "es5",
       "lib": ["es5", "es6", "es7", "es2017", "dom"],
