@@ -4,6 +4,9 @@
   "description": "Edit cartoon bubble frames around an HTML element",
   "main": "index.js",
   "types": "index.d.ts",
+  "files": [
+    "/dist/*"
+  ],
   "repository": "https://github.com/BloomBooks/comical-js.git",
   "author": "SIL Bloom Team & Contributors",
   "license": "MIT",
@@ -24,15 +27,18 @@
     "typescript": "^3.5.3",
     "webpack": "^4.39.2",
     "webpack-cli": "^3.3.6",
-    "webpack-merge": "^4.2.2"
+    "webpack-merge": "^4.2.2",
+    "babel-preset-react": "^6.24.1"
   },
   "dependencies": {
-    "babel-preset-react": "^6.24.1",
     "paper": "^0.12.3"
   },
   "scripts": {
     "storybook": "start-storybook -s ./storyStatic -p 6006",
     "build-storybook": "build-storybook",
-    "build": "shx rm -r dist/ && webpack --config webpack.config-prod.js"
+    "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
+    "build": "shx rm -rf dist/ && webpack --config webpack.config-prod.js && shx cp package-publish.json dist/package.json && shx cp *.md dist",
+    "Notice that we do 'publish dist', because we want to publish is just the contents of the dist directory": "//",
+    "So we want `yarn publish dist`": "//"
   }
 }
