@@ -55,7 +55,7 @@ export class Bubble {
   // It is identified by having id="contentHolder". The bubble shape gets stretched
   // and positioned so this rectangle corresponds to the element that the
   // bubble is wrapping.
-  private contentHolder: Item;
+  private contentHolder: Item | undefined;
   // The tail objects (which include things like its PaperJs underlying objects and how to draw them).
   // Contains more details than the "tips" array in the spec object
   // The elements in each array should correspond, though.
@@ -434,6 +434,12 @@ export class Bubble {
 
   // Adjusts the size and position of the shapes/tails to match the content element
   adjustSizeAndPosition() {
+    if (this.spec.style === "none") {
+      // No need to adjust the bubble or anything because there isn't one.
+      // (Also, if the style is none, then lots of subsequent variables could be undefined/missing/invalid)
+      return;
+    }
+
     var contentWidth = -1;
     var contentHeight = -1;
 
@@ -448,19 +454,21 @@ export class Bubble {
       }, 100);
       return;
     }
-    var holderWidth = (this.contentHolder as any).size.width;
-    var holderHeight = (this.contentHolder as any).size.height;
-    const desiredHScale = contentWidth / holderWidth;
-    const desiredVScale = contentHeight / holderHeight;
-    const scaleXBy = desiredHScale / this.hScale;
-    const scaleYBy = desiredVScale / this.vScale;
-    this.outline.scale(scaleXBy, scaleYBy);
-    if (this.shadowShape) {
-      this.shadowShape.scale(scaleXBy, scaleYBy);
+    if (this.contentHolder) {
+      var holderWidth = (this.contentHolder as any).size.width;
+      var holderHeight = (this.contentHolder as any).size.height;
+      const desiredHScale = contentWidth / holderWidth;
+      const desiredVScale = contentHeight / holderHeight;
+      const scaleXBy = desiredHScale / this.hScale;
+      const scaleYBy = desiredVScale / this.vScale;
+      this.outline.scale(scaleXBy, scaleYBy);
+      if (this.shadowShape) {
+        this.shadowShape.scale(scaleXBy, scaleYBy);
+      }
+      this.fillArea.scale(scaleXBy, scaleYBy);
+      this.hScale = desiredHScale;
+      this.vScale = desiredVScale;
     }
-    this.fillArea.scale(scaleXBy, scaleYBy);
-    this.hScale = desiredHScale;
-    this.vScale = desiredVScale;
     const contentLeft = this.content.offsetLeft;
     const contentTop = this.content.offsetTop;
     const contentCenter = new Point(
