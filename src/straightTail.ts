@@ -1,7 +1,7 @@
 import { Tail } from "./tail";
 import { Point, Layer, Path, Color } from "paper";
 import { TailSpec } from "bubbleSpec";
-import Bubble from "bubble";
+import { Bubble } from "bubble";
 
 //  straight tail is a simple triangle, with only the tip handle
 export class StraightTail extends Tail {

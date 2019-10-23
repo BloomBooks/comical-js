@@ -9,7 +9,7 @@ import {
   GradientStop
 } from "paper";
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
-import Comical from "./comical";
+import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
 import { StraightTail } from "./straightTail";
@@ -24,7 +24,7 @@ import { StraightTail } from "./straightTail";
 // - creating handles on the tails to allow the user to drag them, and updating
 // the data-bubble as well as the shapes when this happens
 // - allowing the Bubble to be dragged, and updating the wrapped element's position (ToDo)
-export default class Bubble {
+export class Bubble {
   // The element to wrap with a bubble
   public content: HTMLElement;
   // Represents the state which is persisted into

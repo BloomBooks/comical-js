@@ -1,6 +1,6 @@
 import { Color, project, setup, Layer } from "paper";
 
-import Bubble from "./bubble";
+import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
 import { BubbleSpec } from "bubbleSpec";
 
@@ -20,7 +20,7 @@ import { BubbleSpec } from "bubbleSpec";
 // Finally, Comical can replace a finished bubble canvas with a single SVG, resulting in
 // a visually identical set of bubbles that can be rendered without using Canvas and
 // Javascript.
-export default class Comical {
+export class Comical {
   static backColor = new Color("white");
 
   static bubbleLists = new Map<Element, Bubble[]>();

@@ -1,7 +1,7 @@
 import { Path, Point, Color, Layer, ToolEvent } from "paper";
-import Comical from "./comical";
+import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
-import Bubble from "./bubble";
+import { Bubble } from "./bubble";
 
 // This is an abstract base class for tails. A concrete class must at least
 // override makeShapes; if it has additional control points, it will probably

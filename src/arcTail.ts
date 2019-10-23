@@ -1,7 +1,7 @@
 import { Tail } from "./tail";
 import { Point, Layer, Path, ToolEvent, Color } from "paper";
 import { TailSpec } from "bubbleSpec";
-import Bubble from "bubble";
+import { Bubble } from "bubble";
 
 // An ArcTail is currently our default: a tail that is an arc from the tip through a third
 // control point, mid, which can also be dragged.
