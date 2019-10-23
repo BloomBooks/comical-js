@@ -31,6 +31,10 @@ export class Comical {
 
   static handleLayer: Layer;
 
+  static activeBubbleListener:
+    | ((active: HTMLElement | undefined) => void)
+    | undefined;
+
   public static convertCanvasToSvgImg(parent: HTMLElement) {
     const canvas = parent.getElementsByTagName("canvas")[0];
     if (!canvas) {
@@ -65,7 +69,7 @@ export class Comical {
   // Make the bubble for the specified element (if any) active. This means
   // showing its edit handles. Must first call convertBubbleJsonToCanvas(),
   // passing the appropriate parent element.
-  public static activateElement(contentElement: Element) {
+  public static activateElement(contentElement: Element | undefined) {
     let newActiveBubble: Bubble | undefined = undefined;
     if (contentElement) {
       newActiveBubble = Comical.allBubbles.find(
@@ -84,6 +88,11 @@ export class Comical {
     Comical.activeBubble = newActiveBubble;
     if (Comical.activeBubble) {
       Comical.activeBubble.showHandles();
+    }
+    if (Comical.activeBubbleListener) {
+      Comical.activeBubbleListener(
+        Comical.activeBubble ? Comical.activeBubble.content : undefined
+      );
     }
   }
 
@@ -194,6 +203,12 @@ export class Comical {
     canvas.height = parent.clientHeight;
     setup(canvas);
     Comical.update(parent);
+  }
+
+  public static setActiveBubbleListener(
+    listener: ((selected: HTMLElement | undefined) => void) | undefined
+  ) {
+    Comical.activeBubbleListener = listener;
   }
 
   // Make appropriate JSON changes so that childElement becomes a child of parentElement.
