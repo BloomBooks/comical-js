@@ -29,6 +29,13 @@ module.exports = {
     path: path.join(__dirname, outputDir),
     filename: "[name].js",
     library: "ComicalJS",
+    // Exporting the library in umd format allows its various classes to
+    // be imported in typescript using import (rather than only by
+    // using require on the whole library) in a way that is consistent
+    // with the d.ts files we are generating. Using various other formats
+    // we found that a client could import the classes apparently successfully,
+    // but they were undefined at runtime.
+    // UMD is also a good universal library format that supports both AMD and commonjs.
     libraryTarget: "umd"
   },
 
