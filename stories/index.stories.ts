@@ -11,8 +11,8 @@ import {
   Item,
   Shape
 } from "paper";
-import Comical from "../src/comical";
-import Bubble from "../src/bubble";
+import { Comical } from "../src/comical";
+import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
 
 storiesOf("comical", module)
@@ -416,6 +416,17 @@ storiesOf("comical", module)
       130,
       100
     );
+
+    const divSelected = document.createElement("div");
+    wrapDiv.appendChild(divSelected);
+    divSelected.innerText = "content of selected element copied here";
+    Comical.setActiveBubbleListener(div => {
+      if (div) {
+        divSelected!.innerText = div.innerText;
+      } else {
+        divSelected.innerText = "nothing selected";
+      }
+    });
 
     // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
