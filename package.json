@@ -37,7 +37,8 @@
     "storybook": "start-storybook -s ./storyStatic -p 6006",
     "build-storybook": "build-storybook",
     "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
-    "build": "shx rm -rf dist/ && webpack --config webpack.config-prod.js && shx cp package-publish.json dist/package.json && shx cp *.md dist",
+    "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js && shx cp package-publish.json dist/package.json && shx cp *.md dist",
+    "build": "shx rm -rf dist/ && webpack && shx cp package-publish.json dist/package.json && shx cp *.md dist",
     "Notice that we do 'publish dist', because we want to publish is just the contents of the dist directory": "//",
     "So we want `yarn publish dist`": "//"
   }
