@@ -28,7 +28,8 @@ module.exports = {
   output: {
     path: path.join(__dirname, outputDir),
     filename: "[name].js",
-    library: "Comical"
+    library: "ComicalJS",
+    libraryTarget: "umd"
   },
 
   resolve: {
