@@ -14,6 +14,7 @@ import {
 import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
+import { LineTail } from "../src/lineTail";
 
 storiesOf("comical", module)
   .add("export gradient svg of scaled group broken", () => {
@@ -729,6 +730,110 @@ storiesOf("comical", module)
     buttonRight.style.position = "absolute";
     buttonRight.style.top = "400px";
     buttonRight.style.left = "200px";
+
+    return wrapDiv;
+  })
+  .add("single-pixel line tail", () => {
+    const canvas = document.createElement("canvas");
+    canvas.height = 600;
+    canvas.width = 600;
+    setup(canvas);
+
+    const start = new Point(100, 100);
+    const tip = start.add(new Point(200, 150));
+    const layer1 = project!.activeLayer;
+    const layer2 = new Layer();
+    const handleLayer = new Layer();
+    project!.addLayer(layer2);
+    project!.addLayer(handleLayer);
+    const mid = Bubble.defaultMid(start, tip);
+
+    const tail = new LineTail(
+      start,
+      tip,
+      layer1,
+      layer2,
+      handleLayer,
+      {
+        tipX: tip.x!,
+        tipY: tip.y!,
+        midpointX: mid.x!,
+        midpointY: mid.y!
+      },
+      undefined
+    );
+    tail.debugMode = true;
+    tail.makeShapes();
+    tail.showHandles();
+    return canvas;
+  })
+
+  .add("single-pixel tail on picture", () => {
+    const wrapDiv = document.createElement("div");
+
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.background =
+      "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+    wrapDiv.style.height = "600px";
+
+    const canvas = document.createElement("canvas");
+    canvas.width = wrapDiv.clientWidth;
+    canvas.height = wrapDiv.clientHeight;
+    setup(canvas);
+
+    wrapDiv.appendChild(canvas);
+
+    var div1 = makeTextBlock(
+      wrapDiv,
+      "How do you like my fancy glasses?",
+      120,
+      100,
+      100
+    );
+
+    const start = new Point(175, 100);
+    const tip = start.add(new Point(10, 150));
+    const layer1 = project!.activeLayer;
+    const layer2 = new Layer();
+    const handleLayer = new Layer();
+    project!.addLayer(layer2);
+    project!.addLayer(handleLayer);
+    const mid = Bubble.defaultMid(start, tip);
+
+    const tailSpec = {
+      tipX: tip.x!,
+      tipY: tip.y!,
+      midpointX: mid.x!,
+      midpointY: mid.y!
+    };
+
+    const tail = new LineTail(
+      start,
+      tip,
+      layer1,
+      layer2,
+      handleLayer,
+      tailSpec,
+      undefined
+    );
+
+    window.setTimeout(() => {
+      const bubble1 = new Bubble(div1);
+      bubble1.setBubbleSpec({
+        version: "1.0",
+        style: "caption",
+        tails: [], // I'd much rather put the tail here and the tail be drawn like makeDefaultTail
+        level: 1,
+        backgroundColors: ["#fff", "#839496"],
+        shadowOffset: 1
+      });
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+
+      // Don't like how this has to be drawn here inside of the timeout.
+      tail.debugMode = true;
+      tail.showHandles();
+      tail.makeShapes();
+    }, 200);
 
     return wrapDiv;
   });
