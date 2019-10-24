@@ -22,16 +22,7 @@ export class LineTail extends Tail {
 
     const tailWidth = 1; // Single pixel may not be thick enough to see it on an image
 
-    const angleBase = new Point(
-      this.tip.x! - this.root.x!,
-      this.tip.y! - this.root.y!
-    ).angle!;
-    const deltaBase = new Point(0, 0);
-    deltaBase.angle = angleBase + 90;
-    deltaBase.length = tailWidth / 2;
-    const begin = this.root.add(deltaBase);
-
-    this.pathstroke = new Path.Line(begin, this.tip);
+    this.pathstroke = new Path.Line(this.root, this.tip);
 
     if (oldStroke) {
       this.pathstroke.insertBelow(oldStroke);
