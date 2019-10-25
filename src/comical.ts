@@ -309,9 +309,20 @@ export class Comical {
     return undefined;
   }
 
-  // Return the parents of the bubble. The first item in the array
+  // Return the immediate parent of the bubble, or undefined if it doesn't have one
+  public static findParent(bubble: Bubble): Bubble | undefined {
+    const ancestors = Comical.findAncestors(bubble);
+
+    if (ancestors && ancestors.length > 0) {
+      return ancestors[ancestors.length - 1];
+    } else {
+      return undefined;
+    }
+  }
+
+  // Return the ancestors of the bubble. The first item in the array
   // is the earliest ancestor (if any); any intermediate bubbles are returned too.
-  public static findParents(bubble: Bubble): Bubble[] {
+  public static findAncestors(bubble: Bubble): Bubble[] {
     const familyLevel = bubble.getSpecLevel();
     const orderWithinFamily = bubble.getBubbleSpec().order;
     if (!orderWithinFamily) {

@@ -1,4 +1,4 @@
-import { Path, Point, Color, Layer, ToolEvent, PathItem } from "paper";
+import { Path, Point, Color, Layer, ToolEvent } from "paper";
 import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
@@ -126,6 +126,16 @@ export class Tail {
   }
 
   public showHandles() {
+    if (this.spec.joiner && this.isOverlappingWithParent()) {
+      // Enhance: Also need to erase the tail of isOverlappingWithParent... but that shouldn't happen here.
+      // The tricky thing is... can you know that the child is guaranteed to be drawn after the parent?
+      return;
+    }
+
+    this.showHandlesHelper();
+  }
+
+  public showHandlesHelper() {
     // Setup event handlers
     this.state = "idle";
 
@@ -188,30 +198,29 @@ export class Tail {
   }
 
   // Returns true if no part of the tail can be seen, when considering just this family in a vacuum.
-  public isTailObscured(): boolean {
+  // Otherwise, returns false
+  public isOverlappingWithParent(): boolean {
     // Only do this for joiner tails
     if (!this.spec.joiner) {
       return false;
     }
 
-    const relatives = Comical.findRelatives(this.bubble!);
-    
-    if (!relatives || relatives.length === 0) {
+    if (!this.bubble) {
       return false;
     }
 
-    // Check if the tail is obscured by seeing first union-ing all the bubbles (without any tails together),
-    // then seeing if adding this tail changes the shape
-    const tempLayer = new Layer();
-    let unionOfBubbles:PathItem = this.bubble!.outline as Path;
-    tempLayer.addChild(this.bubble!.outline.clone());
-    relatives.forEach(x => {
-      const parentClone = x.outline.clone({insert: false});
-      tempLayer.addChild(parentClone);
-      unionOfBubbles = unionOfBubbles.unite(parentClone as Path, { insert: false });
-    });
-    const withTailAdded = unionOfBubbles.unite(this.pathFill, { insert: false } );
-    tempLayer.remove();
-    return withTailAdded.compare(unionOfBubbles);
+    const parent = Comical.findParent(this.bubble);
+    if (!parent) {
+      return false;
+    }
+
+    const isIntersecting = this.bubble.fillArea.intersects(parent.fillArea);
+    if (isIntersecting) {
+      // This is the standard case (at least if an overlap does exist) where a child's outline intersects the parent's outline
+      return true;
+    } else {
+      // TODO: Check if child is a strict subset of parent, or vice-versa
+      return false;
+    }
   }
 }
