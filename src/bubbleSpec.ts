@@ -8,6 +8,7 @@
 // setBubbleSpec and getBubbleSpec. This allows re-creatting the paper.js editable
 // state of the bubble even after we have discarded all that in favor of an SVG
 // for a finished HTML document that doesn't depend on Javascript.
+// If you add a property here, consider handling it in Bubble.mergeWithNewBubbleProps()
 export interface BubbleSpecPattern {
   version?: string; // currently 1.0
   style?: string; // currently one of speech or shout or caption

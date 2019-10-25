@@ -180,25 +180,103 @@ export class Bubble {
     this.content.setAttribute("data-bubble", escapedJson);
   }
 
+  // Return true if the two arrays are equal (one level deep...items are ===)
+  // Also if both are undefined.
+  // This ought to be generic...arrays of any type...but I can't persuade Typescript
+  // to allow it. For now I only need arrays of strings.
+  private comparePossibleArrays(
+    first: string[] | undefined,
+    second: string[] | undefined
+  ): boolean {
+    if (!first && !second) {
+      return true;
+    }
+    if (!first || !second) {
+      return false;
+    }
+    if (first.length != second.length) {
+      return false;
+    }
+    for (let i = 0; i < first.length; i++) {
+      if (first[i] !== second[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public mergeWithNewBubbleProps(newBubbleProps: BubbleSpecPattern): void {
     // Figure out a default that will supply any necessary properties not
-    // specified in data, including a tail in a default position
+    // specified in data, including a tail in a default position.
+    // In certain cases some of these properties may override values in
+    // oldData (but never newBubbleProps).
     const defaultData = Bubble.getDefaultBubbleSpec(
       this.content,
       newBubbleProps.style
     );
 
     const oldData: BubbleSpec = this.spec;
+    const oldDataOverrides: BubbleSpecPattern = {};
+
+    if (oldData.style !== newBubbleProps.style) {
+      // We will do some extra work to possibly switch other props
+      // to their default values for the new style.
+
+      // This gives the default properties associated with the OLD style
+      const oldDefaultData = Bubble.getDefaultBubbleSpec(
+        this.content,
+        oldData.style
+      );
+      // For various properties, if oldData has the same value as oldDefaultData
+      // (that is, the property in the current bubble is unchanged from
+      // the default for the old style), we will update that property to the
+      // default for the new style.
+      if (oldData.tails.length === oldDefaultData.tails.length) {
+        // nothing has changed the number of tails, so we want the new spec to
+        // have the default number for its style. First, we keep as many tails
+        // as are wanted and present (currently always zero or one)
+        oldDataOverrides.tails = oldData.tails.slice(
+          0,
+          defaultData.tails.length
+        );
+        if (oldDataOverrides.tails.length < defaultData.tails.length) {
+          // if we don't already have enough, add another one from defaultData
+          // May need to do something fancier here one day if we might need to add more than
+          // one. I don't think that's likely.
+          oldDataOverrides.tails.push(defaultData.tails[0]);
+        }
+      }
+      if (
+        this.comparePossibleArrays(
+          oldData.backgroundColors,
+          oldDefaultData.backgroundColors
+        )
+      ) {
+        oldDataOverrides.backgroundColors = defaultData.backgroundColors;
+      }
+      if (oldData.borderStyle === oldDefaultData.borderStyle) {
+        oldDataOverrides.borderStyle = defaultData.borderStyle;
+      }
+      if (oldData.shadowOffset === oldDefaultData.shadowOffset) {
+        oldDataOverrides.shadowOffset = defaultData.shadowOffset;
+      }
+      if (oldData.outerBorderColor === oldDefaultData.outerBorderColor) {
+        oldDataOverrides.outerBorderColor = defaultData.outerBorderColor;
+      }
+    }
 
     // We get the default bubble for this style and parent to provide
     // any properties that have never before occurred for this bubble,
     // particularly a default tail placement if it was previously 'none'.
     // Any values already in oldData override these; for example, if
     // this bubble has ever had a tail, we'll keep its last known position.
-    // Finally, any values present in data override anything else.
+    // If we put any values in oldDataOverrides (typically cases where we
+    // prefer the defaultData value), they win next.
+    // Finally, any values present in newBubbleProps override anything else.
     const mergedBubble = {
       ...defaultData,
       ...oldData,
+      ...oldDataOverrides,
       ...(newBubbleProps as BubbleSpec)
     };
 
