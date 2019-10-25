@@ -42,7 +42,7 @@ export interface TailSpec {
   tipY: number;
   midpointX: number; // notionally, tip's curve passes through this point
   midpointY: number;
-  joiner?: boolean;
+  joiner?: boolean; // true if it joins to its parent bubble
   style?: string; // currently one of arc or straight
 }
 // Do we need to specify a width? Other attributes for bezier curve?
