@@ -134,7 +134,7 @@ export class Bubble {
   }
 
   public getFullSpec(): BubbleSpec {
-    const parents = Comical.findParents(this);
+    const parents = Comical.findAncestors(this);
     if (parents.length == 0) {
       return this.spec;
     }
@@ -746,10 +746,6 @@ export class Bubble {
   public showHandles() {
     this.tails.forEach((tail: Tail) => {
       tail.showHandles();
-
-      if (tail.isTailObscured()) {
-        tail.handleLayer.visible = false;
-      }
     });
   }
 

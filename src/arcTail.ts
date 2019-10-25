@@ -162,8 +162,8 @@ export class ArcTail extends Tail {
     this.adjustForChangedRoot(delta);
   }
 
-  public showHandles() {
-    super.showHandles();
+  public showHandlesHelper() {
+    super.showHandlesHelper();
     const isHandleSolid = true;
     const curveHandle = this.makeHandle(this.mid, isHandleSolid);
 

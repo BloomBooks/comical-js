@@ -16,6 +16,7 @@ import {
 import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
+import { TailSpec } from "../src/bubbleSpec";
 
 storiesOf("comical", module)
   .add("playing with beziers", () => {
@@ -779,7 +780,7 @@ storiesOf("comical", module)
 
     return wrapDiv;
   })
-  .add("child bubbles tail completely obscured", () => {
+  .add("child bubbles overlap with parent", () => {
     // A generic picture
     // Four bubbles in the same layer, two overlapping
     const wrapDiv = document.createElement("div");
@@ -789,7 +790,7 @@ storiesOf("comical", module)
     const textDiv2 = document.createElement("div");
     textDiv2.innerHTML =
       "<table><tr><th>Action</th><th>Expectation</th></tr>" +
-      "<tr><td>Activate the child.</td><td>Tail handles should NOT be visible.</td></tr>" +
+      "<tr><td>Activate the child.</td><td>Child tails and child tail handles should NOT be visible.</td></tr>" +
       "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible</td></tr></table>";
     textDiv2.style.width = "600px";
     textDiv2.style.textAlign = "left";
@@ -798,56 +799,89 @@ storiesOf("comical", module)
     textDiv2.style.left = "10px";
     wrapDiv.appendChild(textDiv2);
 
-    const childDiv = makeTextBlock(wrapDiv, "Child", 40, 120, 100);
-    childDiv.style.height = "40px";
-    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 160, 100 );
-    parentDiv.style.height = "40px";
+    const childDivs: HTMLElement[] = [];
+    const parentDivs: HTMLElement[] = [];
 
-    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    childDivs.push(makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40));
+    parentDivs.push(makeTextBlock(wrapDiv, "Parent", 80, 160, 100, 40));
+
+    // Child is a strict subset of parent. (Thus, there is strictly speaking no intersection points of their outlines)
+    // TODO: FIX ME. This case demonstrates a bug. (Tail handles shouldn't appear)
+    parentDivs.push(makeTextBlock(wrapDiv, "Parent 2", 250, 130, 100, 80));
+    childDivs.push(makeTextBlock(wrapDiv, "Child 2", 260, 160, 80));
+
+    // TODO: FIX ME. This case demonstrates a bug. (Tail should not show)
+    childDivs.push(makeTextBlock(wrapDiv, "Child", 380, 120, 100, 40));
+    parentDivs.push(makeTextBlock(wrapDiv, "Parent", 385, 160, 100, 40));
+
+    // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
-      // the parent div
-      const parentBubble = new Bubble(parentDiv);
-      parentBubble.setBubbleSpec({
-        version: "1.0",
-        style: "speech",
-        tails: [Bubble.makeDefaultTail(parentDiv)],
-        level: 1
-      });
-      // To get the right behaviour from initializeChild,
-      // convertCanvasToSvgImg must have been called with
-      // all the previous bubbles in the family defined.
-      // So we turn it off and on again between each call.
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
-      Comical.initializeChild(childDiv, parentDiv);
+
+      for (let i = 0; i < parentDivs.length; ++i) {
+        const parentDiv = parentDivs[i];
+        const childDiv = childDivs[i];
+
+        const parentBubble = new Bubble(parentDiv);
+        parentBubble.setBubbleSpec({
+          version: "1.0",
+          style: "speech",
+          tails: [Bubble.makeDefaultTail(parentDiv)],
+          level: i + 1
+        });
+
+        Comical.convertBubbleJsonToCanvas(wrapDiv);
+        Comical.initializeChild(childDiv, parentDiv);
+        if (i == 2) {
+          const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(childDiv);
+          misguidedChildTailSpec.midpointX = 520;
+          misguidedChildTailSpec.midpointY = 160;
+          misguidedChildTailSpec.tipX = (385 + 100/ 2);
+          misguidedChildTailSpec.tipY = (160 + 40/2);
+          misguidedChildTailSpec.joiner = true;
+
+          const misguidedChildBubble = new Bubble(childDiv);
+          misguidedChildBubble.setBubbleSpec({
+            version: "1.0",
+            style: "speech",
+            tails: [misguidedChildTailSpec],
+            level: i + 1,
+            order: misguidedChildBubble.getBubbleSpec().order
+          });
+        }
+
+
+        if (i < parentDivs.length - 1) {
+          // To get the right behaviour from initializeChild,
+          // convertCanvasToSvgImg must have been called with
+          // all the previous bubbles in the family defined.
+          // So we turn it off and on again between each call.
+          Comical.convertCanvasToSvgImg(wrapDiv);
+        }
+      }
       Comical.update(wrapDiv);
-      Comical.activateElement(childDiv);
+      Comical.activateElement(childDivs[0]);
     }, 200);
 
-    const childButton = addButton(wrapDiv, "Click to activate child", () => {
-      Comical.activateElement(childDiv);
-    });
+    const buttonDiv = document.createElement("div");
+    buttonDiv.style.position = "absolute";
+    buttonDiv.style.left = "10px";
+    buttonDiv.style.top = "275px";
+    wrapDiv.appendChild(buttonDiv);
 
-    const parentButton = addButton(wrapDiv, "Click to activate parent", () => {
-      Comical.activateElement(parentDiv);
-    });
+    for (let i = 0; i < parentDivs.length; ++i) {
+      addButton(buttonDiv, `Click to activate child ${i+1}`, () => {
+        Comical.activateElement(childDivs[i]);
+      });
+      addButton(buttonDiv, `Click to activate parent ${i+1}`, () => {
+        Comical.activateElement(parentDivs[i]);
+      });
+    }
 
-    childButton.style.position = "absolute";
-    childButton.style.left = "10px";
-    childButton.style.top = "275px";
-
-    parentButton.style.position = "absolute";
-    parentButton.style.left = "210px";
-    parentButton.style.top = "275px";
-
-    const button = addFinishButton(wrapDiv);
-    // Force it below the wrapDiv.
-    button.style.position = "absolute";
-    button.style.top = "450px";
-    button.style.left = "0";    
+    addFinishButton(wrapDiv, 0, 450);
     return wrapDiv;
   })
-  .add("child bubbles tail partially obscured", () => {
+  .add("child bubbles no overlap with parent", () => {
     // A generic picture
     // Four bubbles in the same layer, two overlapping
     const wrapDiv = document.createElement("div");
@@ -867,12 +901,10 @@ storiesOf("comical", module)
     textDiv2.style.left = "10px";
     wrapDiv.appendChild(textDiv2);
 
-    const childDiv = makeTextBlock(wrapDiv, "Child", 40, 120, 100);
-    childDiv.style.height = "40px";
-    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 200, 100 );
-    parentDiv.style.height = "40px";
+    const childDiv = makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40);
+    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 200, 100, 40 );
 
-    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
       // the parent div
@@ -893,29 +925,24 @@ storiesOf("comical", module)
       Comical.activateElement(childDiv);
     }, 200);
 
-    const childButton = addButton(wrapDiv, "Click to activate child", () => {
+    const buttonDiv = document.createElement("div");
+    buttonDiv.style.position = "absolute";
+    buttonDiv.style.left = "10px";
+    buttonDiv.style.top = "275px";
+    wrapDiv.appendChild(buttonDiv);
+
+    addButton(buttonDiv, "Click to activate child", () => {
       Comical.activateElement(childDiv);
     });
 
-    const parentButton = addButton(wrapDiv, "Click to activate parent", () => {
+    addButton(buttonDiv, "Click to activate parent", () => {
       Comical.activateElement(parentDiv);
     });
 
-    childButton.style.position = "absolute";
-    childButton.style.left = "10px";
-    childButton.style.top = "275px";
-
-    parentButton.style.position = "absolute";
-    parentButton.style.left = "210px";
-    parentButton.style.top = "275px";
-
-    const button = addFinishButton(wrapDiv);
-    // Force it below the wrapDiv.
-    button.style.position = "absolute";
-    button.style.top = "450px";
-    button.style.left = "0";    
+    addFinishButton(wrapDiv, 0, 450);
     return wrapDiv;
-  })  .add("Move content element", () => {
+  })
+  .add("Move content element", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
     wrapDiv.style.height = "300px";
@@ -979,11 +1006,15 @@ function makeTextBlock(
   content: string,
   x: number,
   y: number,
-  width: number
+  width: number,
+  height?: number
 ): HTMLElement {
   const textDiv = document.createElement("div");
   textDiv.innerText = content;
   textDiv.style.width = `${width}px`;
+  if (height) {
+    textDiv.style.height = `${height}px`;
+  }
   textDiv.style.textAlign = "center";
   textDiv.style.position = "absolute";
   textDiv.style.top = `${y}px`;
@@ -993,11 +1024,20 @@ function makeTextBlock(
   return textDiv;
 }
 
-function addFinishButton(wrapDiv: HTMLElement): HTMLButtonElement {
+function addFinishButton(wrapDiv: HTMLElement, left?: number, top?: number): HTMLButtonElement {
   const button = document.createElement("button");
   button.title = "Finish";
   button.innerText = "Finish";
   button.style.zIndex = "100";
+  if (left || top) {
+    button.style.position = "absolute";
+    if (left) {
+      button.style.left = `${left}px`;
+    }
+    if (top) {
+      button.style.top = `${top}px`;
+    }
+  }
   wrapDiv.appendChild(button);
   let editable = true;
   button.addEventListener("click", () => {
