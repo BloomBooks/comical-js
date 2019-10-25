@@ -1,4 +1,4 @@
-import { Path, Point, Color, Layer, ToolEvent } from "paper";
+import { Path, Point, Color, Layer, ToolEvent, PathItem } from "paper";
 import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
@@ -129,6 +129,7 @@ export class Tail {
     // Setup event handlers
     this.state = "idle";
 
+    this.handleLayer.visible = true;
     let tipHandle: Path.Circle | undefined;
 
     if (!this.spec.joiner) {
@@ -184,5 +185,33 @@ export class Tail {
     }
     result.name = "handle" + Tail.handleIndex++;
     return result;
+  }
+
+  // Returns true if no part of the tail can be seen, when considering just this family in a vacuum.
+  public isTailObscured(): boolean {
+    // Only do this for joiner tails
+    if (!this.spec.joiner) {
+      return false;
+    }
+
+    const relatives = Comical.findRelatives(this.bubble!);
+    
+    if (!relatives || relatives.length === 0) {
+      return false;
+    }
+
+    // Check if the tail is obscured by seeing first union-ing all the bubbles (without any tails together),
+    // then seeing if adding this tail changes the shape
+    const tempLayer = new Layer();
+    let unionOfBubbles:PathItem = this.bubble!.outline as Path;
+    tempLayer.addChild(this.bubble!.outline.clone());
+    relatives.forEach(x => {
+      const parentClone = x.outline.clone({insert: false});
+      tempLayer.addChild(parentClone);
+      unionOfBubbles = unionOfBubbles.unite(parentClone as Path, { insert: false });
+    });
+    const withTailAdded = unionOfBubbles.unite(this.pathFill, { insert: false } );
+    tempLayer.remove();
+    return withTailAdded.compare(unionOfBubbles);
   }
 }

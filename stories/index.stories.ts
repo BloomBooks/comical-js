@@ -779,7 +779,143 @@ storiesOf("comical", module)
 
     return wrapDiv;
   })
-  .add("Move content element", () => {
+  .add("child bubbles tail completely obscured", () => {
+    // A generic picture
+    // Four bubbles in the same layer, two overlapping
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "440px";
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerHTML =
+      "<table><tr><th>Action</th><th>Expectation</th></tr>" +
+      "<tr><td>Activate the child.</td><td>Tail handles should NOT be visible.</td></tr>" +
+      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible</td></tr></table>";
+    textDiv2.style.width = "600px";
+    textDiv2.style.textAlign = "left";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "10px";
+    textDiv2.style.left = "10px";
+    wrapDiv.appendChild(textDiv2);
+
+    const childDiv = makeTextBlock(wrapDiv, "Child", 40, 120, 100);
+    childDiv.style.height = "40px";
+    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 160, 100 );
+    parentDiv.style.height = "40px";
+
+    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      // the parent div
+      const parentBubble = new Bubble(parentDiv);
+      parentBubble.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(parentDiv)],
+        level: 1
+      });
+      // To get the right behaviour from initializeChild,
+      // convertCanvasToSvgImg must have been called with
+      // all the previous bubbles in the family defined.
+      // So we turn it off and on again between each call.
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(childDiv, parentDiv);
+      Comical.update(wrapDiv);
+      Comical.activateElement(childDiv);
+    }, 200);
+
+    const childButton = addButton(wrapDiv, "Click to activate child", () => {
+      Comical.activateElement(childDiv);
+    });
+
+    const parentButton = addButton(wrapDiv, "Click to activate parent", () => {
+      Comical.activateElement(parentDiv);
+    });
+
+    childButton.style.position = "absolute";
+    childButton.style.left = "10px";
+    childButton.style.top = "275px";
+
+    parentButton.style.position = "absolute";
+    parentButton.style.left = "210px";
+    parentButton.style.top = "275px";
+
+    const button = addFinishButton(wrapDiv);
+    // Force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "450px";
+    button.style.left = "0";    
+    return wrapDiv;
+  })
+  .add("child bubbles tail partially obscured", () => {
+    // A generic picture
+    // Four bubbles in the same layer, two overlapping
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "440px";
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerHTML =
+      "<table><tr><th>Action</th><th>Expectation</th></tr>" + 
+      "<tr><td>Activate the child.</td><td>Tail handles should be visible.</td></tr>" + 
+      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible.</td></tr>" + 
+      "<tr><td>Move the tail</td><td>No old tail should be left behind. (There should only be one tail.)</td></tr></table>";
+    textDiv2.style.width = "600px";
+    textDiv2.style.textAlign = "left";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "10px";
+    textDiv2.style.left = "10px";
+    wrapDiv.appendChild(textDiv2);
+
+    const childDiv = makeTextBlock(wrapDiv, "Child", 40, 120, 100);
+    childDiv.style.height = "40px";
+    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 200, 100 );
+    parentDiv.style.height = "40px";
+
+    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      // the parent div
+      const parentBubble = new Bubble(parentDiv);
+      parentBubble.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(parentDiv)],
+        level: 1
+      });
+      // To get the right behaviour from initializeChild,
+      // convertCanvasToSvgImg must have been called with
+      // all the previous bubbles in the family defined.
+      // So we turn it off and on again between each call.
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(childDiv, parentDiv);
+      Comical.update(wrapDiv);
+      Comical.activateElement(childDiv);
+    }, 200);
+
+    const childButton = addButton(wrapDiv, "Click to activate child", () => {
+      Comical.activateElement(childDiv);
+    });
+
+    const parentButton = addButton(wrapDiv, "Click to activate parent", () => {
+      Comical.activateElement(parentDiv);
+    });
+
+    childButton.style.position = "absolute";
+    childButton.style.left = "10px";
+    childButton.style.top = "275px";
+
+    parentButton.style.position = "absolute";
+    parentButton.style.left = "210px";
+    parentButton.style.top = "275px";
+
+    const button = addFinishButton(wrapDiv);
+    // Force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "450px";
+    button.style.left = "0";    
+    return wrapDiv;
+  })  .add("Move content element", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
     wrapDiv.style.height = "300px";

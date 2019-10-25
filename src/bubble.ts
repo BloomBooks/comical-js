@@ -41,14 +41,14 @@ export class Bubble {
   // When it's simply obtained from an svg, it's usually some kind of group.
   // When we extract a single outline from the svg (or eventually make one algorithmically),
   // it will most likely be a Path.
-  private outline: Item;
+  public outline: Item;
   // If the item has a shadow, this makes it.
   // We would prefer to do this with the paper.js shadow properties applied to shape,
   // but experiment indicates that such shadows do not convert to SVG.
   private shadowShape: Item;
   // a clone of this.outline with no border and an appropriate fill; drawn after all outlines
   // to fill them in and erase any overlapping borders.
-  private fillArea: Item;
+  public fillArea: Item;
   // contentHolder is a shape which is a required part of an SVG object used as
   // a bubble. It should be a rectangle in the SVG; it currently comes out as a Shape
   // when the SVG is converted to a paper.js object.
@@ -746,6 +746,10 @@ export class Bubble {
   public showHandles() {
     this.tails.forEach((tail: Tail) => {
       tail.showHandles();
+
+      if (tail.isTailObscured()) {
+        tail.handleLayer.visible = false;
+      }
     });
   }
 
