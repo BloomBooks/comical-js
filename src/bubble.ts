@@ -31,7 +31,7 @@ import { makeSpeechBubble } from "./speechBubble";
 export class Bubble {
   // The element to wrap with a bubble
   public content: HTMLElement;
-  public static defaultBorderWidth = 2;
+  public static defaultBorderWidth = 3;
   // Represents the state which is persisted into
   // It is private because we want to try to ensure that callers go through the saveBubbleSpec() setter method,
   // because it's important that changes here get persisted not just in this instance's memory but additionally to the HTML as well.
