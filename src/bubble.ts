@@ -16,6 +16,7 @@ import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
 import { StraightTail } from "./straightTail";
+import { makeSpeechBubble } from "./speechBubble";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles:
@@ -372,8 +373,8 @@ export class Bubble {
   public static getShapeSvgString(bubbleStyle: string): string {
     let svg: string = "";
     switch (bubbleStyle) {
-      case "speech":
-        svg = Bubble.speechBubble();
+      case "ellipse":
+        svg = Bubble.ellipseBubble();
         break;
       case "shout":
         svg = Bubble.shoutBubble();
@@ -385,7 +386,7 @@ export class Bubble {
         break;
       default:
         console.log("unknown bubble type; using default");
-        svg = Bubble.speechBubble();
+        svg = Bubble.ellipseBubble();
     }
 
     return svg;
@@ -401,10 +402,19 @@ export class Bubble {
     }
     const bubbleStyle = this.getStyle();
     this.lowerLayer.activate(); // at least for now, the main shape always goes in this layer.
-    if (bubbleStyle === "pointedArcs") {
-      return this.makePointedArcBubble();
+    switch (bubbleStyle) {
+      case "pointedArcs":
+        return this.makePointedArcBubble();
+      case "speech":
+        return makeSpeechBubble(
+          this.content.offsetWidth,
+          this.content.offsetHeight,
+          0.6,
+          0.8
+        );
+      default:
+        return undefined; // not a computed shape, may be svg...caller has real default
     }
-    return undefined;
   }
 
   // Loads the shape (technically Item) corresponding to the specified bubbleStyle,
@@ -905,8 +915,8 @@ export class Bubble {
     });
   }
 
-  // The SVG contents of a round speech bubble
-  public static speechBubble() {
+  // The SVG contents of a round (elliptical) bubble
+  public static ellipseBubble() {
     return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
       <svg
          xmlns:dc="http://purl.org/dc/elements/1.1/"
