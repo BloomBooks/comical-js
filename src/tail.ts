@@ -126,9 +126,18 @@ export class Tail {
   }
 
   public showHandles() {
+    this.showHandlesInternal();
+
+    if (this.isBubbleOverlappingParent()) {
+      this.setTailAndHandleVisibility(false);
+    }
+  }
+
+  protected showHandlesInternal() {
     // Setup event handlers
     this.state = "idle";
 
+    this.handleLayer.visible = true;
     let tipHandle: Path.Circle | undefined;
 
     if (!this.spec.joiner) {
@@ -166,6 +175,27 @@ export class Tail {
     }
   }
 
+  private isBubbleOverlappingParent(): boolean {
+    if (this.bubble) {
+      // Assumes that the parent is already drawn, which is probably reasonable because showHandles() doesn't happen until activateElement() is called, which isn't right away.
+      const parentBubble = Comical.findParent(this.bubble);
+      if (parentBubble) {
+        if (this.bubble.isOverlapping(parentBubble)) {
+          return true;
+        }        
+      }
+    }
+
+    return false;
+  }
+
+  public setTailAndHandleVisibility(newVisibility: boolean): void {
+    this.pathFill.visible = newVisibility;
+    this.pathstroke.visible = newVisibility;
+    
+    // ENHANCE: It'd be nice to hide the tipHandle too, but that doesn't make a difference yet.
+  }
+
   // Helps determine unique names for the handles
   static handleIndex = 0;
 
@@ -183,6 +213,8 @@ export class Tail {
       result.fillColor.alpha = 0.01;
     }
     result.name = "handle" + Tail.handleIndex++;
+    result.visible = true;
     return result;
   }
+
 }
