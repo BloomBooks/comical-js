@@ -31,6 +31,7 @@ import { makeSpeechBubble } from "./speechBubble";
 export class Bubble {
   // The element to wrap with a bubble
   public content: HTMLElement;
+  public static defaultBorderWidth = 2;
   // Represents the state which is persisted into
   // It is private because we want to try to ensure that callers go through the saveBubbleSpec() setter method,
   // because it's important that changes here get persisted not just in this instance's memory but additionally to the HTML as well.
@@ -480,6 +481,7 @@ export class Bubble {
       this.outline.insertBelow(oldOutline);
       oldOutline.remove();
     }
+    this.outline.strokeWidth = Bubble.defaultBorderWidth;
     this.hScale = this.vScale = 1; // haven't scaled it at all yet.
     // recursive: true is required to see any but the root "g" element
     // (apparently contrary to documentation).
@@ -521,6 +523,10 @@ export class Bubble {
     } else {
       this.upperLayer.addChild(this.fillArea);
     }
+  }
+
+  public getBorderWidth() {
+    return Bubble.defaultBorderWidth;
   }
 
   public getBackgroundColor(): Color {
