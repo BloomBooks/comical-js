@@ -162,8 +162,8 @@ export class ArcTail extends Tail {
     this.adjustForChangedRoot(delta);
   }
 
-  public showHandlesHelper() {
-    super.showHandlesHelper();
+  protected showHandlesInternal(): void {
+    super.showHandlesInternal();
     const isHandleSolid = true;
     const curveHandle = this.makeHandle(this.mid, isHandleSolid);
 
@@ -191,5 +191,12 @@ export class ArcTail extends Tail {
       this.spec.midpointY = curveHandle!.position!.y!;
       this.persistSpecChanges();
     };
+  }
+
+  public setTailAndHandleVisibility(newVisibility: boolean) {
+    super.setTailAndHandleVisibility(newVisibility);
+    if (this.midHandle) {
+      this.midHandle.visible = newVisibility;
+    }
   }
 }

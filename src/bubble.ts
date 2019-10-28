@@ -356,15 +356,17 @@ export class Bubble {
     }
     this.tails = [];
 
-    // Make the bubble part of the bubble+tail
-    this.loadShapeAsync((newlyLoadedShape: Item) => {
-      this.makeShapes(newlyLoadedShape);
-      this.adjustSizeAndPosition();
-    }); // Note: Make sure to use arrow functions to ensure that "this" refers to the right thing.
-
     // Make any tails the bubble should have
     this.spec.tails.forEach(tail => {
       this.makeTail(tail);
+    });
+
+    // Make the bubble part of the bubble+tail
+    this.loadShapeAsync((newlyLoadedShape: Item) => {
+      this.makeShapes(newlyLoadedShape);
+
+      // Precondition: The tails must be initialized before this function is called
+      this.adjustSizeAndPosition();
     });
 
     this.monitorContent();
@@ -652,7 +654,47 @@ export class Bubble {
     // Now, look for a child whose joiner should be our center, and adjust that.
     const child = Comical.findChild(this);
     if (child) {
+      console.assert(child.tails.length <= 1, "A child may only have at most 1 tail.");
+      
+      // Note: I think it's better to adjust the joiners even if they would subsequently be hidden.
+      //       This keeps the internal state looking more up-to-date and reasonable, even if it's invisible.
+      //       However, it is also possible to only adjust the joiners if they are not overlapping
       child.adjustJoiners(contentCenter);
+
+      const shouldTailsBeVisible = !this.isOverlapping(child);
+      child.tails.forEach(tail => {
+        tail.setTailAndHandleVisibility(shouldTailsBeVisible);
+      });
+    }
+
+    const parent = Comical.findParent(this);
+    if (parent) {
+      // Need to check both child and parent, because even if we loaded the bubbles in a certain order, due to async nature, we can't be sure which one will be loaded first.
+      // (This should only applicable to determining whether the tail is visible or not.
+      // Don't think we need to adjust the joiners, they should all be loaded at that time.)
+      const shouldTailsBeVisible = !this.isOverlapping(parent);
+      
+      console.assert(this.tails.length <= 1, "A child bubble may have at most 1 tail.");
+      this.tails.forEach(tail => {
+        tail.setTailAndHandleVisibility(shouldTailsBeVisible);
+      });
+    }
+  }
+
+  // Returns true if the bubbles overlap. Otherwise, returns false
+  public isOverlapping(otherBubble: Bubble): boolean {
+    if (!this.fillArea || !otherBubble.fillArea) {
+      // If at least one of the bubbles doesn't have its shape (yet), we define this as being not overlapping
+      return false;
+    }
+
+    const isIntersecting = this.fillArea.intersects(otherBubble.fillArea);
+    if (isIntersecting) {
+      // This is the standard case (at least if an overlap does exist) where this bubble's outline intersects the other's outline
+      return true;
+    } else {
+      // TODO: Check pathological case where one bubble is entirely contained within the other
+      return false;
     }
   }
 

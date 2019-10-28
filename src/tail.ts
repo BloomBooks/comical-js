@@ -126,16 +126,14 @@ export class Tail {
   }
 
   public showHandles() {
-    if (this.spec.joiner && this.isOverlappingWithParent()) {
-      // Enhance: Also need to erase the tail of isOverlappingWithParent... but that shouldn't happen here.
-      // The tricky thing is... can you know that the child is guaranteed to be drawn after the parent?
-      return;
-    }
+    this.showHandlesInternal();
 
-    this.showHandlesHelper();
+    if (this.isBubbleOverlappingParent()) {
+      this.setTailAndHandleVisibility(false);
+    }
   }
 
-  public showHandlesHelper() {
+  protected showHandlesInternal() {
     // Setup event handlers
     this.state = "idle";
 
@@ -177,6 +175,27 @@ export class Tail {
     }
   }
 
+  private isBubbleOverlappingParent(): boolean {
+    if (this.bubble) {
+      // Assumes that the parent is already drawn, which is probably reasonable because showHandles() doesn't happen until activateElement() is called, which isn't right away.
+      const parentBubble = Comical.findParent(this.bubble);
+      if (parentBubble) {
+        if (this.bubble.isOverlapping(parentBubble)) {
+          return true;
+        }        
+      }
+    }
+
+    return false;
+  }
+
+  public setTailAndHandleVisibility(newVisibility: boolean): void {
+    this.pathFill.visible = newVisibility;
+    this.pathstroke.visible = newVisibility;
+    
+    // ENHANCE: It'd be nice to hide the tipHandle too, but that doesn't make a difference yet.
+  }
+
   // Helps determine unique names for the handles
   static handleIndex = 0;
 
@@ -194,33 +213,8 @@ export class Tail {
       result.fillColor.alpha = 0.01;
     }
     result.name = "handle" + Tail.handleIndex++;
+    result.visible = true;
     return result;
   }
 
-  // Returns true if no part of the tail can be seen, when considering just this family in a vacuum.
-  // Otherwise, returns false
-  public isOverlappingWithParent(): boolean {
-    // Only do this for joiner tails
-    if (!this.spec.joiner) {
-      return false;
-    }
-
-    if (!this.bubble) {
-      return false;
-    }
-
-    const parent = Comical.findParent(this.bubble);
-    if (!parent) {
-      return false;
-    }
-
-    const isIntersecting = this.bubble.fillArea.intersects(parent.fillArea);
-    if (isIntersecting) {
-      // This is the standard case (at least if an overlap does exist) where a child's outline intersects the parent's outline
-      return true;
-    } else {
-      // TODO: Check if child is a strict subset of parent, or vice-versa
-      return false;
-    }
-  }
 }

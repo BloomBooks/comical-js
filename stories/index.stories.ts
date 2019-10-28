@@ -802,7 +802,7 @@ storiesOf("comical", module)
     const childDivs: HTMLElement[] = [];
     const parentDivs: HTMLElement[] = [];
 
-    childDivs.push(makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40));
+    childDivs.push(makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40));  // Child is PROBABLY loaded before parent
     parentDivs.push(makeTextBlock(wrapDiv, "Parent", 80, 160, 100, 40));
 
     // Child is a strict subset of parent. (Thus, there is strictly speaking no intersection points of their outlines)
@@ -810,9 +810,9 @@ storiesOf("comical", module)
     parentDivs.push(makeTextBlock(wrapDiv, "Parent 2", 250, 130, 100, 80));
     childDivs.push(makeTextBlock(wrapDiv, "Child 2", 260, 160, 80));
 
-    // TODO: FIX ME. This case demonstrates a bug. (Tail should not show)
-    childDivs.push(makeTextBlock(wrapDiv, "Child", 380, 120, 100, 40));
-    parentDivs.push(makeTextBlock(wrapDiv, "Parent", 385, 160, 100, 40));
+    parentDivs.push(makeTextBlock(wrapDiv, "Parent", 385, 160, 100, 40)); // Parent is PROBABLY loaded before child. Tests opposite scenario as Case #1
+    const childWithTailToSide = makeTextBlock(wrapDiv, "Child", 380, 120, 100, 40)
+    childDivs.push(childWithTailToSide);
 
     // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
@@ -832,7 +832,8 @@ storiesOf("comical", module)
 
         Comical.convertBubbleJsonToCanvas(wrapDiv);
         Comical.initializeChild(childDiv, parentDiv);
-        if (i == 2) {
+
+        if (childDiv == childWithTailToSide) {
           const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(childDiv);
           misguidedChildTailSpec.midpointX = 520;
           misguidedChildTailSpec.midpointY = 160;
@@ -866,7 +867,7 @@ storiesOf("comical", module)
     const buttonDiv = document.createElement("div");
     buttonDiv.style.position = "absolute";
     buttonDiv.style.left = "10px";
-    buttonDiv.style.top = "275px";
+    buttonDiv.style.top = "250px";
     wrapDiv.appendChild(buttonDiv);
 
     for (let i = 0; i < parentDivs.length; ++i) {
@@ -877,8 +878,8 @@ storiesOf("comical", module)
         Comical.activateElement(parentDivs[i]);
       });
     }
-
-    addFinishButton(wrapDiv, 0, 450);
+  
+    addFinishButton(wrapDiv, 400, 450);
     return wrapDiv;
   })
   .add("child bubbles no overlap with parent", () => {
@@ -940,6 +941,97 @@ storiesOf("comical", module)
     });
 
     addFinishButton(wrapDiv, 0, 450);
+    return wrapDiv;
+  })
+  .add("child bubbles overlap - dynamic test", () => {
+    // A generic picture
+    // Four bubbles in the same layer, two overlapping
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "440px";
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerHTML =
+      "<table><tr><th>Action</th><th>Expectation</th></tr>" +
+      "<tr><td>Activate the child.</td><td>Child tails and child tail handles should NOT be visible.</td></tr>" +
+      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible</td></tr></table>";
+    textDiv2.style.width = "600px";
+    textDiv2.style.textAlign = "left";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "10px";
+    textDiv2.style.left = "10px";
+    wrapDiv.appendChild(textDiv2);
+
+    const parentLeft = 85;
+    const parentTop = 160;
+    const parentWidth = 100;
+    const parentHeight = 40;
+    const childDiv = makeTextBlock(wrapDiv, "Child", parentLeft - 5, parentTop - parentHeight, parentWidth, parentHeight);  // Add child first to make this test harder
+    const parentDiv = makeTextBlock(wrapDiv, "Parent", parentLeft, parentTop, parentWidth, parentHeight);
+
+    // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      const parentBubble = new Bubble(parentDiv);
+      parentBubble.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(parentDiv)],
+        level: 1
+      });
+
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(childDiv, parentDiv);
+
+      if (childDiv == childDiv) {
+        const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(childDiv);
+        misguidedChildTailSpec.midpointX = parentWidth - 55;
+        misguidedChildTailSpec.midpointY = parentTop - 25;
+        misguidedChildTailSpec.tipX = parentLeft + (parentWidth / 2);
+        misguidedChildTailSpec.tipY = parentTop + (parentHeight /2);
+        misguidedChildTailSpec.joiner = true;
+
+        const misguidedChildBubble = new Bubble(childDiv);
+        misguidedChildBubble.setBubbleSpec({
+          version: "1.0",
+          style: "speech",
+          tails: [misguidedChildTailSpec],
+          level: 1,
+          order: misguidedChildBubble.getBubbleSpec().order
+        });
+      }
+
+      Comical.update(wrapDiv);
+      Comical.activateElement(childDiv);
+    }, 200);
+
+    const buttonDiv = document.createElement("div");
+    buttonDiv.style.position = "absolute";
+    buttonDiv.style.left = "10px";
+    buttonDiv.style.top = "250px";
+    wrapDiv.appendChild(buttonDiv);
+
+    let stepNumber = 1;
+    addButton(buttonDiv, `Step ${stepNumber++}: Activate child - Nothing should change`, () => {
+      Comical.activateElement(childDiv);
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Activate parent - Parent handles should become visible.`, () => {
+      Comical.activateElement(parentDiv);
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Move child - Child tail should become visible, but no handle`, () => {
+      childDiv.style.left = "250px";
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Activate child - Child mid handle visible now too`, () => {
+      Comical.activateElement(childDiv);
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Move parent on - child tail/handles should disappear`, () => {
+      parentDiv.style.left = "250px";
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Move parent off - child tail AND HANDLES should re-appear`, () => {
+      parentDiv.style.left = "125px";
+    });
+  
+    addFinishButton(wrapDiv, 400, 450);
     return wrapDiv;
   })
   .add("Move content element", () => {
