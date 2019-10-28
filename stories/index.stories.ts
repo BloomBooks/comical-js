@@ -9,13 +9,100 @@ import {
   Color,
   //Rectangle,
   Item,
-  Shape
+  Shape,
+  Segment,
+  Path
 } from "paper";
 import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
 
 storiesOf("comical", module)
+  .add("playing with beziers", () => {
+    const wrapDiv = document.createElement("div");
+    const canvas = document.createElement("canvas");
+    canvas.height = 600;
+    canvas.width = 600;
+    var xhandleFraction = 0.6;
+    var yHandleFraction = 0.8;
+    setup(canvas);
+    wrapDiv.appendChild(canvas);
+    const makePath = () => {
+      const top = 50;
+      const left = 50;
+      const height = 80;
+      const width = 200;
+      const xCenter = left + width / 2;
+      const yCenter = top + height / 2;
+      const right = left + width;
+      const bottom = top + height;
+      const xHandleOffset = (width / 2) * xhandleFraction;
+      const yHandleOffset = (height / 2) * yHandleFraction;
+      var firstSegment = new Segment({
+        point: new Point(xCenter, top),
+        handleOut: new Point(xHandleOffset, 0),
+        handleIn: new Point(-xHandleOffset, 0)
+      });
+      var secondSegment = new Segment({
+        point: new Point(right, yCenter),
+        handleIn: new Point(0, -yHandleOffset),
+        handleOut: new Point(0, yHandleOffset)
+      });
+      var thirdSegment = new Segment({
+        point: new Point(xCenter, bottom),
+        handleIn: new Point(xHandleOffset, 0),
+        handleOut: new Point(-xHandleOffset, 0)
+      });
+      var fourthSegment = new Segment({
+        point: new Point(left, yCenter),
+        handleIn: new Point(0, yHandleOffset),
+        handleOut: new Point(0, -yHandleOffset)
+      });
+      const path = new Path({
+        segments: [firstSegment, secondSegment, thirdSegment, fourthSegment],
+        strokeColor: new Color("black")
+      });
+      const topRightCurve = path.curves[0];
+      const topRight = topRightCurve.getLocationAt(
+        (topRightCurve.length * width) / (width + height)
+      ).point;
+      const bottomLeftCurve = path.curves[2];
+      const bottomLeft = bottomLeftCurve.getLocationAt(
+        (bottomLeftCurve.length * width) / (width + height)
+      ).point;
+      const contentHolder = new Path.Rectangle(topRight, bottomLeft);
+      contentHolder.strokeColor = new Color("red");
+
+      path.fullySelected = true;
+      path.closed = true;
+    };
+    makePath();
+
+    const button = document.createElement("button");
+    button.title = "Tighter";
+    button.innerText = "Tighter";
+    button.style.zIndex = "100";
+    button.style.marginRight = "10px";
+    wrapDiv.appendChild(button);
+    button.addEventListener("click", () => {
+      xhandleFraction += 0.03;
+      project!.activeLayer.removeChildren();
+      makePath();
+    });
+
+    const looser = document.createElement("button");
+    looser.title = "Looser";
+    looser.innerText = "Looser";
+    looser.style.zIndex = "100";
+    wrapDiv.appendChild(looser);
+    looser.addEventListener("click", () => {
+      xhandleFraction -= 0.03;
+      project!.activeLayer.removeChildren();
+      makePath();
+    });
+
+    return wrapDiv;
+  })
   .add("export gradient svg of scaled group broken", () => {
     // const wrapDiv = document.createElement("div");
     // const canvas = document.createElement("canvas");
@@ -423,8 +510,8 @@ storiesOf("comical", module)
     var div3 = makeTextBlock(
       wrapDiv,
       "This should be the middle layer",
-      250,
-      80,
+      240,
+      85,
       200
     );
     var div4 = makeTextBlock(
