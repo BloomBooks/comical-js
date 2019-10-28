@@ -131,6 +131,7 @@ export class ArcTail extends Tail {
       this.pathstroke.insertBelow(oldStroke);
       oldStroke.remove();
     }
+    this.pathstroke!.strokeWidth = this.bubble!.getBorderWidth();
     this.upperLayer.activate();
     this.pathFill = this.pathstroke.clone() as Path;
     this.pathFill.remove();
