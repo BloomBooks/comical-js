@@ -9,14 +9,102 @@ import {
   Color,
   //Rectangle,
   Item,
-  Shape
+  Shape,
+  Segment,
+  Path
 } from "paper";
 import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
 import { LineTail } from "../src/lineTail";
+import { TailSpec } from "../src/bubbleSpec";
 
 storiesOf("comical", module)
+  .add("playing with beziers", () => {
+    const wrapDiv = document.createElement("div");
+    const canvas = document.createElement("canvas");
+    canvas.height = 600;
+    canvas.width = 600;
+    var xhandleFraction = 0.6;
+    var yHandleFraction = 0.8;
+    setup(canvas);
+    wrapDiv.appendChild(canvas);
+    const makePath = () => {
+      const top = 50;
+      const left = 50;
+      const height = 80;
+      const width = 200;
+      const xCenter = left + width / 2;
+      const yCenter = top + height / 2;
+      const right = left + width;
+      const bottom = top + height;
+      const xHandleOffset = (width / 2) * xhandleFraction;
+      const yHandleOffset = (height / 2) * yHandleFraction;
+      var firstSegment = new Segment({
+        point: new Point(xCenter, top),
+        handleOut: new Point(xHandleOffset, 0),
+        handleIn: new Point(-xHandleOffset, 0)
+      });
+      var secondSegment = new Segment({
+        point: new Point(right, yCenter),
+        handleIn: new Point(0, -yHandleOffset),
+        handleOut: new Point(0, yHandleOffset)
+      });
+      var thirdSegment = new Segment({
+        point: new Point(xCenter, bottom),
+        handleIn: new Point(xHandleOffset, 0),
+        handleOut: new Point(-xHandleOffset, 0)
+      });
+      var fourthSegment = new Segment({
+        point: new Point(left, yCenter),
+        handleIn: new Point(0, yHandleOffset),
+        handleOut: new Point(0, -yHandleOffset)
+      });
+      const path = new Path({
+        segments: [firstSegment, secondSegment, thirdSegment, fourthSegment],
+        strokeColor: new Color("black")
+      });
+      const topRightCurve = path.curves[0];
+      const topRight = topRightCurve.getLocationAt(
+        (topRightCurve.length * width) / (width + height)
+      ).point;
+      const bottomLeftCurve = path.curves[2];
+      const bottomLeft = bottomLeftCurve.getLocationAt(
+        (bottomLeftCurve.length * width) / (width + height)
+      ).point;
+      const contentHolder = new Path.Rectangle(topRight, bottomLeft);
+      contentHolder.strokeColor = new Color("red");
+
+      path.fullySelected = true;
+      path.closed = true;
+    };
+    makePath();
+
+    const button = document.createElement("button");
+    button.title = "Tighter";
+    button.innerText = "Tighter";
+    button.style.zIndex = "100";
+    button.style.marginRight = "10px";
+    wrapDiv.appendChild(button);
+    button.addEventListener("click", () => {
+      xhandleFraction += 0.03;
+      project!.activeLayer.removeChildren();
+      makePath();
+    });
+
+    const looser = document.createElement("button");
+    looser.title = "Looser";
+    looser.innerText = "Looser";
+    looser.style.zIndex = "100";
+    wrapDiv.appendChild(looser);
+    looser.addEventListener("click", () => {
+      xhandleFraction -= 0.03;
+      project!.activeLayer.removeChildren();
+      makePath();
+    });
+
+    return wrapDiv;
+  })
   .add("export gradient svg of scaled group broken", () => {
     // const wrapDiv = document.createElement("div");
     // const canvas = document.createElement("canvas");
@@ -323,7 +411,7 @@ storiesOf("comical", module)
     button.style.left = "0";
     return wrapDiv;
   })
-  .add("two captions on picture", () => {
+  .add("three captions on picture", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
     wrapDiv.style.background =
@@ -347,6 +435,15 @@ storiesOf("comical", module)
     );
     div2.setAttribute("contenteditable", "true");
 
+    var div3 = makeTextBlock(
+      wrapDiv,
+      "This is someone outside speaking.",
+      100,
+      250,
+      150
+    );
+    div3.setAttribute("contenteditable", "true");
+
     // convertBubbleJsonToCanvas needs to see the divs laid out in their eventual positions
     window.setTimeout(() => {
       const bubble1 = new Bubble(div1);
@@ -367,6 +464,15 @@ storiesOf("comical", module)
         backgroundColors: ["#FFFFFF", "#DFB28B"],
         shadowOffset: 5
       });
+
+      const bubble3 = new Bubble(div3);
+      bubble3.setBubbleSpec({
+        version: "1.0",
+        style: "pointedArcs",
+        tails: [],
+        level: 1
+      });
+
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
 
@@ -406,8 +512,8 @@ storiesOf("comical", module)
     var div3 = makeTextBlock(
       wrapDiv,
       "This should be the middle layer",
-      250,
-      80,
+      240,
+      85,
       200
     );
     var div4 = makeTextBlock(
@@ -675,6 +781,260 @@ storiesOf("comical", module)
 
     return wrapDiv;
   })
+  .add("child bubbles overlap with parent", () => {
+    // A generic picture
+    // Four bubbles in the same layer, two overlapping
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "440px";
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerHTML =
+      "<table><tr><th>Action</th><th>Expectation</th></tr>" +
+      "<tr><td>Activate the child.</td><td>Child tails and child tail handles should NOT be visible.</td></tr>" +
+      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible</td></tr></table>";
+    textDiv2.style.width = "600px";
+    textDiv2.style.textAlign = "left";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "10px";
+    textDiv2.style.left = "10px";
+    wrapDiv.appendChild(textDiv2);
+
+    const childDivs: HTMLElement[] = [];
+    const parentDivs: HTMLElement[] = [];
+
+    childDivs.push(makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40));  // Child is PROBABLY loaded before parent
+    parentDivs.push(makeTextBlock(wrapDiv, "Parent", 80, 160, 100, 40));
+
+    // Child is a strict subset of parent. (Thus, there is strictly speaking no intersection points of their outlines)
+    // TODO: FIX ME. This case demonstrates a bug. (Tail handles shouldn't appear)
+    parentDivs.push(makeTextBlock(wrapDiv, "Parent 2", 250, 130, 100, 80));
+    childDivs.push(makeTextBlock(wrapDiv, "Child 2", 260, 160, 80));
+
+    parentDivs.push(makeTextBlock(wrapDiv, "Parent", 385, 160, 100, 40)); // Parent is PROBABLY loaded before child. Tests opposite scenario as Case #1
+    const childWithTailToSide = makeTextBlock(wrapDiv, "Child", 380, 120, 100, 40)
+    childDivs.push(childWithTailToSide);
+
+    // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+
+      for (let i = 0; i < parentDivs.length; ++i) {
+        const parentDiv = parentDivs[i];
+        const childDiv = childDivs[i];
+
+        const parentBubble = new Bubble(parentDiv);
+        parentBubble.setBubbleSpec({
+          version: "1.0",
+          style: "speech",
+          tails: [Bubble.makeDefaultTail(parentDiv)],
+          level: i + 1
+        });
+
+        Comical.convertBubbleJsonToCanvas(wrapDiv);
+        Comical.initializeChild(childDiv, parentDiv);
+
+        if (childDiv == childWithTailToSide) {
+          const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(childDiv);
+          misguidedChildTailSpec.midpointX = 520;
+          misguidedChildTailSpec.midpointY = 160;
+          misguidedChildTailSpec.tipX = (385 + 100/ 2);
+          misguidedChildTailSpec.tipY = (160 + 40/2);
+          misguidedChildTailSpec.joiner = true;
+
+          const misguidedChildBubble = new Bubble(childDiv);
+          misguidedChildBubble.setBubbleSpec({
+            version: "1.0",
+            style: "speech",
+            tails: [misguidedChildTailSpec],
+            level: i + 1,
+            order: misguidedChildBubble.getBubbleSpec().order
+          });
+        }
+
+
+        if (i < parentDivs.length - 1) {
+          // To get the right behaviour from initializeChild,
+          // convertCanvasToSvgImg must have been called with
+          // all the previous bubbles in the family defined.
+          // So we turn it off and on again between each call.
+          Comical.convertCanvasToSvgImg(wrapDiv);
+        }
+      }
+      Comical.update(wrapDiv);
+      Comical.activateElement(childDivs[0]);
+    }, 200);
+
+    const buttonDiv = document.createElement("div");
+    buttonDiv.style.position = "absolute";
+    buttonDiv.style.left = "10px";
+    buttonDiv.style.top = "250px";
+    wrapDiv.appendChild(buttonDiv);
+
+    for (let i = 0; i < parentDivs.length; ++i) {
+      addButton(buttonDiv, `Click to activate child ${i+1}`, () => {
+        Comical.activateElement(childDivs[i]);
+      });
+      addButton(buttonDiv, `Click to activate parent ${i+1}`, () => {
+        Comical.activateElement(parentDivs[i]);
+      });
+    }
+  
+    addFinishButton(wrapDiv, 400, 450);
+    return wrapDiv;
+  })
+  .add("child bubbles no overlap with parent", () => {
+    // A generic picture
+    // Four bubbles in the same layer, two overlapping
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "440px";
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerHTML =
+      "<table><tr><th>Action</th><th>Expectation</th></tr>" + 
+      "<tr><td>Activate the child.</td><td>Tail handles should be visible.</td></tr>" + 
+      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible.</td></tr>" + 
+      "<tr><td>Move the tail</td><td>No old tail should be left behind. (There should only be one tail.)</td></tr></table>";
+    textDiv2.style.width = "600px";
+    textDiv2.style.textAlign = "left";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "10px";
+    textDiv2.style.left = "10px";
+    wrapDiv.appendChild(textDiv2);
+
+    const childDiv = makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40);
+    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 200, 100, 40 );
+
+    // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      // the parent div
+      const parentBubble = new Bubble(parentDiv);
+      parentBubble.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(parentDiv)],
+        level: 1
+      });
+      // To get the right behaviour from initializeChild,
+      // convertCanvasToSvgImg must have been called with
+      // all the previous bubbles in the family defined.
+      // So we turn it off and on again between each call.
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(childDiv, parentDiv);
+      Comical.update(wrapDiv);
+      Comical.activateElement(childDiv);
+    }, 200);
+
+    const buttonDiv = document.createElement("div");
+    buttonDiv.style.position = "absolute";
+    buttonDiv.style.left = "10px";
+    buttonDiv.style.top = "275px";
+    wrapDiv.appendChild(buttonDiv);
+
+    addButton(buttonDiv, "Click to activate child", () => {
+      Comical.activateElement(childDiv);
+    });
+
+    addButton(buttonDiv, "Click to activate parent", () => {
+      Comical.activateElement(parentDiv);
+    });
+
+    addFinishButton(wrapDiv, 0, 450);
+    return wrapDiv;
+  })
+  .add("child bubbles overlap - dynamic test", () => {
+    // A generic picture
+    // Four bubbles in the same layer, two overlapping
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "440px";
+
+    const textDiv2 = document.createElement("div");
+    textDiv2.innerHTML =
+      "<table><tr><th>Action</th><th>Expectation</th></tr>" +
+      "<tr><td>Activate the child.</td><td>Child tails and child tail handles should NOT be visible.</td></tr>" +
+      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible</td></tr></table>";
+    textDiv2.style.width = "600px";
+    textDiv2.style.textAlign = "left";
+    textDiv2.style.position = "absolute";
+    textDiv2.style.top = "10px";
+    textDiv2.style.left = "10px";
+    wrapDiv.appendChild(textDiv2);
+
+    const parentLeft = 85;
+    const parentTop = 160;
+    const parentWidth = 100;
+    const parentHeight = 40;
+    const childDiv = makeTextBlock(wrapDiv, "Child", parentLeft - 5, parentTop - parentHeight, parentWidth, parentHeight);  // Add child first to make this test harder
+    const parentDiv = makeTextBlock(wrapDiv, "Parent", parentLeft, parentTop, parentWidth, parentHeight);
+
+    // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      const parentBubble = new Bubble(parentDiv);
+      parentBubble.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(parentDiv)],
+        level: 1
+      });
+
+      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.initializeChild(childDiv, parentDiv);
+
+      if (childDiv == childDiv) {
+        const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(childDiv);
+        misguidedChildTailSpec.midpointX = parentWidth - 55;
+        misguidedChildTailSpec.midpointY = parentTop - 25;
+        misguidedChildTailSpec.tipX = parentLeft + (parentWidth / 2);
+        misguidedChildTailSpec.tipY = parentTop + (parentHeight /2);
+        misguidedChildTailSpec.joiner = true;
+
+        const misguidedChildBubble = new Bubble(childDiv);
+        misguidedChildBubble.setBubbleSpec({
+          version: "1.0",
+          style: "speech",
+          tails: [misguidedChildTailSpec],
+          level: 1,
+          order: misguidedChildBubble.getBubbleSpec().order
+        });
+      }
+
+      Comical.update(wrapDiv);
+      Comical.activateElement(childDiv);
+    }, 200);
+
+    const buttonDiv = document.createElement("div");
+    buttonDiv.style.position = "absolute";
+    buttonDiv.style.left = "10px";
+    buttonDiv.style.top = "250px";
+    wrapDiv.appendChild(buttonDiv);
+
+    let stepNumber = 1;
+    addButton(buttonDiv, `Step ${stepNumber++}: Activate child - Nothing should change`, () => {
+      Comical.activateElement(childDiv);
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Activate parent - Parent handles should become visible.`, () => {
+      Comical.activateElement(parentDiv);
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Move child - Child tail should become visible, but no handle`, () => {
+      childDiv.style.left = "250px";
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Activate child - Child mid handle visible now too`, () => {
+      Comical.activateElement(childDiv);
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Move parent on - child tail/handles should disappear`, () => {
+      parentDiv.style.left = "250px";
+    });
+    addButton(buttonDiv, `Step ${stepNumber++}: Move parent off - child tail AND HANDLES should re-appear`, () => {
+      parentDiv.style.left = "125px";
+    });
+  
+    addFinishButton(wrapDiv, 400, 450);
+    return wrapDiv;
+  })
   .add("Move content element", () => {
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
@@ -814,11 +1174,15 @@ function makeTextBlock(
   content: string,
   x: number,
   y: number,
-  width: number
+  width: number,
+  height?: number
 ): HTMLElement {
   const textDiv = document.createElement("div");
   textDiv.innerText = content;
   textDiv.style.width = `${width}px`;
+  if (height) {
+    textDiv.style.height = `${height}px`;
+  }
   textDiv.style.textAlign = "center";
   textDiv.style.position = "absolute";
   textDiv.style.top = `${y}px`;
@@ -828,11 +1192,20 @@ function makeTextBlock(
   return textDiv;
 }
 
-function addFinishButton(wrapDiv: HTMLElement): HTMLButtonElement {
+function addFinishButton(wrapDiv: HTMLElement, left?: number, top?: number): HTMLButtonElement {
   const button = document.createElement("button");
   button.title = "Finish";
   button.innerText = "Finish";
   button.style.zIndex = "100";
+  if (left || top) {
+    button.style.position = "absolute";
+    if (left) {
+      button.style.left = `${left}px`;
+    }
+    if (top) {
+      button.style.top = `${top}px`;
+    }
+  }
   wrapDiv.appendChild(button);
   let editable = true;
   button.addEventListener("click", () => {

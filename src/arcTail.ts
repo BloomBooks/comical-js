@@ -131,6 +131,7 @@ export class ArcTail extends Tail {
       this.pathstroke.insertBelow(oldStroke);
       oldStroke.remove();
     }
+    this.pathstroke!.strokeWidth = this.bubble!.getBorderWidth();
     this.upperLayer.activate();
     this.pathFill = this.pathstroke.clone() as Path;
     this.pathFill.remove();
@@ -161,8 +162,8 @@ export class ArcTail extends Tail {
     this.adjustForChangedRoot(delta);
   }
 
-  public showHandles() {
-    super.showHandles();
+  protected showHandlesInternal(): void {
+    super.showHandlesInternal();
     const isHandleSolid = true;
     const curveHandle = this.makeHandle(this.mid, isHandleSolid);
 
@@ -190,5 +191,12 @@ export class ArcTail extends Tail {
       this.spec.midpointY = curveHandle!.position!.y!;
       this.persistSpecChanges();
     };
+  }
+
+  public setTailAndHandleVisibility(newVisibility: boolean) {
+    super.setTailAndHandleVisibility(newVisibility);
+    if (this.midHandle) {
+      this.midHandle.visible = newVisibility;
+    }
   }
 }

@@ -8,6 +8,7 @@
 // setBubbleSpec and getBubbleSpec. This allows re-creatting the paper.js editable
 // state of the bubble even after we have discarded all that in favor of an SVG
 // for a finished HTML document that doesn't depend on Javascript.
+// If you add a property here, consider handling it in Bubble.mergeWithNewBubbleProps()
 export interface BubbleSpecPattern {
   version?: string; // currently 1.0
   style?: string; // currently one of speech or shout or caption
@@ -42,7 +43,7 @@ export interface TailSpec {
   tipY: number;
   midpointX: number; // notionally, tip's curve passes through this point
   midpointY: number;
-  joiner?: boolean;
+  joiner?: boolean; // true if it joins to its parent bubble
   style?: string; // currently one of arc or straight
 }
 // Do we need to specify a width? Other attributes for bezier curve?
