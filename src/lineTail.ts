@@ -4,6 +4,8 @@ import { TailSpec } from "bubbleSpec";
 import { Bubble } from "bubble";
 
 export class LineTail extends Tail {
+  private tailWidth: number = 1;
+
   public constructor(
     root: Point,
     tip: Point,
@@ -20,7 +22,7 @@ export class LineTail extends Tail {
     const oldStroke = this.pathstroke;
     this.lowerLayer.activate();
 
-    const tailWidth = 1; // Single pixel may not be thick enough to see it on an image
+    this.tailWidth = 1; // Single pixel may not be thick enough to see it on an image
 
     this.pathstroke = new Path.Line(this.root, this.tip);
 
@@ -30,6 +32,24 @@ export class LineTail extends Tail {
     }
 
     this.pathstroke.strokeColor = new Color("black");
-    this.pathstroke.strokeWidth = tailWidth;
+    this.pathstroke.strokeWidth = this.tailWidth;
+  }
+
+  public onClick(action: () => void) {
+    this.clickAction = action;
+    if (this.pathstroke) {
+      // create onMouseEnter and onMouseLeave events for making it easier for a user to grab
+      // the tail. Otherwise clicking on it is really hard. The onMouseLeave event is so that it
+      // returns the tail to the default width (this.tailWidth) of the LineTail
+
+      this.pathstroke.onMouseEnter = () => {
+        this.pathstroke.strokeWidth = 4;
+      };
+
+      this.pathstroke.onMouseLeave = () => {
+        this.pathstroke.strokeWidth = this.tailWidth;
+      };
+      this.pathstroke.onClick = action;
+    }
   }
 }

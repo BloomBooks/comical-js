@@ -13,6 +13,7 @@ import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
 import { StraightTail } from "./straightTail";
+import { LineTail } from "./lineTail";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles:
@@ -563,6 +564,17 @@ export class Bubble {
           this
         );
         break;
+      case "line":
+        tail = new LineTail(
+          startPoint,
+          tipPoint,
+          this.lowerLayer,
+          this.upperLayer,
+          this.handleLayer,
+          desiredTail,
+          undefined
+        );
+        break;
       case "arc":
       default:
         tail = new ArcTail(
@@ -577,6 +589,15 @@ export class Bubble {
         );
         break;
     }
+
+    // todo: remove before commit
+    console.log("Create LineTail!");
+    console.log("Content: ");
+    console.log(this.content);
+    console.log("tipPoint: ");
+    console.log(tipPoint);
+    console.log(desiredTail);
+    // todo: remove before commit
 
     tail.makeShapes();
     tail.onClick(() => {

@@ -791,48 +791,19 @@ storiesOf("comical", module)
       100
     );
 
-    const start = new Point(175, 100);
-    const tip = start.add(new Point(10, 150));
-    const layer1 = project!.activeLayer;
-    const layer2 = new Layer();
-    const handleLayer = new Layer();
-    project!.addLayer(layer2);
-    project!.addLayer(handleLayer);
-    const mid = Bubble.defaultMid(start, tip);
-
-    const tailSpec = {
-      tipX: tip.x!,
-      tipY: tip.y!,
-      midpointX: mid.x!,
-      midpointY: mid.y!
-    };
-
-    const tail = new LineTail(
-      start,
-      tip,
-      layer1,
-      layer2,
-      handleLayer,
-      tailSpec,
-      undefined
-    );
-
     window.setTimeout(() => {
       const bubble1 = new Bubble(div1);
+      var tail = Bubble.makeDefaultTail(div1);
+      tail.style = "line";
       bubble1.setBubbleSpec({
         version: "1.0",
         style: "caption",
-        tails: [], // I'd much rather put the tail here and the tail be drawn like makeDefaultTail
+        tails: [tail],
         level: 1,
         backgroundColors: ["#fff", "#839496"],
         shadowOffset: 1
       });
       Comical.convertBubbleJsonToCanvas(wrapDiv);
-
-      // Don't like how this has to be drawn here inside of the timeout.
-      tail.debugMode = true;
-      tail.showHandles();
-      tail.makeShapes();
     }, 200);
 
     return wrapDiv;
