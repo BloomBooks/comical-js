@@ -1,12 +1,12 @@
 ## About Comical-JS
 
-Comical-JS is a JavaScript library for displaying and editing comic balloons (speech bubbles), captions, callouts, and related text that floats above an image. Lacking a better term, we call all of these things _bubbles_.
+Comical-JS is a JavaScript library for displaying and editing comic balloons (speech bubbles), captions, callouts, and related text that floats above one or more images. Lacking a better term, we call all of these things _bubbles_.
 
 Comical-JS only provides ui elements (handles) to control bubble tails. In the future it may provide ui for controlling the location and bounds of the bubble. But ui for properties like bubble style (thought-bubble, whisper, etc.), background color, etc. will always be left to the client application.
 
 Similarly, Comical-JS does not provide any features related to the text inside the bubble. Instead, the client application must create the element containing the text, and then tell Comical-JS to attach to it. This gives client applications freedom to do whatever they need to with text.
 
-Comical-JS comes from the [Bloom](https://github.com/BloomBooks) project which is an HTML-based literacy material production app. So it is a bit unusual in that it is designed to work with HTML-based editors like Bloom which make changes to the DOM and then save that DOM. For example, when active, Comical draws all the bubbles above an image using the HTML canvas. But when deactivated, Comical-JS inserts an SVG into the DOM, so the you can display the page without having to fire up Comical. Since you might want to later edit the bubbles, it also stores the JSON that defines each bubble in an attribute named _data-comical_. Using this, it can recreate the interactive bubble as needed.
+Comical-JS comes from the [Bloom](https://github.com/BloomBooks) project which is an HTML-based literacy material production app. So it is a bit unusual in that it is designed to work with HTML-based editors like Bloom which make changes to the DOM and then save that DOM. For example, when active, Comical draws all the bubbles above an image using the HTML canvas. But when deactivated, Comical-JS inserts an SVG into the DOM, so that you can display the page without having to fire up Comical. Since you might want to later edit the bubbles, it also stores the JSON that defines each bubble in an attribute named _data-comical_. Using this, it can recreate the interactive bubble as needed.
 
 ## Project Status
 
@@ -20,7 +20,7 @@ To get started:
 
 ### To make bubbles appear
 
-You need a parent element, typically containing the picture to which you want to add bubbles, and one or more elements you want to wrap bubbles around, typically positioned relative to the parent. The child elements must have a data-bubble attribute giving an initial specification of the desired bubble (and possibly tails) for that element.
+You need one or more parent elements, typically containing the picture to which you want to add bubbles, and one or more elements you want to wrap bubbles around, typically positioned relative to the parent. The child elements must have a data-bubble attribute giving an initial specification of the desired bubble (and possibly tails) for that element.
 
 A simple way to do this is, for each desired child, call
 
@@ -28,17 +28,17 @@ A simple way to do this is, for each desired child, call
 
 To turn on editing mode, call
 
-`Comical.convertBubbleJsonToCanvas(parent);`
+`Comical.startEditing([parent]);`
 
-A user can then interactively click on a bubble to make handles appear and drag them to move the tail.
+A user can then interactively click on a bubble to make handles appear and drag them to move the tail. You can specify more than one parent if you wish. Performance may well suffer with a large number of parents; Comical is designed for a number of parent images that would reasonably fit on a page.
 
 ### When done editing
 
 To put the document in a state where the bubbles can't be edited and Comical.js code is not needed to make them appear, call
 
-`convertCanvasToSvgImg(parent);`
+`Comical.stopEditing();`
 
-(Later, you can call convertBubbleJsonToCanvas() again to resume editing.)
+(Later, you can call startEditing() again to resume editing.)
 
 ### BubbleSpec
 
@@ -50,7 +50,7 @@ If you setBubbleSpec() while Comical editing is happening (a valid way of changi
 
 `Comical.update(parent);`
 
-to make the visible bubbles conform.
+on the appropriate parent element to make the visible bubbles conform. Note that this must be done after calling Comical.startEditing() with 'parent' in the list of parents, and before the corresponding stopEditing() call.
 
 (This isn't necessary if you just move the element that the bubble is wrapped around; Comical will automatically adjust things, as long as editing is turned on.)
 

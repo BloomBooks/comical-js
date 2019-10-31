@@ -2,6 +2,7 @@ import { Tail } from "./tail";
 import { Point, Layer, Path, ToolEvent, Color } from "paper";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "bubble";
+import { activateLayer } from "./utilities";
 
 // An ArcTail is currently our default: a tail that is an arc from the tip through a third
 // control point, mid, which can also be dragged.
@@ -37,7 +38,7 @@ export class ArcTail extends Tail {
     const oldFill = this.pathFill;
     const oldStroke = this.pathstroke;
 
-    this.lowerLayer.activate();
+    activateLayer(this.lowerLayer);
 
     const tailWidth = 12;
 
@@ -115,12 +116,12 @@ export class ArcTail extends Tail {
         this.mark1.remove();
         this.mark2!.remove();
       }
-      this.upperLayer.activate();
+      activateLayer(this.upperLayer);
       this.mark1 = new Path.Circle(mid1, 3);
       this.mark1.fillColor = this.mark1.strokeColor = new Color("red");
       this.mark2 = new Path.Circle(mid2, 3);
       this.mark2.fillColor = this.mark2.strokeColor = new Color("red");
-      this.lowerLayer.activate();
+      activateLayer(this.lowerLayer);
     }
 
     this.pathstroke = new Path.Arc(begin, mid1, this.tip);
@@ -132,7 +133,7 @@ export class ArcTail extends Tail {
       oldStroke.remove();
     }
     this.pathstroke!.strokeWidth = this.bubble!.getBorderWidth();
-    this.upperLayer.activate();
+    activateLayer(this.upperLayer);
     this.pathFill = this.pathstroke.clone() as Path;
     this.pathFill.remove();
     if (oldFill) {
