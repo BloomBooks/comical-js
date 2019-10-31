@@ -17,8 +17,7 @@ import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
 import { TailSpec } from "../src/bubbleSpec";
-
-storiesOf("comical", module)
+storiesOf("paper", module)
   .add("playing with beziers", () => {
     const wrapDiv = document.createElement("div");
     const canvas = document.createElement("canvas");
@@ -181,7 +180,9 @@ storiesOf("comical", module)
     const svg = project!.exportSVG() as SVGElement;
     wrapDiv.appendChild(svg);
     return wrapDiv;
-  })
+  });
+
+storiesOf("comical", module)
   // I don't think we need a story for the tail by itself any more
   .add("drag tail", () => {
     const canvas = document.createElement("canvas");
@@ -589,11 +590,7 @@ storiesOf("comical", module)
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
     wrapDiv.style.height = "300px";
-    const canvas = document.createElement("canvas");
-    canvas.height = 300;
-    canvas.width = 500;
-    wrapDiv.appendChild(canvas);
-    setup(canvas);
+    wrapDiv.style.width = "500px";
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
@@ -614,27 +611,42 @@ storiesOf("comical", module)
     });
 
     setTimeout(() => {
-      Comical.update(wrapDiv);
+      Comical.startEditing([wrapDiv]);
     }, 200);
 
-    addButton(wrapDiv, "None", () => {
-      const spec = Bubble.getBubbleSpec(textDiv2);
-      spec.style = "none";
-      bubble.setBubbleSpec(spec);
-      Comical.update(wrapDiv);
-    });
-    addButton(wrapDiv, "Speech", () => {
-      const spec = Bubble.getBubbleSpec(textDiv2);
-      spec.style = "speech";
-      bubble.setBubbleSpec(spec);
-      Comical.update(wrapDiv);
-    });
-    addButton(wrapDiv, "Shout", () => {
-      const spec = Bubble.getBubbleSpec(textDiv2);
-      spec.style = "shout";
-      bubble.setBubbleSpec(spec);
-      Comical.update(wrapDiv);
-    });
+    addButtonBelow(
+      wrapDiv,
+      "None",
+      () => {
+        const spec = Bubble.getBubbleSpec(textDiv2);
+        spec.style = "none";
+        bubble.setBubbleSpec(spec);
+        Comical.update(wrapDiv);
+      },
+      "430px"
+    );
+    addButtonBelow(
+      wrapDiv,
+      "Speech",
+      () => {
+        const spec = Bubble.getBubbleSpec(textDiv2);
+        spec.style = "speech";
+        bubble.setBubbleSpec(spec);
+        Comical.update(wrapDiv);
+      },
+      "460px"
+    );
+    addButtonBelow(
+      wrapDiv,
+      "Shout",
+      () => {
+        const spec = Bubble.getBubbleSpec(textDiv2);
+        spec.style = "shout";
+        bubble.setBubbleSpec(spec);
+        Comical.update(wrapDiv);
+      },
+      "490px"
+    );
 
     const button = addFinishButton(wrapDiv);
     // Force it below the wrapDiv.
@@ -648,11 +660,7 @@ storiesOf("comical", module)
     const wrapDiv = document.createElement("div");
     wrapDiv.style.position = "relative";
     wrapDiv.style.height = "300px";
-    const canvas = document.createElement("canvas");
-    canvas.height = 300;
-    canvas.width = 500;
-    wrapDiv.appendChild(canvas);
-    setup(canvas);
+    wrapDiv.style.width = "500px";
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerText =
@@ -676,7 +684,7 @@ storiesOf("comical", module)
     });
 
     setTimeout(() => {
-      Comical.update(wrapDiv);
+      Comical.startEditing([wrapDiv]);
     }, 200);
 
     const button = addFinishButton(wrapDiv);
@@ -730,16 +738,16 @@ storiesOf("comical", module)
       // convertCanvasToSvgImg must have been called with
       // all the previous bubbles in the family defined.
       // So we turn it off and on again between each call.
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.startEditing([wrapDiv]);
       Comical.initializeChild(div3, div4);
-      Comical.convertCanvasToSvgImg(wrapDiv);
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.stopEditing();
+      Comical.startEditing([wrapDiv]);
       Comical.initializeChild(div2, div3);
-      Comical.convertCanvasToSvgImg(wrapDiv);
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.stopEditing();
+      Comical.startEditing([wrapDiv]);
       Comical.initializeChild(div1, div4);
-      Comical.convertCanvasToSvgImg(wrapDiv);
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.stopEditing();
+      Comical.startEditing([wrapDiv]);
     }, 200);
 
     const button = addFinishButton(wrapDiv);
@@ -802,7 +810,7 @@ storiesOf("comical", module)
     const childDivs: HTMLElement[] = [];
     const parentDivs: HTMLElement[] = [];
 
-    childDivs.push(makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40));  // Child is PROBABLY loaded before parent
+    childDivs.push(makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40)); // Child is PROBABLY loaded before parent
     parentDivs.push(makeTextBlock(wrapDiv, "Parent", 80, 160, 100, 40));
 
     // Child is a strict subset of parent. (Thus, there is strictly speaking no intersection points of their outlines)
@@ -811,13 +819,19 @@ storiesOf("comical", module)
     childDivs.push(makeTextBlock(wrapDiv, "Child 2", 260, 160, 80));
 
     parentDivs.push(makeTextBlock(wrapDiv, "Parent", 385, 160, 100, 40)); // Parent is PROBABLY loaded before child. Tests opposite scenario as Case #1
-    const childWithTailToSide = makeTextBlock(wrapDiv, "Child", 380, 120, 100, 40)
+    const childWithTailToSide = makeTextBlock(
+      wrapDiv,
+      "Child",
+      380,
+      120,
+      100,
+      40
+    );
     childDivs.push(childWithTailToSide);
 
     // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
     window.setTimeout(() => {
-
       for (let i = 0; i < parentDivs.length; ++i) {
         const parentDiv = parentDivs[i];
         const childDiv = childDivs[i];
@@ -830,15 +844,17 @@ storiesOf("comical", module)
           level: i + 1
         });
 
-        Comical.convertBubbleJsonToCanvas(wrapDiv);
+        Comical.startEditing([wrapDiv]);
         Comical.initializeChild(childDiv, parentDiv);
 
         if (childDiv == childWithTailToSide) {
-          const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(childDiv);
+          const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(
+            childDiv
+          );
           misguidedChildTailSpec.midpointX = 520;
           misguidedChildTailSpec.midpointY = 160;
-          misguidedChildTailSpec.tipX = (385 + 100/ 2);
-          misguidedChildTailSpec.tipY = (160 + 40/2);
+          misguidedChildTailSpec.tipX = 385 + 100 / 2;
+          misguidedChildTailSpec.tipY = 160 + 40 / 2;
           misguidedChildTailSpec.joiner = true;
 
           const misguidedChildBubble = new Bubble(childDiv);
@@ -851,13 +867,12 @@ storiesOf("comical", module)
           });
         }
 
-
         if (i < parentDivs.length - 1) {
           // To get the right behaviour from initializeChild,
           // convertCanvasToSvgImg must have been called with
           // all the previous bubbles in the family defined.
           // So we turn it off and on again between each call.
-          Comical.convertCanvasToSvgImg(wrapDiv);
+          Comical.stopEditing();
         }
       }
       Comical.update(wrapDiv);
@@ -871,14 +886,14 @@ storiesOf("comical", module)
     wrapDiv.appendChild(buttonDiv);
 
     for (let i = 0; i < parentDivs.length; ++i) {
-      addButton(buttonDiv, `Click to activate child ${i+1}`, () => {
+      addButton(buttonDiv, `Click to activate child ${i + 1}`, () => {
         Comical.activateElement(childDivs[i]);
       });
-      addButton(buttonDiv, `Click to activate parent ${i+1}`, () => {
+      addButton(buttonDiv, `Click to activate parent ${i + 1}`, () => {
         Comical.activateElement(parentDivs[i]);
       });
     }
-  
+
     addFinishButton(wrapDiv, 400, 450);
     return wrapDiv;
   })
@@ -891,9 +906,9 @@ storiesOf("comical", module)
 
     const textDiv2 = document.createElement("div");
     textDiv2.innerHTML =
-      "<table><tr><th>Action</th><th>Expectation</th></tr>" + 
-      "<tr><td>Activate the child.</td><td>Tail handles should be visible.</td></tr>" + 
-      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible.</td></tr>" + 
+      "<table><tr><th>Action</th><th>Expectation</th></tr>" +
+      "<tr><td>Activate the child.</td><td>Tail handles should be visible.</td></tr>" +
+      "<tr><td>Activate the parent.</td><td>Parent's tail handles should be visible.</td></tr>" +
       "<tr><td>Move the tail</td><td>No old tail should be left behind. (There should only be one tail.)</td></tr></table>";
     textDiv2.style.width = "600px";
     textDiv2.style.textAlign = "left";
@@ -903,7 +918,7 @@ storiesOf("comical", module)
     wrapDiv.appendChild(textDiv2);
 
     const childDiv = makeTextBlock(wrapDiv, "Child", 40, 120, 100, 40);
-    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 200, 100, 40 );
+    const parentDiv = makeTextBlock(wrapDiv, "Parent", 80, 200, 100, 40);
 
     // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
@@ -920,7 +935,7 @@ storiesOf("comical", module)
       // convertCanvasToSvgImg must have been called with
       // all the previous bubbles in the family defined.
       // So we turn it off and on again between each call.
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.startEditing([wrapDiv]);
       Comical.initializeChild(childDiv, parentDiv);
       Comical.update(wrapDiv);
       Comical.activateElement(childDiv);
@@ -966,8 +981,23 @@ storiesOf("comical", module)
     const parentTop = 160;
     const parentWidth = 100;
     const parentHeight = 40;
-    const childDiv = makeTextBlock(wrapDiv, "Child", parentLeft - 5, parentTop - parentHeight, parentWidth, parentHeight);  // Add child first to make this test harder
-    const parentDiv = makeTextBlock(wrapDiv, "Parent", parentLeft, parentTop, parentWidth, parentHeight);
+    // Add child first to make this test harder
+    const childDiv = makeTextBlock(
+      wrapDiv,
+      "Child",
+      parentLeft - 5,
+      parentTop - parentHeight,
+      parentWidth,
+      parentHeight
+    );
+    const parentDiv = makeTextBlock(
+      wrapDiv,
+      "Parent",
+      parentLeft,
+      parentTop,
+      parentWidth,
+      parentHeight
+    );
 
     // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
     // as does convertBubbleJsonToCanvas.
@@ -980,15 +1010,17 @@ storiesOf("comical", module)
         level: 1
       });
 
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      Comical.startEditing([wrapDiv]);
       Comical.initializeChild(childDiv, parentDiv);
 
       if (childDiv == childDiv) {
-        const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(childDiv);
+        const misguidedChildTailSpec: TailSpec = Bubble.makeDefaultTail(
+          childDiv
+        );
         misguidedChildTailSpec.midpointX = parentWidth - 55;
         misguidedChildTailSpec.midpointY = parentTop - 25;
-        misguidedChildTailSpec.tipX = parentLeft + (parentWidth / 2);
-        misguidedChildTailSpec.tipY = parentTop + (parentHeight /2);
+        misguidedChildTailSpec.tipX = parentLeft + parentWidth / 2;
+        misguidedChildTailSpec.tipY = parentTop + parentHeight / 2;
         misguidedChildTailSpec.joiner = true;
 
         const misguidedChildBubble = new Bubble(childDiv);
@@ -1012,26 +1044,127 @@ storiesOf("comical", module)
     wrapDiv.appendChild(buttonDiv);
 
     let stepNumber = 1;
-    addButton(buttonDiv, `Step ${stepNumber++}: Activate child - Nothing should change`, () => {
-      Comical.activateElement(childDiv);
-    });
-    addButton(buttonDiv, `Step ${stepNumber++}: Activate parent - Parent handles should become visible.`, () => {
-      Comical.activateElement(parentDiv);
-    });
-    addButton(buttonDiv, `Step ${stepNumber++}: Move child - Child tail should become visible, but no handle`, () => {
-      childDiv.style.left = "250px";
-    });
-    addButton(buttonDiv, `Step ${stepNumber++}: Activate child - Child mid handle visible now too`, () => {
-      Comical.activateElement(childDiv);
-    });
-    addButton(buttonDiv, `Step ${stepNumber++}: Move parent on - child tail/handles should disappear`, () => {
-      parentDiv.style.left = "250px";
-    });
-    addButton(buttonDiv, `Step ${stepNumber++}: Move parent off - child tail AND HANDLES should re-appear`, () => {
-      parentDiv.style.left = "125px";
-    });
-  
+    addButton(
+      buttonDiv,
+      `Step ${stepNumber++}: Activate child - Nothing should change`,
+      () => {
+        Comical.activateElement(childDiv);
+      }
+    );
+    addButton(
+      buttonDiv,
+      `Step ${stepNumber++}: Activate parent - Parent handles should become visible.`,
+      () => {
+        Comical.activateElement(parentDiv);
+      }
+    );
+    addButton(
+      buttonDiv,
+      `Step ${stepNumber++}: Move child - Child tail should become visible, but no handle`,
+      () => {
+        childDiv.style.left = "250px";
+      }
+    );
+    addButton(
+      buttonDiv,
+      `Step ${stepNumber++}: Activate child - Child mid handle visible now too`,
+      () => {
+        Comical.activateElement(childDiv);
+      }
+    );
+    addButton(
+      buttonDiv,
+      `Step ${stepNumber++}: Move parent on - child tail/handles should disappear`,
+      () => {
+        parentDiv.style.left = "250px";
+      }
+    );
+    addButton(
+      buttonDiv,
+      `Step ${stepNumber++}: Move parent off - child tail AND HANDLES should re-appear`,
+      () => {
+        parentDiv.style.left = "125px";
+      }
+    );
+
     addFinishButton(wrapDiv, 400, 450);
+    return wrapDiv;
+  })
+  .add("bubbles on two pictures", () => {
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    const firstPicDiv = document.createElement("div");
+    firstPicDiv.style.position = "relative";
+    firstPicDiv.style.background =
+      "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/400px";
+    firstPicDiv.style.height = "400px";
+    wrapDiv.appendChild(firstPicDiv);
+
+    const secondPicDiv = document.createElement("div");
+    secondPicDiv.style.position = "relative";
+    secondPicDiv.style.background =
+      "url('The Moon and The Cap_Page 051.jpg') no-repeat 0/400px";
+    secondPicDiv.style.height = "400px";
+    wrapDiv.appendChild(secondPicDiv);
+
+    var div1 = makeTextBlock(firstPicDiv, "Sweet! Rad glasses!", 120, 100, 100);
+
+    var div2 = makeTextBlock(
+      firstPicDiv,
+      "I got a blue hat. I love it! Better not lose it...",
+      300,
+      150,
+      200
+    );
+    div2.setAttribute("contenteditable", "true");
+
+    var div3 = makeTextBlock(
+      secondPicDiv,
+      "My hat is stuck in the tree!",
+      50,
+      50,
+      200
+    );
+    div3.setAttribute("contenteditable", "true");
+
+    // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+    // as does convertBubbleJsonToCanvas.
+    window.setTimeout(() => {
+      const bubble1 = new Bubble(div1);
+      var tail = Bubble.makeDefaultTail(div1);
+      tail.style = "straight";
+      bubble1.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [tail],
+        level: 1
+      });
+
+      const bubble2 = new Bubble(div2);
+      bubble2.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(div2)],
+        level: 2
+      });
+      const bubble3 = new Bubble(div3);
+      bubble3.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [Bubble.makeDefaultTail(div3)],
+        level: 1
+      });
+      Comical.startEditing([firstPicDiv, secondPicDiv]);
+    }, 200);
+
+    const button = addFinishButton(wrapDiv, undefined, undefined, [
+      firstPicDiv,
+      secondPicDiv
+    ]);
+    // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+    button.style.position = "absolute";
+    button.style.top = "600px";
+    button.style.left = "0";
     return wrapDiv;
   })
   .add("Move content element", () => {
@@ -1047,12 +1180,6 @@ storiesOf("comical", module)
     instructionsDiv.style.top = "0px";
     instructionsDiv.style.left = "0px";
     wrapDiv.appendChild(instructionsDiv);
-
-    const canvas = document.createElement("canvas");
-    canvas.height = 300;
-    canvas.width = 600;
-    wrapDiv.appendChild(canvas);
-    setup(canvas);
 
     const textDiv1 = document.createElement("div");
     textDiv1.innerText = "Text";
@@ -1072,7 +1199,7 @@ storiesOf("comical", module)
         level: 1
       });
 
-      Comical.update(wrapDiv);
+      Comical.startEditing([wrapDiv]);
     }, 200);
 
     const buttonLeft = addButton(wrapDiv, "Click to move box left", () => {
@@ -1116,7 +1243,12 @@ function makeTextBlock(
   return textDiv;
 }
 
-function addFinishButton(wrapDiv: HTMLElement, left?: number, top?: number): HTMLButtonElement {
+function addFinishButton(
+  wrapDiv: HTMLElement,
+  left?: number,
+  top?: number,
+  roots?: HTMLElement[]
+): HTMLButtonElement {
   const button = document.createElement("button");
   button.title = "Finish";
   button.innerText = "Finish";
@@ -1134,11 +1266,19 @@ function addFinishButton(wrapDiv: HTMLElement, left?: number, top?: number): HTM
   let editable = true;
   button.addEventListener("click", () => {
     if (editable) {
-      Comical.convertCanvasToSvgImg(wrapDiv);
+      if (roots) {
+        Comical.stopEditing();
+      } else {
+        Comical.convertCanvasToSvgImg(wrapDiv);
+      }
       editable = false;
       button.innerText = "Edit";
     } else {
-      Comical.convertBubbleJsonToCanvas(wrapDiv);
+      if (roots) {
+        Comical.startEditing(roots);
+      } else {
+        Comical.convertBubbleJsonToCanvas(wrapDiv);
+      }
       editable = true;
       button.innerText = "Finish";
     }
@@ -1161,4 +1301,16 @@ function addButton(
     clickHandler();
   });
   return button;
+}
+
+function addButtonBelow(
+  wrapDiv: HTMLElement,
+  buttonText: string,
+  clickHandler: () => void,
+  position: string
+) {
+  var result = addButton(wrapDiv, buttonText, clickHandler);
+  result.style.position = "absolute";
+  result.style.top = position;
+  result.style.left = "0";
 }

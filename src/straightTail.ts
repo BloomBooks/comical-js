@@ -2,6 +2,7 @@ import { Tail } from "./tail";
 import { Point, Layer, Path, Color } from "paper";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "bubble";
+import { activateLayer } from "./utilities";
 
 //  straight tail is a simple triangle, with only the tip handle
 export class StraightTail extends Tail {
@@ -24,7 +25,7 @@ export class StraightTail extends Tail {
     const oldFill = this.pathFill;
     const oldStroke = this.pathstroke;
 
-    this.lowerLayer.activate();
+    activateLayer(this.lowerLayer);
 
     const tailWidth = 12;
 
@@ -53,7 +54,7 @@ export class StraightTail extends Tail {
       oldStroke.remove();
     }
     this.pathstroke!.strokeWidth = this.bubble!.getBorderWidth();
-    this.upperLayer.activate();
+    activateLayer(this.upperLayer);
     this.pathFill = this.pathstroke.clone({ insert: false }) as Path;
     if (oldFill) {
       this.pathFill.insertAbove(oldFill);

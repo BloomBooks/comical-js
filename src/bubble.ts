@@ -3,7 +3,6 @@ import {
   Color,
   Item,
   Shape,
-  project,
   Layer,
   Gradient,
   GradientStop,
@@ -17,6 +16,7 @@ import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
 import { StraightTail } from "./straightTail";
 import { makeSpeechBubble } from "./speechBubble";
+import { activateLayer } from "./utilities";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles:
@@ -106,14 +106,14 @@ export class Bubble {
         version: Comical.bubbleVersion,
         style: "none",
         tails: [],
-        level: Comical.getMaxLevel() + 1
+        level: Comical.getMaxLevel(element) + 1
       };
     }
     const result: BubbleSpec = {
       version: Comical.bubbleVersion,
       style: style,
       tails: [Bubble.makeDefaultTail(element)],
-      level: Comical.getMaxLevel() + 1
+      level: Comical.getMaxLevel(element) + 1
     };
     if (style === "caption") {
       result.backgroundColors = ["#FFFFFF", "#DFB28B"];
@@ -404,7 +404,7 @@ export class Bubble {
       this.oldContentWidth = this.content.offsetWidth;
     }
     const bubbleStyle = this.getStyle();
-    this.lowerLayer.activate(); // at least for now, the main shape always goes in this layer.
+    activateLayer(this.lowerLayer); // at least for now, the main shape always goes in this layer.
     switch (bubbleStyle) {
       case "pointedArcs":
         return this.makePointedArcBubble();
@@ -434,11 +434,11 @@ export class Bubble {
     }
     const svg = Bubble.getShapeSvgString(bubbleStyle);
 
-    this.lowerLayer.activate(); // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
+    activateLayer(this.lowerLayer); // Sets this bubble's lowerLayer as the active layer, so that the SVG will be imported into the correct layer.
 
     // ImportSVG may return asynchronously if the input string is a URL.
     // Even though the string we pass contains the svg contents directly (not a URL), when I ran it in Bloom I still got a null shape out as the return value, so best to treat it as async.
-    project!.importSVG(svg, {
+    this.lowerLayer.project.importSVG(svg, {
       onLoad: (item: Item) => {
         onShapeLoaded(item);
       }
@@ -449,7 +449,7 @@ export class Bubble {
   private makeShapes(shape: Item) {
     var oldOutline = this.outline;
     var oldFillArea = this.fillArea;
-    this.lowerLayer.activate();
+    activateLayer(this.lowerLayer);
     this.outline = shape;
 
     // if the SVG contains a single shape (marked with an ID) that is all
@@ -537,12 +537,7 @@ export class Bubble {
     // Issue: sharing the gradation process with any tails (and maybe
     // other bubbles in family??)
     if (spec.backgroundColors && spec.backgroundColors.length) {
-      // The checks for fillArea and bounds relate to the comment below in creating a gradient.
-      if (
-        spec.backgroundColors.length === 1 ||
-        !this.fillArea ||
-        !this.fillArea.bounds
-      ) {
+      if (spec.backgroundColors.length === 1) {
         return new Color(spec.backgroundColors[0]);
       }
 
@@ -553,23 +548,21 @@ export class Bubble {
       );
       gradient.stops = stops;
 
-      // enhance: this is too dependent on fillArea being created, sized, and positioned before
-      // backgroundColor is called for. It's not guaranteed, for example,
-      // that fillArea is ready before tail shapes are made.
-      // Thus, this is really only good enough for a single bubble, without tails:
-      // although experimentally it seems to work with tails, there's no guarantee.
-      // So, if somehow we don't have a fillArea or fillArea.bounds, we arrange
-      // above to just return the first color.
-      // But note, even if we have fillArea and fillArea.bounds,
-      // we have no way to know whether it's already been sized and positioned in complex cases.
-      // For linked bubbles, we need to either hide the part of the child tail
-      // that is inside the parent (but using a differently positioned gradient),
-      // or else use a single gradient for all the linked bubbles, which would
-      // require finding all the siblings, determining an overall bounding rectangle,
-      // and somehow making sure we don't use the background color until all the shapes are made.
-      // Fortunately, our current needs only require gradients for single bubbles without tails.
-      const gradientOrigin = this.fillArea.bounds.topCenter!;
-      const gradientDestination = this.fillArea.bounds.bottomCenter!;
+      // enhance: we'd like the gradient to extend over the whole fillArea,
+      // but we can't depend on that existing when we need this, especially when
+      // called by one of the tails. So just make one from the top of the content
+      // to the bottom.
+      // My expectation was that for this to work we'd need gradientOrigin to use the Y coordinate
+      // of the top of the box, and gradientDestination its bottom. In fact, we seem to need
+      // zero and the box's height. So apparently the gradient is relative to the object,
+      // not the canvas. This means we don't really get the effect we want when applied to
+      // tails...though they use an identical color object, it doesn't result in a smooth
+      // transition where the tail joins the bubble. Rather, they have independent gradients.
+      // There's probably something better we could do, but at present it's not a priority,
+      // because we only want gradient for independent captions with no tails at all.
+      const xCenter = this.content.offsetWidth / 2;
+      const gradientOrigin = new Point(xCenter, 0);
+      const gradientDestination = new Point(xCenter, this.content.offsetHeight);
 
       const result: Color = new Color(
         gradient,
@@ -654,8 +647,11 @@ export class Bubble {
     // Now, look for a child whose joiner should be our center, and adjust that.
     const child = Comical.findChild(this);
     if (child) {
-      console.assert(child.tails.length <= 1, "A child may only have at most 1 tail.");
-      
+      console.assert(
+        child.tails.length <= 1,
+        "A child may only have at most 1 tail."
+      );
+
       // Note: I think it's better to adjust the joiners even if they would subsequently be hidden.
       //       This keeps the internal state looking more up-to-date and reasonable, even if it's invisible.
       //       However, it is also possible to only adjust the joiners if they are not overlapping
@@ -673,8 +669,11 @@ export class Bubble {
       // (This should only applicable to determining whether the tail is visible or not.
       // Don't think we need to adjust the joiners, they should all be loaded at that time.)
       const shouldTailsBeVisible = !this.isOverlapping(parent);
-      
-      console.assert(this.tails.length <= 1, "A child bubble may have at most 1 tail.");
+
+      console.assert(
+        this.tails.length <= 1,
+        "A child bubble may have at most 1 tail."
+      );
       this.tails.forEach(tail => {
         tail.setTailAndHandleVisibility(shouldTailsBeVisible);
       });
@@ -747,7 +746,7 @@ export class Bubble {
     const midPoint = new Point(desiredTail.midpointX, desiredTail.midpointY);
     let startPoint = this.calculateTailStartPoint();
 
-    this.upperLayer.activate();
+    activateLayer(this.upperLayer);
     let tail: Tail;
     switch (desiredTail.style) {
       case "straight":

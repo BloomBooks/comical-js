@@ -2,6 +2,7 @@ import { Path, Point, Color, Layer, ToolEvent } from "paper";
 import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
+import { activateLayer } from "./utilities";
 
 // This is an abstract base class for tails. A concrete class must at least
 // override makeShapes; if it has additional control points, it will probably
@@ -136,6 +137,7 @@ export class Tail {
   protected showHandlesInternal() {
     // Setup event handlers
     this.state = "idle";
+    activateLayer(this.handleLayer);
 
     this.handleLayer.visible = true;
     let tipHandle: Path.Circle | undefined;
@@ -182,7 +184,7 @@ export class Tail {
       if (parentBubble) {
         if (this.bubble.isOverlapping(parentBubble)) {
           return true;
-        }        
+        }
       }
     }
 
@@ -192,7 +194,7 @@ export class Tail {
   public setTailAndHandleVisibility(newVisibility: boolean): void {
     this.pathFill.visible = newVisibility;
     this.pathstroke.visible = newVisibility;
-    
+
     // ENHANCE: It'd be nice to hide the tipHandle too, but that doesn't make a difference yet.
   }
 
@@ -200,7 +202,7 @@ export class Tail {
   static handleIndex = 0;
 
   makeHandle(tip: Point, solid: boolean): Path.Circle {
-    this.handleLayer.activate();
+    activateLayer(this.handleLayer);
     const result = new Path.Circle(tip, 5);
     result.strokeColor = new Color("#1d94a4");
     result.fillColor = new Color("#1d94a4"); // a distinct instance of Color, may get made transparent below
@@ -216,5 +218,4 @@ export class Tail {
     result.visible = true;
     return result;
   }
-
 }

@@ -3,6 +3,7 @@ import { Color, project, setup, Layer } from "paper";
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
 import { BubbleSpec } from "bubbleSpec";
+import { ContainerData } from "containerData";
 
 // Manages a collection of comic bubbles warpped around HTML elements that share a common parent.
 // Each element that has a comic bubble has a data-bubble attribute specifying the appearance
@@ -23,56 +24,81 @@ import { BubbleSpec } from "bubbleSpec";
 export class Comical {
   static backColor = new Color("white");
 
-  static bubbleLists = new Map<Element, Bubble[]>();
-
-  static allBubbles: Bubble[];
+  static activeContainers = new Map<Element, ContainerData>();
 
   static activeBubble: Bubble | undefined;
-
-  static handleLayer: Layer;
 
   static activeBubbleListener:
     | ((active: HTMLElement | undefined) => void)
     | undefined;
+
+  public static startEditing(parents: HTMLElement[]): void {
+    parents.forEach(parent => Comical.convertBubbleJsonToCanvas(parent));
+  }
+
+  public static stopEditing(): void {
+    const keys: HTMLElement[] = [];
+    Comical.activeContainers.forEach((value, key: HTMLElement) => {
+      // Possibly we could just call convertCanvasToSvgImg(key) here,
+      // but each such call deletes key from Comical.editElements,
+      // so we'd be modifying the collection we're iterating over,
+      // which feels dangerous.
+      keys.push(key);
+    });
+    keys.forEach(key => Comical.convertCanvasToSvgImg(key));
+  }
 
   public static convertCanvasToSvgImg(parent: HTMLElement) {
     const canvas = parent.getElementsByTagName("canvas")[0];
     if (!canvas) {
       return;
     }
-    // Remove drag handles
-    project!
-      .getItems({
-        recursive: true,
-        match: (x: any) => {
-          return x.name && x.name.startsWith("handle");
-        }
-      })
-      .forEach(x => x.remove());
-    const svg = project!.exportSVG() as SVGElement;
-    svg.classList.add("comical-generated");
-    uniqueIds(svg);
-    canvas.parentElement!.insertBefore(svg, canvas);
+    const containerData = this.activeContainers.get(parent);
+    if (!containerData) {
+      console.error("attempting convertCanvasToSvgImg on non-active element");
+      return;
+    }
+    if (containerData.bubbleList.length !== 0) {
+      // It's quite plausible for there to be no bubbles;
+      // we may have turned on bubble editing just in case one
+      // got added. But if none did, we have no handles to clean up,
+      // and more importantly, no need to create an SVG.
+
+      // Remove drag handles
+      containerData.project
+        .getItems({
+          recursive: true,
+          match: (x: any) => {
+            return x.name && x.name.startsWith("handle");
+          }
+        })
+        .forEach(x => x.remove());
+      const svg = containerData.project.exportSVG() as SVGElement;
+      svg.classList.add("comical-generated");
+      uniqueIds(svg);
+      canvas.parentElement!.insertBefore(svg, canvas);
+    }
     canvas.remove();
     Comical.stopMonitoring(parent);
+    this.activeContainers.delete(parent);
   }
 
   // This logic is designed to prevent accumulating mutation observers.
   // Not yet fully tested.
   private static stopMonitoring(parent: HTMLElement) {
-    const bubbles = Comical.bubbleLists.get(parent);
-    if (bubbles) {
-      bubbles.forEach(bubble => bubble.stopMonitoring());
+    const containerData = Comical.activeContainers.get(parent);
+    if (containerData) {
+      containerData.bubbleList.forEach(bubble => bubble.stopMonitoring());
     }
   }
 
   // Make the bubble for the specified element (if any) active. This means
   // showing its edit handles. Must first call convertBubbleJsonToCanvas(),
   // passing the appropriate parent element.
-  public static activateElement(contentElement: Element | undefined) {
+  public static activateElement(contentElement: HTMLElement | undefined) {
     let newActiveBubble: Bubble | undefined = undefined;
     if (contentElement) {
-      newActiveBubble = Comical.allBubbles.find(
+      newActiveBubble = Comical.getBubblesInSameCanvas(contentElement).find(
         x => x.content === contentElement
       );
     }
@@ -97,42 +123,49 @@ export class Comical {
   }
 
   public static hideHandles() {
-    if (Comical.handleLayer) {
-      Comical.handleLayer.removeChildren();
-    }
+    Comical.activeContainers.forEach(container => {
+      if (container.handleLayer) {
+        container.handleLayer.removeChildren();
+      }
+    });
   }
 
   // call after adding or deleting elements with data-bubble
   // assumes convertBubbleJsonToCanvas has been called and canvas exists
-  public static update(parent: HTMLElement) {
-    Comical.stopMonitoring(parent);
-    while (project!.layers.length > 1) {
-      const layer = project!.layers.pop();
+  public static update(container: HTMLElement) {
+    Comical.stopMonitoring(container);
+    const containerData = this.activeContainers.get(container);
+    if (!containerData) {
+      console.error("invoked update on an element that is not active");
+      return; // nothing sensible we can do
+    }
+    containerData.project.activate();
+    while (containerData.project.layers.length > 1) {
+      const layer = containerData.project.layers.pop();
       if (layer) {
         layer.remove(); // Erase this layer
       }
     }
-    if (project!.layers.length > 0) {
-      project!.layers[0].activate();
+    if (containerData.project.layers.length > 0) {
+      containerData.project.layers[0].activate();
     }
-    project!.activeLayer.removeChildren();
+    containerData.project.activeLayer.removeChildren();
 
-    const elements = parent.ownerDocument!.evaluate(
+    const elements = container.ownerDocument!.evaluate(
       ".//*[@data-bubble]",
-      parent,
+      container,
       null,
       XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
       null
     );
     const bubbles: Bubble[] = [];
-    Comical.bubbleLists.set(parent, bubbles);
+    containerData.bubbleList = bubbles;
 
     var zLevelList: number[] = [];
-    Comical.allBubbles = [];
     for (let i = 0; i < elements.snapshotLength; i++) {
       const element = elements.snapshotItem(i) as HTMLElement;
       const bubble = new Bubble(element);
-      Comical.allBubbles.push(bubble);
+      bubbles.push(bubble);
 
       let zLevel = bubble.getSpecLevel();
       if (!zLevel) {
@@ -156,11 +189,11 @@ export class Comical {
         levelToLayer[zLevel] = [lowerLayer, upperLayer];
       }
     }
-    Comical.handleLayer = new Layer();
+    containerData.handleLayer = new Layer();
 
     // Now that the layers are created, we can go back and place objects into the correct layers and ask them to draw themselves.
-    for (let i = 0; i < Comical.allBubbles.length; ++i) {
-      const bubble = Comical.allBubbles[i];
+    for (let i = 0; i < bubbles.length; ++i) {
+      const bubble = bubbles[i];
 
       let zLevel = bubble.getSpecLevel();
       if (!zLevel) {
@@ -168,18 +201,19 @@ export class Comical {
       }
 
       const [lowerLayer, upperLayer] = levelToLayer[zLevel];
-      bubble.setLayers(lowerLayer, upperLayer, Comical.handleLayer);
+      bubble.setLayers(lowerLayer, upperLayer, containerData.handleLayer);
       bubble.initialize();
-      bubbles.push(bubble);
     }
   }
 
-  public static getMaxLevel(): number {
-    if (!Comical.allBubbles || Comical.allBubbles.length === 0) {
+  // Get max level of elements in the same canvas as element
+  public static getMaxLevel(element: HTMLElement): number {
+    const bubblesInSameCanvas = Comical.getBubblesInSameCanvas(element);
+    if (bubblesInSameCanvas.length === 0) {
       return 0;
     }
     let maxLevel = Number.MIN_VALUE;
-    Comical.allBubbles.forEach(
+    bubblesInSameCanvas.forEach(
       b => (maxLevel = Math.max(maxLevel, b.getBubbleSpec().level || 0))
     );
     return maxLevel;
@@ -201,7 +235,11 @@ export class Comical {
     }
     canvas.width = parent.clientWidth;
     canvas.height = parent.clientHeight;
-    setup(canvas);
+    setup(canvas); // updates the global project variable to a new project associated with this canvas
+    this.activeContainers.set(parent, {
+      project: project!,
+      bubbleList: []
+    });
     Comical.update(parent);
   }
 
@@ -223,7 +261,8 @@ export class Comical {
     childElement: HTMLElement,
     parentElement: HTMLElement
   ) {
-    const parentBubble = Comical.allBubbles.find(
+    const bubblesInSameCanvas = Comical.getBubblesInSameCanvas(parentElement);
+    const parentBubble = bubblesInSameCanvas.find(
       x => x.content === parentElement
     );
     if (!parentBubble) {
@@ -233,7 +272,6 @@ export class Comical {
       return;
     }
     const parentSpec = parentBubble.getBubbleSpec();
-    let familyLevel = parentSpec.level;
     if (!parentSpec.order) {
       // It's important not to use zero for order, since that will be treated
       // as an unspecified order.
@@ -241,12 +279,12 @@ export class Comical {
       parentBubble.persistBubbleSpec();
     }
     // enhance: if familyLevel is undefined, set it to a number one greater than
-    // any level that occurs in allBubbles.
-    let childBubble = Comical.allBubbles.find(x => x.content === childElement);
+    // any level that occurs in bubblesInSameCanvas.
+    let childBubble = bubblesInSameCanvas.find(x => x.content === childElement);
     if (!childBubble) {
       childBubble = new Bubble(childElement);
     }
-    const lastInFamily = Comical.getLastInFamily(familyLevel);
+    const lastInFamily = Comical.getLastInFamily(parentElement);
     const maxOrder = lastInFamily.getBubbleSpec().order || 1;
     const tip = lastInFamily.calculateTailStartPoint();
     const root = childBubble.calculateTailStartPoint();
@@ -279,8 +317,23 @@ export class Comical {
     // change other properties,...
   }
 
-  private static getLastInFamily(familyLevel: number | undefined): Bubble {
-    const family = Comical.allBubbles
+  private static getBubblesInSameCanvas(element: HTMLElement): Bubble[] {
+    const iterator = Comical.activeContainers.entries();
+    let result = iterator.next();
+    while (!result.done) {
+      // result.value is a [container, containerData] pair.
+      if (result.value[0].contains(element)) {
+        return result.value[1].bubbleList;
+      }
+    }
+    return [];
+  }
+
+  // Get the last element in the family of the given element (belonging to the same
+  // canvas and having the same level). Any element in the family can be passed.
+  private static getLastInFamily(element: HTMLElement): Bubble {
+    const familyLevel = Bubble.getBubbleSpec(element).level;
+    const family = Comical.getBubblesInSameCanvas(element)
       .filter(
         x => x.getBubbleSpec().level === familyLevel && x.getBubbleSpec().order
       )
@@ -295,7 +348,7 @@ export class Comical {
     if (!orderWithinFamily) {
       return undefined;
     }
-    const family = Comical.allBubbles
+    const family = Comical.getBubblesInSameCanvas(bubble.content)
       .filter(
         x =>
           x.getBubbleSpec().level === familyLevel &&
@@ -328,7 +381,7 @@ export class Comical {
     if (!orderWithinFamily) {
       return [];
     }
-    return Comical.allBubbles
+    return Comical.getBubblesInSameCanvas(bubble.content)
       .filter(
         x =>
           x.getBubbleSpec().level === familyLevel &&
@@ -344,7 +397,7 @@ export class Comical {
     if (!orderWithinFamily) {
       return [];
     }
-    return Comical.allBubbles
+    return Comical.getBubblesInSameCanvas(bubble.content)
       .filter(
         x =>
           x.getBubbleSpec().level === familyLevel &&
