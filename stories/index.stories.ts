@@ -18,31 +18,6 @@ import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
 import { TailSpec } from "../src/bubbleSpec";
 storiesOf("paper", module)
-  .add("playing with layers", () => {
-    const wrapDiv = document.createElement("div");
-    const canvas1 = document.createElement("canvas");
-    canvas1.height = canvas1.width = 300;
-    wrapDiv.appendChild(canvas1);
-    setup(canvas1);
-    const project1 = project!;
-    const canvas2 = document.createElement("canvas");
-    canvas2.height = canvas2.width = 300;
-    wrapDiv.appendChild(canvas2);
-    setup(canvas2);
-    const project2 = project!;
-    if (project1 === project2) {
-      alert("same project");
-    }
-    const circle = new Shape.Circle(new Point(100, 100), 50);
-    circle.strokeColor = new Color("red");
-    project1.activeLayer.activate();
-    // without this line, the square very unexpectedly ends up in the
-    // wrong canvas.
-    project1.activeLayer.project.activate();
-    const square = new Shape.Rectangle(new Point(20, 20), new Point(80, 80));
-    square.strokeColor = new Color("blue");
-    return wrapDiv;
-  })
   .add("playing with beziers", () => {
     const wrapDiv = document.createElement("div");
     const canvas = document.createElement("canvas");
@@ -1006,6 +981,7 @@ storiesOf("comical", module)
     const parentTop = 160;
     const parentWidth = 100;
     const parentHeight = 40;
+    // Add child first to make this test harder
     const childDiv = makeTextBlock(
       wrapDiv,
       "Child",
@@ -1013,7 +989,7 @@ storiesOf("comical", module)
       parentTop - parentHeight,
       parentWidth,
       parentHeight
-    ); // Add child first to make this test harder
+    );
     const parentDiv = makeTextBlock(
       wrapDiv,
       "Parent",
