@@ -156,6 +156,15 @@ export class Tail {
                 if (this.state !== "dragTip") {
                     return;
                 }
+                if (this.bubble) {
+                    const [parentElement] = Comical.comicalParentOf(this.bubble.content);
+                    if (
+                        parentElement &&
+                        Comical.bubbleWithContentAtPoint(parentElement, event.point!.x!, event.point!.y!)
+                    ) {
+                        return; // refuse to drag tip to a point inside a bubble
+                    }
+                }
                 // tipHandle can't be undefined at this point
                 const delta = event.point!.subtract(tipHandle!.position!).divide(2);
                 tipHandle!.position = event.point;
