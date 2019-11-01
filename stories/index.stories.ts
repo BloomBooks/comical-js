@@ -11,7 +11,8 @@ import {
   Item,
   Shape,
   Segment,
-  Path
+  Path,
+  ToolEvent
 } from "paper";
 import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
@@ -19,6 +20,51 @@ import { ArcTail } from "../src/arcTail";
 import { LineTail } from "../src/lineTail";
 import { TailSpec } from "../src/bubbleSpec";
 storiesOf("paper", module)
+  // Please keep this test case, it is being used to document a Paper.js problem.
+  .add("playing with scale", () => {
+    const wrapDiv = document.createElement("div");
+    // Make a demo canvas
+    const makeCanvas = (color: Color, parent: HTMLElement) => {
+      const canvas1 = document.createElement("canvas");
+      canvas1.height = canvas1.width = 300;
+      parent.appendChild(canvas1);
+      setup(canvas1);
+      const project1 = project!;
+      //Give it a colored background so mouseDown works on the layer.
+      var background = new Path.Rectangle(new Point(0, 0), new Point(300, 300));
+      background.fillColor = color;
+      // mouse down on the canvas adds a dot to show where you clicked.
+      project1.activeLayer.onMouseDown = (event: ToolEvent) => {
+        project1.activate();
+        var path = new Path.Circle({
+          center: event.point,
+          radius: 3,
+          fillColor: new Color("red")
+        });
+        // if you click on the dot it should draw another circle around it
+        path.onMouseDown = () => {
+          project;
+          const path2 = new Path.Circle({
+            center: path.position,
+            radius: 6,
+            strokeColor: new Color("blue")
+          });
+          path2.strokeWidth = 2;
+        };
+      };
+    };
+    // at normal scale all is well.
+    makeCanvas(new Color("yellow"), wrapDiv);
+
+    // now make another canvas that is transformed.
+    const wrap2 = document.createElement("div");
+    wrapDiv.appendChild(wrap2);
+    wrap2.style.transform = "scale(1.3)";
+    wrap2.style.transformOrigin = "left top";
+    makeCanvas(new Color("pink"), wrap2);
+
+    return wrapDiv;
+  })
   .add("playing with beziers", () => {
     const wrapDiv = document.createElement("div");
     const canvas = document.createElement("canvas");
