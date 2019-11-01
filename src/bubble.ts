@@ -15,6 +15,7 @@ import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
 import { StraightTail } from "./straightTail";
+import { LineTail } from "./lineTail";
 import { makeSpeechBubble } from "./speechBubble";
 import { activateLayer } from "./utilities";
 
@@ -751,6 +752,17 @@ export class Bubble {
     switch (desiredTail.style) {
       case "straight":
         tail = new StraightTail(
+          startPoint,
+          tipPoint,
+          this.lowerLayer,
+          this.upperLayer,
+          this.handleLayer,
+          desiredTail,
+          this
+        );
+        break;
+      case "line":
+        tail = new LineTail(
           startPoint,
           tipPoint,
           this.lowerLayer,
