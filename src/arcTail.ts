@@ -40,7 +40,7 @@ export class ArcTail extends Tail {
 
         activateLayer(this.lowerLayer);
 
-        const tailWidth = 12;
+        const tailWidth = 18;
 
         // We want to make two arcs, basically from the tip to a bit either side
         // of the root, and passing through mid.
