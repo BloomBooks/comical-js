@@ -3,6 +3,7 @@ import { Point, Layer, Path, ToolEvent, Color } from "paper";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "bubble";
 import { activateLayer } from "./utilities";
+import { Comical } from "./comical";
 
 // An ArcTail is currently our default: a tail that is an arc from the tip through a third
 // control point, mid, which can also be dragged.
@@ -140,13 +141,17 @@ export class ArcTail extends Tail {
         }
     }
     adjustForChangedRoot(delta: Point): void {
-        this.mid = this.mid.add(delta.divide(2));
+        let newPosition = this.mid.add(delta.divide(2));
+        if (this.bubble) {
+            newPosition = Comical.movePointOutsideBubbleContent(this.bubble.content, newPosition);
+        }
+        this.mid = newPosition;
         if (this.midHandle) {
-            this.midHandle.position = this.mid;
+            this.midHandle.position = newPosition;
         }
         if (this.spec) {
-            this.spec.midpointX = this.mid.x!;
-            this.spec.midpointY = this.mid.y!;
+            this.spec.midpointX = newPosition.x!;
+            this.spec.midpointY = newPosition.y!;
         }
     }
 
@@ -173,7 +178,9 @@ export class ArcTail extends Tail {
             if (this.state !== "dragCurve") {
                 return;
             }
-
+            if (!this.okToMoveHandleTo(event.point!)) {
+                return;
+            }
             curveHandle.position = event.point;
             this.mid = event.point!;
             this.makeShapes();
