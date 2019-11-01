@@ -1,4 +1,4 @@
-import { Color, project, setup, Layer } from "paper";
+import { Color, project, setup, Layer, Point } from "paper";
 
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
@@ -315,6 +315,22 @@ export class Comical {
     // Note that getting all the shapes updated properly could be nontrivial
     // if childElement already has a bubble...it may need to change shape, lose tails,
     // change other properties,...
+  }
+
+  // Return true if a click at the specified point (relative to the top left
+  // of the specified container element) hits something Comical has put into
+  // the canvas...any of the bubble shapes, tail shapes, handles.
+  public static somethingHit(
+    element: HTMLElement,
+    x: number,
+    y: number
+  ): boolean {
+    const containerData = Comical.activeContainers.get(element);
+    if (!containerData) {
+      return false;
+    }
+    const hitResult = containerData.project.hitTest(new Point(x, y));
+    return !!hitResult;
   }
 
   private static getBubblesInSameCanvas(element: HTMLElement): Bubble[] {
