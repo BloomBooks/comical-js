@@ -10,41 +10,41 @@
 // for a finished HTML document that doesn't depend on Javascript.
 // If you add a property here, consider handling it in Bubble.mergeWithNewBubbleProps()
 export interface BubbleSpecPattern {
-  version?: string; // currently 1.0
-  style?: string; // currently one of speech or shout or caption
-  tails?: TailSpec[];
-  level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
-  borderStyle?: string; // not implemented or fully designed yet
-  // Just 1 color for solid, multiple for gradient (top to bottom). Omit for white.
-  // Individual strings can be things that can be passed to paper.js to define colors.
-  // Typical CSS color names are supported, and also #RRGGBB. Possibly others, but lets not
-  // count on any more options yet.
-  backgroundColors?: string[];
-  outerBorderColor?: string; // omit for black; not implemented.
-  // bubbles on the same level with this property are linked in an order specified by this.
-  // bubbles without order (or with order zero) are not linked.
-  // Do not use negative numbers or zero as an order.
-  order?: number;
-  shadowOffset?: number;
+    version?: string; // currently 1.0
+    style?: string; // The style of bubble, e.g. speech, shout, caption, pointedArcs, ellipse
+    tails?: TailSpec[];
+    level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
+    borderStyle?: string; // not implemented or fully designed yet
+    // Just 1 color for solid, multiple for gradient (top to bottom). Omit for white.
+    // Individual strings can be things that can be passed to paper.js to define colors.
+    // Typical CSS color names are supported, and also #RRGGBB. Possibly others, but lets not
+    // count on any more options yet.
+    backgroundColors?: string[];
+    outerBorderColor?: string; // omit for black; not implemented.
+    // bubbles on the same level with this property are linked in an order specified by this.
+    // bubbles without order (or with order zero) are not linked.
+    // Do not use negative numbers or zero as an order.
+    order?: number;
+    shadowOffset?: number;
 }
 
 export interface BubbleSpec extends BubbleSpecPattern {
-  // A real bubble stored in data-bubble should always have at least version, style, tips, and level.
-  // The only things overridden here should be to change something from optional to required.
-  version: string; // currently 1.0
-  style: string; // currently one of speech or shout
-  tails: TailSpec[];
+    // A real bubble stored in data-bubble should always have at least version, style, tips, and level.
+    // The only things overridden here should be to change something from optional to required.
+    version: string; // currently 1.0
+    style: string; // currently one of speech or shout
+    tails: TailSpec[];
 }
 // Design has a parentBubble attribute...not sure whether we need this, so leaving out for now.
 // Do we need to control things like angle of gradient?
 
 export interface TailSpec {
-  tipX: number; // tip point, relative to the main image on which the bubble is placed
-  tipY: number;
-  midpointX: number; // notionally, tip's curve passes through this point
-  midpointY: number;
-  joiner?: boolean; // true if it joins to its parent bubble
-  style?: string; // currently one of arc or straight
+    tipX: number; // tip point, relative to the main image on which the bubble is placed
+    tipY: number;
+    midpointX: number; // notionally, tip's curve passes through this point
+    midpointY: number;
+    joiner?: boolean; // true if it joins to its parent bubble
+    style?: string; // currently one of arc or straight
 }
 // Do we need to specify a width? Other attributes for bezier curve?
 // Current design: start with three points, the target, midpoint, and the root (center of the text block).

@@ -1,0 +1,14 @@
+root = true
+
+# Defaults
+[*]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_size = 4
+
+[*.{ts,json,js,md,jsx,css,less}]
+indent_style = space
+max_line_length = 120
+
+[ReleaseNotes.md]
+trim_trailing_whitespace=false

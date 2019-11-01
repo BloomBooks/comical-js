@@ -1,45 +1,53 @@
 {
-  "name": "comicaljs",
-  "version": "0.1.0",
-  "description": "Edit cartoon bubble frames around an HTML element",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "files": [
-    "/dist/*"
-  ],
-  "repository": "https://github.com/BloomBooks/comical-js.git",
-  "author": "SIL Bloom Team & Contributors",
-  "license": "MIT",
-  "private": false,
-  "devDependencies": {
-    "@babel/core": "^7.5.5",
-    "@storybook/html": "^5.1.11",
-    "@types/storybook__html": "^5.0.2",
-    "@types/svg.js": "^2.3.1",
-    "awesome-typescript-loader": "^5.2.1",
-    "babel-loader": "^8.0.6",
-    "babel-preset-env": "^1.7.0",
-    "copy-webpack-plugin": "^5.0.4",
-    "globule": "^1.2.1",
-    "npx": "^10.2.0",
-    "shx": "^0.3.2",
-    "ts-loader": "^6.2.0",
-    "typescript": "^3.5.3",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.6",
-    "webpack-merge": "^4.2.2",
-    "babel-preset-react": "^6.24.1"
-  },
-  "dependencies": {
-    "paper": "^0.12.3"
-  },
-  "scripts": {
-    "storybook": "start-storybook -s ./storyStatic -p 6006",
-    "build-storybook": "build-storybook",
-    "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
-    "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js && shx cp package-publish.json dist/package.json && shx cp *.md dist",
-    "build": "shx rm -rf dist/ && webpack && shx cp package-publish.json dist/package.json && shx cp *.md dist",
-    "Notice that we do 'publish dist', because we want to publish is just the contents of the dist directory": "//",
-    "So we want `yarn publish dist`": "//"
-  }
+    "name": "comicaljs",
+    "version": "0.1.0",
+    "description": "Edit cartoon bubble frames around an HTML element",
+    "main": "index.js",
+    "types": "index.d.ts",
+    "files": [
+        "/dist/*"
+    ],
+    "repository": "https://github.com/BloomBooks/comical-js.git",
+    "author": "SIL Bloom Team & Contributors",
+    "license": "MIT",
+    "private": false,
+    "devDependencies": {
+        "@babel/core": "^7.5.5",
+        "@storybook/html": "^5.1.11",
+        "@types/storybook__html": "^5.0.2",
+        "@types/svg.js": "^2.3.1",
+        "awesome-typescript-loader": "^5.2.1",
+        "babel-loader": "^8.0.6",
+        "babel-preset-env": "^1.7.0",
+        "babel-preset-react": "^6.24.1",
+        "copy-webpack-plugin": "^5.0.4",
+        "globule": "^1.2.1",
+        "husky": "^3.0.9",
+        "npx": "^10.2.0",
+        "prettier": "^1.18.2",
+        "pretty-quick": "^2.0.0",
+        "shx": "^0.3.2",
+        "ts-loader": "^6.2.0",
+        "typescript": "^3.5.3",
+        "webpack": "^4.39.2",
+        "webpack-cli": "^3.3.6",
+        "webpack-merge": "^4.2.2"
+    },
+    "dependencies": {
+        "paper": "^0.12.3"
+    },
+    "scripts": {
+        "storybook": "start-storybook -s ./storyStatic -p 6006",
+        "build-storybook": "build-storybook",
+        "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
+        "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js && shx cp package-publish.json dist/package.json && shx cp *.md dist",
+        "build": "shx rm -rf dist/ && webpack && shx cp package-publish.json dist/package.json && shx cp *.md dist",
+        "Notice that we do 'publish dist', because we want to publish is just the contents of the dist directory": "//",
+        "So we want `yarn publish dist`": "//"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "pretty-quick --staged"
+        }
+    }
 }
