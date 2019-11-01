@@ -3,7 +3,7 @@ import { Color, project, setup, Layer, Point } from "paper";
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
 import { BubbleSpec } from "bubbleSpec";
-import { ContainerData } from "containerData";
+import { ContainerData } from "./containerData";
 
 // Manages a collection of comic bubbles warpped around HTML elements that share a common parent.
 // Each element that has a comic bubble has a data-bubble attribute specifying the appearance
