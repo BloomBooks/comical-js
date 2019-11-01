@@ -8,8 +8,8 @@ import { Layer } from "paper";
 // This function activates both the layer and its project, so new objects
 // automatically go into this layer.
 export function activateLayer(layer: Layer) {
-  if (layer) {
-    layer.project.activate();
-    layer.activate();
-  }
+    if (layer) {
+        layer.project.activate();
+        layer.activate();
+    }
 }
