@@ -350,6 +350,132 @@ export class Comical {
         return bubbleList.find(bubble => bubble.isHitByPoint(new Point(x, y)));
     }
 
+    // Return the comical container that the element is part of (or undefined if it is
+    // not part of any), along with the corresponding containerData.
+    static comicalParentOf(element: HTMLElement): [HTMLElement | undefined, ContainerData | undefined] {
+        let target: HTMLElement | null = element;
+        while (target) {
+            const containerData = Comical.activeContainers.get(target);
+            if (containerData) {
+                return [target, containerData];
+            }
+            target = target.parentElement;
+        }
+        return [undefined, undefined];
+    }
+
+    // If the given point is inside some bubble's content area that belongs to
+    // the given container, answer that bubble.
+    // (If it is somehow in more than one, answer one of them.)
+    // Answer undefined if it is not in any bubble's content area.
+    // Note: for most purposes, getBubbleHit() is a better function to use.
+    // This one is mainly useful for keeping handles outside the spaces
+    // where they can't be grabbed.
+    static bubbleWithContentAtPoint(parentContainer: HTMLElement, x: number, y: number): Bubble | undefined {
+        const containerData = Comical.activeContainers.get(parentContainer);
+        if (!containerData) {
+            return undefined;
+        }
+        for (let i = 0; i < containerData.bubbleList.length; i++) {
+            var bubble = containerData.bubbleList[i];
+            const contentPosition = Comical.getBoundsRelativeToParent(parentContainer, bubble.content);
+            if (
+                x >= contentPosition.left &&
+                x <= contentPosition.right &&
+                y >= contentPosition.top &&
+                y <= contentPosition.bottom
+            ) {
+                return bubble;
+            }
+        }
+        return undefined;
+    }
+
+    // Answer target.getBoundingClientRect(), but relative to the top left of the specified parent.
+    static getBoundsRelativeToParent(parentContainer: HTMLElement, target: HTMLElement): ClientRect {
+        const parentBounds = parentContainer.getBoundingClientRect();
+        const targetBounds = target.getBoundingClientRect();
+        const xOffset = parentBounds.left;
+        const yOffset = parentBounds.top;
+        return {
+            left: targetBounds.left - xOffset,
+            right: targetBounds.right - xOffset,
+            width: targetBounds.width,
+            top: targetBounds.top - yOffset,
+            bottom: targetBounds.bottom - yOffset,
+            height: targetBounds.height
+        };
+    }
+
+    // If the specified position is inside the content area of a bubble in the same
+    // parentContainer as element, return
+    // a nearby point that is not inside any bubble content area.
+    // If the point is not inside a content area, return it unmodified.
+    static movePointOutsideBubbleContent(element: HTMLElement, position: Point): Point {
+        const [parentContainer] = Comical.comicalParentOf(element);
+        if (!parentContainer) {
+            return position;
+        }
+        let bubble = this.bubbleWithContentAtPoint(parentContainer, position.x!, position.y!);
+        let result = position;
+        while (bubble) {
+            // Point is at a problem location. We will try the points closest to it on each
+            // side of the content area, but eliminating any that are in yet another content
+            // area. If all four positions are in some other bubble, we move
+            // down; the next iteration will move us outside that bubble.
+            const bounds = Comical.getBoundsRelativeToParent(parentContainer, bubble.content);
+            let delta = new Point(result.x!, bounds.bottom + 1).subtract(result); // down (default)
+            delta = Comical.chooseBetterDelta(parentContainer, result, delta, new Point(result.x!, bounds.top - 1)); // up
+            delta = Comical.chooseBetterDelta(parentContainer, result, delta, new Point(bounds.left - 1, result.y!)); // left
+            delta = Comical.chooseBetterDelta(parentContainer, result, delta, new Point(bounds.right + 1, result.y!)); // right
+            result = result.add(delta);
+            // if we didn't manage to get outside all content areas, we'll try again.
+            bubble = this.bubbleWithContentAtPoint(parentContainer, result.x!, result.y!);
+        }
+        return result;
+    }
+
+    // Return a delta from start, either delta1 or candidate.subtract(start).
+    // In general we prefer the shorter delta.
+    // However, even more strongly we prefer a delta that puts us outside of any bubble
+    // and inside the containing canvas.
+    // If neither option is outside a bubble and inside the canvas, return delta1.
+    private static chooseBetterDelta(element: HTMLElement, start: Point, delta1: Point, candidate: Point): Point {
+        const delta2 = candidate.subtract(start);
+        const okToMoveTo2 = this.okToMoveTo(element, candidate);
+        const delta2IsCloser = delta2.length! < delta1.length!;
+        const original = start.add(delta1); // the point we're comparing with candidate
+        // We prefer to move to candidate if it is OK and either
+        // (1) it is closer, or
+        // (2) original is NOT OK.
+        if (okToMoveTo2 && (delta2IsCloser || !this.okToMoveTo(element, original))) {
+            return delta2;
+        }
+        // this covers cases where delta1 is closer, where it's OK but delta2 is not,
+        // or where neither is OK.
+        return delta1;
+    }
+
+    static okToMoveTo(element: HTMLElement, dest: Point): boolean {
+        const [parentContainer] = Comical.comicalParentOf(element);
+        if (!parentContainer) {
+            return true; // shouldn't happen, I think.
+        }
+        if (this.bubbleWithContentAtPoint(parentContainer, dest.x!, dest.y!)) {
+            return false;
+        }
+
+        if (
+            dest.x! < 0 ||
+            dest.y! < 0 ||
+            dest.x! >= parentContainer.clientWidth ||
+            dest.y! >= parentContainer.clientHeight
+        ) {
+            return false;
+        }
+        return true;
+    }
+
     private static getBubblesInSameCanvas(element: HTMLElement): Bubble[] {
         const iterator = Comical.activeContainers.entries();
         let result = iterator.next();
