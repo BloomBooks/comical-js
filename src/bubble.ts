@@ -770,7 +770,7 @@ export class Bubble {
           this.upperLayer,
           this.handleLayer,
           desiredTail,
-          undefined
+          this
         );
         break;
       case "arc":
@@ -787,15 +787,6 @@ export class Bubble {
         );
         break;
     }
-
-    // todo: remove before commit
-    console.log("Create LineTail!");
-    console.log("Content: ");
-    console.log(this.content);
-    console.log("tipPoint: ");
-    console.log(tipPoint);
-    console.log(desiredTail);
-    // todo: remove before commit
 
     tail.makeShapes();
     tail.onClick(() => {

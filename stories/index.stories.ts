@@ -1165,6 +1165,7 @@ storiesOf("comical", module)
       });
       Comical.convertBubbleJsonToCanvas(wrapDiv);
     }, 200);
+    addFinishButton(wrapDiv, 400, 600);
 
     return wrapDiv;
   });
