@@ -14,6 +14,14 @@ export function makeSpeechBubble(
     xHandleFraction: number,
     yHandleFraction: number
 ): Item {
+    if (width <= 0) {
+        console.assert(false, `Invalid width. Received: ${width}. Expected: width > 0`);
+        width = 1;
+    }
+    if (height <= 0) {
+        console.assert(false, `Invalid height. Received: ${height}. Expected: height > 0`);
+        height = 1;
+    }
     // Because of the way the bubble code aligns the content-holder
     // rectangle with the content element, the values used for top and left
     // currently make absolutely no difference. They translate the bubble,

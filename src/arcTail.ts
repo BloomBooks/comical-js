@@ -123,7 +123,14 @@ export class ArcTail extends Tail {
             this.pathstroke.insertBelow(oldStroke);
             oldStroke.remove();
         }
-        this.pathstroke!.strokeWidth = this.bubble!.getBorderWidth();
+
+        console.assert(!!this.bubble, "ArcTail::makeShapes() - this.bubble is null or undefined");
+        let borderWidth = 1;
+        if (this.bubble) {
+            borderWidth = this.bubble.getBorderWidth();
+        }
+
+        this.pathstroke!.strokeWidth = borderWidth;
         activateLayer(this.upperLayer);
         this.pathFill = this.pathstroke.clone() as Path;
         this.pathFill.remove();
