@@ -320,6 +320,8 @@ export class Comical {
             if (result.value[0].contains(element)) {
                 return result.value[1].bubbleList;
             }
+
+            result = iterator.next();
         }
         return [];
     }
