@@ -312,6 +312,50 @@ export class Comical {
         return !!hitResult;
     }
 
+    public static getBubbleHit(parentContainer: HTMLElement, x: number, y: number): Bubble | undefined {
+        const point = new Point(x, y);
+        return Comical.getBubbleHitByPoint(parentContainer, point);
+    }
+
+    public static getBubbleHitByPoint(parentContainer: HTMLElement, point: Point): Bubble | undefined {
+        const containerData = Comical.activeContainers.get(parentContainer);
+        if (!containerData) {
+            return undefined;
+        }
+
+        // I think it's easier to just iterate through the bubbles and check if they're hit or not.
+        // You could try to run hitTest, but that gives you a Paper Item, and then you have to figure out which Bubble the Paper Item belongs to... not any easier.
+
+        // Create a shallow copy so we can mess it without concern.
+        const bubbleList = containerData.bubbleList.slice(0);
+
+        // Sort them so that the highest level comes first. If we detect a hit on a higher level bubble, we'll stop and ignore hits on lower level bubbles.
+        bubbleList.sort((a, b) => {
+            let levelA = a.getBubbleSpec().level;
+            if (!levelA) {
+                levelA = 0;
+            }
+
+            let levelB = b.getBubbleSpec().level;
+            if (!levelB) {
+                levelB = 0;
+            }
+
+            // Sort in DESCENDING order, highest level first
+            return levelB - levelA;
+        });
+
+        // Now find the first bubble hit, highest precedence first
+        for (let i = 0; i < bubbleList.length; ++i) {
+            const bubble = bubbleList[i];
+            if (bubble.isHitByPoint(point)) {
+                return bubble;
+            }
+        }
+
+        return undefined;
+    }
+
     private static getBubblesInSameCanvas(element: HTMLElement): Bubble[] {
         const iterator = Comical.activeContainers.entries();
         let result = iterator.next();

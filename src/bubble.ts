@@ -1,4 +1,4 @@
-import { Point, Color, Item, Shape, Layer, Gradient, GradientStop, Path, Rectangle, Group } from "paper";
+import { Point, Color, Item, Shape, Layer, Gradient, GradientStop, Path, Rectangle, Group, HitResult } from "paper";
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import { Comical } from "./comical";
 import { Tail } from "./tail";
@@ -634,6 +634,12 @@ export class Bubble {
             // TODO: Check pathological case where one bubble is entirely contained within the other
             return false;
         }
+    }
+
+    // Returns true if the point is contained within the bubble itself (not including the tail).
+    public isHitByPoint(point: Point): boolean {
+        const hitResult: HitResult | null = this.fillArea.hitTest(point);
+        return !!hitResult;
     }
 
     private adjustJoiners(newTip: Point): void {
