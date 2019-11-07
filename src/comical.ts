@@ -200,6 +200,24 @@ export class Comical {
         }
     }
 
+    // Sorts an array of bubbles such that the highest level comes first
+    // Does an in-place sort
+    private static sortBubbleListTopLevelFirst(bubbleList: Bubble[]): void {
+        bubbleList.sort((a, b) => {
+            let levelA = a.getBubbleSpec().level;
+            if (!levelA) {
+                levelA = 0;
+            }
+
+            let levelB = b.getBubbleSpec().level;
+            if (!levelB) {
+                levelB = 0;
+            }
+
+            // Sort in DESCENDING order, highest level first
+            return levelB - levelA;
+        });
+    }
     // Get max level of elements in the same canvas as element
     public static getMaxLevel(element: HTMLElement): number {
         const bubblesInSameCanvas = Comical.getBubblesInSameCanvas(element);
@@ -310,6 +328,26 @@ export class Comical {
         }
         const hitResult = containerData.project.hitTest(new Point(x, y));
         return !!hitResult;
+    }
+
+    // Returns the first bubble at the point (x, y), or undefined if no bubble is present at that point.
+    public static getBubbleHit(parentContainer: HTMLElement, x: number, y: number): Bubble | undefined {
+        const containerData = Comical.activeContainers.get(parentContainer);
+        if (!containerData) {
+            return undefined;
+        }
+
+        // I think it's easier to just iterate through the bubbles and check if they're hit or not.
+        // You could try to run hitTest, but that gives you a Paper Item, and then you have to figure out which Bubble the Paper Item belongs to... not any easier.
+
+        // Create a shallow copy so we can mess it without concern.
+        const bubbleList = containerData.bubbleList.slice(0);
+
+        // Sort them so that bubbles with higher level come first.
+        Comical.sortBubbleListTopLevelFirst(bubbleList);
+
+        // Now find the first bubble hit, highest precedence first
+        return bubbleList.find(bubble => bubble.isHitByPoint(new Point(x, y)));
     }
 
     private static getBubblesInSameCanvas(element: HTMLElement): Bubble[] {
