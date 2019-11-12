@@ -638,6 +638,11 @@ export class Bubble {
 
     // Returns true if the point is contained within the bubble itself (not including the tail).
     public isHitByPoint(point: Point): boolean {
+        if (!this.fillArea) {
+            // If style = none, then fillArea can be undefined
+            return false;
+        }
+
         const hitResult: HitResult | null = this.fillArea.hitTest(point);
         return !!hitResult;
     }
