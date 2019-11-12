@@ -1,7 +1,7 @@
 import { Tail } from "./tail";
 import { Point, Layer, Path, ToolEvent, Color } from "paper";
 import { TailSpec } from "bubbleSpec";
-import { Bubble } from "bubble";
+import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
 import { Comical } from "./comical";
 
@@ -30,6 +30,16 @@ export class ArcTail extends Tail {
     ) {
         super(root, tip, lowerLayer, upperLayer, handleLayer, spec, bubble);
         this.mid = mid;
+    }
+
+    private static makeArc(start: Point, mid: Point, end: Point): Path {
+        try {
+            return new Path.Arc(start, mid, end);
+        } catch (e) {
+            // Path.Arc fails when the points are on a straight line.
+            // In that case, just return the line.
+            return new Path.Line(start, end);
+        }
     }
 
     // Make the shapes that implement the tail.
@@ -70,7 +80,7 @@ export class ArcTail extends Tail {
         const tempBisector = new Path.Line(bisectorStart, bisectorEnd);
 
         // find where it intersects an arc through the three original control points.
-        const tempArc = new Path.Arc(this.root, this.mid, this.tip);
+        const tempArc = ArcTail.makeArc(this.root, this.mid, this.tip);
         const intersect = tempArc.getIntersections(tempBisector);
         tempArc.remove(); // maybe we could prevent adding them in the first place?
         tempBisector.remove();
@@ -116,8 +126,8 @@ export class ArcTail extends Tail {
             activateLayer(this.lowerLayer);
         }
 
-        this.pathstroke = new Path.Arc(begin, mid1, this.tip);
-        const pathArc2 = new Path.Arc(this.tip, mid2, end);
+        this.pathstroke = ArcTail.makeArc(begin, mid1, this.tip);
+        const pathArc2 = ArcTail.makeArc(this.tip, mid2, end);
         this.pathstroke.addSegments(pathArc2.segments!);
         pathArc2.remove();
         if (oldStroke) {
@@ -149,6 +159,9 @@ export class ArcTail extends Tail {
     }
     adjustForChangedRoot(delta: Point): void {
         let newPosition = this.mid.add(delta.divide(2));
+        if (this.bubble && this.spec.autoCurve) {
+            newPosition = Bubble.defaultMid(this.currentStartPoint(), this.tip);
+        }
         if (this.bubble) {
             newPosition = Comical.movePointOutsideBubbleContent(this.bubble.content, newPosition);
         }
@@ -168,7 +181,7 @@ export class ArcTail extends Tail {
 
     protected showHandlesInternal(): void {
         super.showHandlesInternal();
-        const isHandleSolid = true;
+        const isHandleSolid = !this.spec.autoCurve;
         const curveHandle = this.makeHandle(this.mid, isHandleSolid);
 
         this.midHandle = curveHandle;
@@ -188,6 +201,8 @@ export class ArcTail extends Tail {
             if (!this.okToMoveHandleTo(event.point!)) {
                 return;
             }
+            this.spec.autoCurve = false;
+            curveHandle.fillColor!.alpha = 1;
             curveHandle.position = event.point;
             this.mid = event.point!;
             this.makeShapes();
@@ -196,6 +211,14 @@ export class ArcTail extends Tail {
             this.spec.midpointX = curveHandle!.position!.x!;
             this.spec.midpointY = curveHandle!.position!.y!;
             this.persistSpecChanges();
+        };
+
+        curveHandle.onDoubleClick = () => {
+            this.spec.autoCurve = true;
+            this.adjustForChangedRoot(new Point(0, 0));
+            this.makeShapes();
+            this.persistSpecChanges();
+            Tail.makeTransparentClickable(curveHandle);
         };
     }
 

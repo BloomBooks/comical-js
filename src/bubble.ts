@@ -802,17 +802,34 @@ export class Bubble {
             tipX: targetX,
             tipY: targetY,
             midpointX: mid.x!,
-            midpointY: mid.y!
+            midpointY: mid.y!,
+            autoCurve: true
         };
         return result;
     }
 
     static defaultMid(start: Point, target: Point): Point {
-        const xmid = (start.x! + target.x!) / 2;
-        const ymid = (start.y! + target.y!) / 2;
-        const deltaX = target.x! - start.x!;
-        const deltaY = target.y! - start.y!;
-        return new Point(xmid - deltaY / 10, ymid + deltaX / 10);
+        let delta = target.subtract(start);
+        let mid = start.add(delta.divide(2));
+        delta = delta.divide(10);
+        delta.angle! -= 90;
+        // At this point, delta is 10% of the distance from start to target,
+        // at right angles to that line, and on the side of it toward
+        // the y axis. We prefer the line to curve in that direction,
+        // both above and below the x axis.
+
+        // Now, we want to reduce the curvature if the line is close to
+        // horizontal or vertical. This is in line with comic expectations;
+        // it also has the benefit that as the tip is dragged from one
+        // quadrant to another, the transition is smooth, as the curve
+        // reduces to a line and then starts to bend the other way rather
+        // than suddenly jumping from one quadrant's rule to the other.
+        if (Math.abs(delta.x!) > Math.abs(delta.y!)) {
+            delta.length! *= delta.y! / delta.x!;
+        } else {
+            delta.length! *= delta.x! / delta.y!;
+        }
+        return mid.add(delta);
     }
 
     // This is a helper method which, possibly with some enhancements,
