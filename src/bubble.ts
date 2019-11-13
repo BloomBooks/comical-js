@@ -3,9 +3,11 @@ import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
+import { ThoughtTail } from "./thoughtTail";
 import { StraightTail } from "./straightTail";
 import { LineTail } from "./lineTail";
 import { makeSpeechBubble } from "./speechBubble";
+import { makeThoughtBubble } from "./thoughtBubble";
 import { activateLayer } from "./utilities";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
@@ -319,18 +321,32 @@ export class Bubble {
         }
         this.tails = [];
 
-        // Make any tails the bubble should have
-        this.spec.tails.forEach(tail => {
-            this.makeTail(tail);
-        });
-
         // Make the bubble part of the bubble+tail
         this.loadShapeAsync((newlyLoadedShape: Item) => {
             this.makeShapes(newlyLoadedShape);
 
-            // Precondition: The tails must be initialized before this function is called
+            // If we're making the main shape first (especially, thoughtBubble),
+            // we need to adjust its size and position before making the tail,
+            // since we depend on that to decide where to stop making mini-bubbles.
+            // If we're making the shape asynchronously, it's possible the call
+            // that adjusted the tails already happened. But it won't hurt do do it
+            // one more time once we have everything.
             this.adjustSizeAndPosition();
         });
+
+        // Make any tails the bubble should have.
+        // For some tail types (e.g., currently, thoughtTail), it's important
+        // to make the main shape first, since making the tail shapes depends
+        // on having it. Currently this can only be guaranteed with computational
+        // shapes (that don't depend on loading an svg).
+        this.spec.tails.forEach(tail => {
+            this.makeTail(tail);
+        });
+
+        // Need to do this again, mainly to adjust the tail positions.
+        // Note that in some cases, this might possibly happen before
+        // the main bubble shape is created.
+        this.adjustSizeAndPosition();
 
         this.monitorContent();
     }
@@ -371,6 +387,8 @@ export class Bubble {
         switch (bubbleStyle) {
             case "pointedArcs":
                 return this.makePointedArcBubble();
+            case "thought":
+                return makeThoughtBubble(this);
             case "speech":
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
             default:
@@ -573,13 +591,18 @@ export class Bubble {
         const contentLeft = this.content.offsetLeft;
         const contentTop = this.content.offsetTop;
         const contentCenter = new Point(contentLeft + contentWidth / 2, contentTop + contentHeight / 2);
-        this.outline.position = contentCenter;
-        this.fillArea.position = contentCenter;
-        if (this.shadowShape) {
-            // We shouldn't have a shadowShape at all unless we have a shadowOffset.
-            // In case somehow we do, hide the shadow completely when that offset is
-            // falsy by putting it entirely behind the main shapes.
-            this.shadowShape.position = this.outline.position.add(this.spec.shadowOffset || 0);
+        if (this.outline) {
+            // it's just possible if shape is created asynchronously from
+            // an SVG that this method is called to adjust tails before the main shape
+            // exists. If so, it will be called again when it does.
+            this.outline.position = contentCenter;
+            this.fillArea.position = contentCenter;
+            if (this.shadowShape) {
+                // We shouldn't have a shadowShape at all unless we have a shadowOffset.
+                // In case somehow we do, hide the shadow completely when that offset is
+                // falsy by putting it entirely behind the main shapes.
+                this.shadowShape.position = this.outline.position.add(this.spec.shadowOffset || 0);
+            }
         }
         // Enhance: I think we could extract from this a method updateTailSpec
         // which loops over all the tails and if any tail's spec doesn't match the tail,
@@ -723,6 +746,23 @@ export class Bubble {
                 break;
             case "arc":
             default:
+                // Currently thought tails are specific to thought bubbles.
+                // So these tails don't have their own style; instead,
+                // failing to match a known tail style, we fall through here
+                // and make one based on the bubble style.
+                if (this.spec.style === "thought") {
+                    tail = new ThoughtTail(
+                        startPoint,
+                        tipPoint,
+                        midPoint,
+                        this.lowerLayer,
+                        this.upperLayer,
+                        this.handleLayer,
+                        desiredTail,
+                        this
+                    );
+                    break;
+                }
                 tail = new ArcTail(
                     startPoint,
                     tipPoint,

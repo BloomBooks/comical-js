@@ -7,6 +7,8 @@ import { activateLayer } from "./utilities";
 // This is an abstract base class for tails. A concrete class must at least
 // override makeShapes; if it has additional control points, it will probably
 // override showHandles, adjustForChangedRoot(), and adjustForChangedTip().
+// If it involves additional shapes not stored in pathStroke and pathFill,
+// it should override fillPaths() and allPaths().
 export class Tail {
     // the path representing the line around the tail
     pathstroke: Path;
@@ -62,11 +64,27 @@ export class Tail {
         throw new Error("Each subclass must implement makeShapes");
     }
 
-    public onClick(action: () => void) {
-        this.clickAction = action;
+    public fillPaths(): Path[] {
         if (this.pathFill) {
-            this.pathFill.onClick = action;
+            return [this.pathFill];
+        } else {
+            return [];
         }
+    }
+
+    public allPaths(): Path[] {
+        const result = this.fillPaths();
+        if (this.pathstroke) {
+            result.push(this.pathstroke);
+        }
+        return result;
+    }
+
+    public onClick(action: () => void): void {
+        this.clickAction = action;
+        this.fillPaths().forEach(p => {
+            p.onClick = action;
+        });
     }
 
     adjustForChangedRoot(delta: Point) {
@@ -115,8 +133,7 @@ export class Tail {
 
     // Erases the tail from the canvas
     remove() {
-        this.pathFill.remove();
-        this.pathstroke.remove();
+        this.allPaths().forEach(p => p.remove());
     }
 
     currentStartPoint(): Point {
@@ -202,8 +219,7 @@ export class Tail {
     }
 
     public setTailAndHandleVisibility(newVisibility: boolean): void {
-        this.pathFill.visible = newVisibility;
-        this.pathstroke.visible = newVisibility;
+        this.allPaths().forEach(p => (p.visible = newVisibility));
 
         // ENHANCE: It'd be nice to hide the tipHandle too, but that doesn't make a difference yet.
     }
