@@ -45,6 +45,11 @@ export interface TailSpec {
     midpointY: number;
     joiner?: boolean; // true if it joins to its parent bubble
     style?: string; // currently one of arc or straight
+    // true to automatically keep the shape of the tail matching
+    // Comical's default shape for the current root and tip when
+    // either moves. False for the user to control the shape using
+    // other handles, if any (though Comical may still move the
+    // other handles to some extent when the tip or root move).
     autoCurve?: boolean;
 }
 // Do we need to specify a width? Other attributes for bezier curve?
