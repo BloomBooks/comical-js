@@ -325,7 +325,12 @@ export class Bubble {
         this.loadShapeAsync((newlyLoadedShape: Item) => {
             this.makeShapes(newlyLoadedShape);
 
-            // Precondition: The tails must be initialized before this function is called
+            // If we're making the main shape first (especially, thoughtBubble),
+            // we need to adjust its size and position before making the tail,
+            // since we depend on that to decide where to stop making mini-bubbles.
+            // If we're making the shape asynchronously, it's possible the call
+            // that adjusted the tails already happened. But it won't hurt do do it
+            // one more time once we have everything.
             this.adjustSizeAndPosition();
         });
 
@@ -337,6 +342,11 @@ export class Bubble {
         this.spec.tails.forEach(tail => {
             this.makeTail(tail);
         });
+
+        // Need to do this again, mainly to adjust the tail positions.
+        // Note that in some cases, this might possibly happen before
+        // the main bubble shape is created.
+        this.adjustSizeAndPosition();
 
         this.monitorContent();
     }
@@ -581,13 +591,18 @@ export class Bubble {
         const contentLeft = this.content.offsetLeft;
         const contentTop = this.content.offsetTop;
         const contentCenter = new Point(contentLeft + contentWidth / 2, contentTop + contentHeight / 2);
-        this.outline.position = contentCenter;
-        this.fillArea.position = contentCenter;
-        if (this.shadowShape) {
-            // We shouldn't have a shadowShape at all unless we have a shadowOffset.
-            // In case somehow we do, hide the shadow completely when that offset is
-            // falsy by putting it entirely behind the main shapes.
-            this.shadowShape.position = this.outline.position.add(this.spec.shadowOffset || 0);
+        if (this.outline) {
+            // it's just possible if shape is created asynchronously from
+            // an SVG that this method is called to adjust tails before the main shape
+            // exists. If so, it will be called again when it does.
+            this.outline.position = contentCenter;
+            this.fillArea.position = contentCenter;
+            if (this.shadowShape) {
+                // We shouldn't have a shadowShape at all unless we have a shadowOffset.
+                // In case somehow we do, hide the shadow completely when that offset is
+                // falsy by putting it entirely behind the main shapes.
+                this.shadowShape.position = this.outline.position.add(this.spec.shadowOffset || 0);
+            }
         }
         // Enhance: I think we could extract from this a method updateTailSpec
         // which loops over all the tails and if any tail's spec doesn't match the tail,

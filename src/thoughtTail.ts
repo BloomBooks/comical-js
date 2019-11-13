@@ -4,7 +4,7 @@ import { Bubble } from "./bubble";
 import { activateLayer, makeArc } from "./utilities";
 import { CurveTail } from "./curveTail";
 
-// An ThoughtTail is a succession of mini-bubbles, ellipses drawn along the curve.
+// A ThoughtTail is a succession of mini-bubbles, ellipses drawn along the curve.
 // One of them may partly overlap the main bubble.
 // Enhance: all the handle-related code could usefully be refactored into a
 // common base class shared by ArcTail, perhaps MidHandleTail
@@ -31,7 +31,7 @@ export class ThoughtTail extends CurveTail {
 
     // Make the shapes that implement the tail.
     // If there are existing shapes (typically representing an earlier tail position),
-    // remove them after putting the new shapes in the same z-order and layer.
+    // remove them.
     public makeShapes() {
         if (this.miniBubbleFillPaths) {
             this.miniBubbleFillPaths.forEach(x => x.remove());
