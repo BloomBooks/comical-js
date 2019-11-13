@@ -407,7 +407,7 @@ storiesOf("comical", module)
         });
         return wrapDiv;
     })
-    .add("two bubbles on picture", () => {
+    .add("three bubbles on picture", () => {
         const wrapDiv = document.createElement("div");
         wrapDiv.style.position = "relative";
         wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
@@ -415,15 +415,20 @@ storiesOf("comical", module)
 
         var div1 = makeTextBlock(wrapDiv, "Sweet! Rad glasses!", 120, 100, 100);
 
-        var div2 = makeTextBlock(
-            wrapDiv,
-            //"The oxen stumbled! The ark was falling! He touched it! How could God do such a thing?",
-            "I got a blue hat. I love it! Better not lose it...",
-            300,
-            150,
-            200
-        );
+        var div2 = makeTextBlock(wrapDiv, "I got a blue hat. I love it! Better not lose it...", 100, 170, 200);
         div2.setAttribute("contenteditable", "true");
+
+        // This length of text and block size illustrates one case where the shape
+        // currently produced is not very pretty. A better algorithm might involve an ellipse
+        // (or speech-bubble curve?) around the text, and then points more-or-less evenly spaced along it.
+        var div3 = makeTextBlock(
+            wrapDiv,
+            "Yum! This tastes really good!  I want more and more and more...",
+            300,
+            50,
+            100
+        );
+        div3.setAttribute("contenteditable", "true");
 
         // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
         // as does convertBubbleJsonToCanvas.
@@ -443,6 +448,15 @@ storiesOf("comical", module)
                 version: "1.0",
                 style: "speech",
                 tails: [Bubble.makeDefaultTail(div2)],
+                level: 1
+            });
+
+            const bubble3 = new Bubble(div3);
+            var tail3 = Bubble.makeDefaultTail(div3);
+            bubble3.setBubbleSpec({
+                version: "1.0",
+                style: "thought",
+                tails: [tail3],
                 level: 1
             });
             Comical.convertBubbleJsonToCanvas(wrapDiv);
