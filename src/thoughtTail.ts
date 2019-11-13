@@ -1,24 +1,16 @@
-import { Tail } from "./tail";
-import { Point, Layer, Path, ToolEvent, Color, Size } from "paper";
+import { Point, Layer, Path, Color, Size } from "paper";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
-import { activateLayer } from "./utilities";
-import { Comical } from "./comical";
+import { activateLayer, makeArc } from "./utilities";
+import { CurveTail } from "./curveTail";
 
 // An ThoughtTail is a succession of mini-bubbles, ellipses drawn along the curve.
 // One of them may partly overlap the main bubble.
 // Enhance: all the handle-related code could usefully be refactored into a
 // common base class shared by ArcTail, perhaps MidHandleTail
-export class ThoughtTail extends Tail {
-    mid: Point;
-
+export class ThoughtTail extends CurveTail {
     mark1: Path.Circle | undefined;
     mark2: Path.Circle | undefined;
-
-    // This may be set to ensure that when the tail's midpoint is moved
-    // automatically (e.g., to adjust for the root moving), the corresponding
-    // handle is moved too.
-    midHandle: Path | undefined;
 
     miniBubbleStrokePaths: Path[];
     miniBubbleFillPaths: Path[];
@@ -37,17 +29,6 @@ export class ThoughtTail extends Tail {
         this.mid = mid;
     }
 
-    // Enhance: wants to move to utilities.
-    private static makeArc(start: Point, mid: Point, end: Point): Path {
-        try {
-            return new Path.Arc(start, mid, end);
-        } catch (e) {
-            // Path.Arc fails when the points are on a straight line.
-            // In that case, just return the line.
-            return new Path.Line(start, end);
-        }
-    }
-
     // Make the shapes that implement the tail.
     // If there are existing shapes (typically representing an earlier tail position),
     // remove them after putting the new shapes in the same z-order and layer.
@@ -63,7 +44,7 @@ export class ThoughtTail extends Tail {
         const tipWidth = 7;
 
         // We want to make an arc from the tip to the root, and passing through mid.
-        const centerPath = ThoughtTail.makeArc(this.tip, this.mid, this.root);
+        const centerPath = makeArc(this.tip, this.mid, this.root);
         centerPath.remove();
 
         const length = centerPath.length;
@@ -140,85 +121,5 @@ export class ThoughtTail extends Tail {
             result = [...result, ...this.miniBubbleStrokePaths];
         }
         return result;
-    }
-
-    // Enhance: I think all the rest of this code is shared with ArcTail and can move
-    // to a base class.
-    adjustForChangedRoot(delta: Point): void {
-        let newPosition = this.mid.add(delta.divide(2));
-        if (this.bubble && this.spec.autoCurve) {
-            newPosition = Bubble.defaultMid(this.currentStartPoint(), this.tip);
-        }
-        if (this.bubble) {
-            newPosition = Comical.movePointOutsideBubbleContent(this.bubble.content, newPosition);
-        }
-        this.mid = newPosition;
-        if (this.midHandle) {
-            this.midHandle.position = newPosition;
-        }
-        if (this.spec) {
-            this.spec.midpointX = newPosition.x!;
-            this.spec.midpointY = newPosition.y!;
-        }
-    }
-
-    adjustForChangedTip(delta: Point): void {
-        this.adjustForChangedRoot(delta);
-    }
-
-    protected showHandlesInternal(): void {
-        super.showHandlesInternal();
-        const isHandleSolid = !this.spec.autoCurve;
-        const curveHandle = this.makeHandle(this.mid, isHandleSolid);
-
-        this.midHandle = curveHandle;
-
-        curveHandle.bringToFront();
-        curveHandle.onMouseDown = () => {
-            this.state = "dragCurve";
-        };
-        curveHandle.onMouseUp = () => {
-            this.state = "idle";
-        };
-
-        curveHandle.onMouseDrag = (event: ToolEvent) => {
-            if (this.state !== "dragCurve") {
-                return;
-            }
-            if (this.bubble) {
-                const [parentElement] = Comical.comicalParentOf(this.bubble.content);
-                if (
-                    parentElement &&
-                    Comical.bubbleWithContentAtPoint(parentElement, event.point!.x!, event.point!.y!)
-                ) {
-                    return; // refuse to drag mid to a point inside a bubble
-                }
-            }
-            this.spec.autoCurve = false;
-            curveHandle.fillColor!.alpha = 1;
-            curveHandle.position = event.point;
-            this.mid = event.point!;
-            this.makeShapes();
-
-            // Update this.spec.tips to reflect the new handle positions
-            this.spec.midpointX = curveHandle!.position!.x!;
-            this.spec.midpointY = curveHandle!.position!.y!;
-            this.persistSpecChanges();
-        };
-
-        curveHandle.onDoubleClick = () => {
-            this.spec.autoCurve = true;
-            this.adjustForChangedRoot(new Point(0, 0));
-            this.makeShapes();
-            this.persistSpecChanges();
-            Tail.makeTransparentClickable(curveHandle);
-        };
-    }
-
-    public setTailAndHandleVisibility(newVisibility: boolean) {
-        super.setTailAndHandleVisibility(newVisibility);
-        if (this.midHandle) {
-            this.midHandle.visible = newVisibility;
-        }
     }
 }

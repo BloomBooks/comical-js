@@ -413,7 +413,7 @@ storiesOf("comical", module)
         wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
         wrapDiv.style.height = "600px";
 
-        var div1 = makeTextBlock(wrapDiv, "Sweet! Rad glasses!", 120, 100, 100);
+        var div1 = makeTextBlock(wrapDiv, "Sweet! Rad glasses!", 20, 50, 100);
 
         var div2 = makeTextBlock(wrapDiv, "I got a blue hat. I love it! Better not lose it...", 100, 170, 200);
         div2.setAttribute("contenteditable", "true");

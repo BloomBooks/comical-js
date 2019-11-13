@@ -1,22 +1,14 @@
-import { Tail } from "./tail";
-import { Point, Layer, Path, ToolEvent, Color } from "paper";
+import { Point, Layer, Path, Color } from "paper";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
-import { activateLayer } from "./utilities";
-import { Comical } from "./comical";
+import { activateLayer, makeArc } from "./utilities";
+import { CurveTail } from "./curveTail";
 
 // An ArcTail is currently our default: a tail that is an arc from the tip through a third
 // control point, mid, which can also be dragged.
-export class ArcTail extends Tail {
-    mid: Point;
-
+export class ArcTail extends CurveTail {
     mark1: Path.Circle | undefined;
     mark2: Path.Circle | undefined;
-
-    // This may be set to ensure that when the tail's midpoint is moved
-    // automatically (e.g., to adjust for the root moving), the corresponding
-    // handle is moved too.
-    midHandle: Path | undefined;
 
     public constructor(
         root: Point,
@@ -30,20 +22,6 @@ export class ArcTail extends Tail {
     ) {
         super(root, tip, lowerLayer, upperLayer, handleLayer, spec, bubble);
         this.mid = mid;
-    }
-
-    private static makeArc(start: Point, mid: Point, end: Point): Path {
-        // Path.Arc fails when the points are on a straight line.
-        // In that case, just return the line.
-        // This includes the pathological case where mid on the line through start and end,
-        // but not between them. In that case, it's not possible to draw an arc
-        // that includes the three points, so we'll still go with a line from
-        // start to end.
-        const angleDiff = Math.abs(mid.subtract(start).angle! - end.subtract(start).angle!);
-        if (angleDiff < 0.0001 || Math.abs(angleDiff - 180) < 0.0001) {
-            return new Path.Line(start, end);
-        }
-        return new Path.Arc(start, mid, end);
     }
 
     // Make the shapes that implement the tail.
@@ -84,7 +62,7 @@ export class ArcTail extends Tail {
         const tempBisector = new Path.Line(bisectorStart, bisectorEnd);
 
         // find where it intersects an arc through the three original control points.
-        const tempArc = ArcTail.makeArc(this.root, this.mid, this.tip);
+        const tempArc = makeArc(this.root, this.mid, this.tip);
         const intersect = tempArc.getIntersections(tempBisector);
         tempArc.remove(); // maybe we could prevent adding them in the first place?
         tempBisector.remove();
@@ -130,8 +108,8 @@ export class ArcTail extends Tail {
             activateLayer(this.lowerLayer);
         }
 
-        this.pathstroke = ArcTail.makeArc(begin, mid1, this.tip);
-        const pathArc2 = ArcTail.makeArc(this.tip, mid2, end);
+        this.pathstroke = makeArc(begin, mid1, this.tip);
+        const pathArc2 = makeArc(this.tip, mid2, end);
         this.pathstroke.addSegments(pathArc2.segments!);
         pathArc2.remove();
         if (oldStroke) {
@@ -159,77 +137,6 @@ export class ArcTail extends Tail {
         this.pathFill.fillColor = this.getFillColor();
         if (this.clickAction) {
             this.pathFill.onClick = this.clickAction;
-        }
-    }
-    adjustForChangedRoot(delta: Point): void {
-        let newPosition = this.mid.add(delta.divide(2));
-        if (this.bubble && this.spec.autoCurve) {
-            newPosition = Bubble.defaultMid(this.currentStartPoint(), this.tip);
-        }
-        if (this.bubble) {
-            newPosition = Comical.movePointOutsideBubbleContent(this.bubble.content, newPosition);
-        }
-        this.mid = newPosition;
-        if (this.midHandle) {
-            this.midHandle.position = newPosition;
-        }
-        if (this.spec) {
-            this.spec.midpointX = newPosition.x!;
-            this.spec.midpointY = newPosition.y!;
-        }
-    }
-
-    adjustForChangedTip(delta: Point): void {
-        this.adjustForChangedRoot(delta);
-    }
-
-    protected showHandlesInternal(): void {
-        super.showHandlesInternal();
-        const isHandleSolid = !this.spec.autoCurve;
-        const curveHandle = this.makeHandle(this.mid, isHandleSolid);
-
-        this.midHandle = curveHandle;
-
-        curveHandle.bringToFront();
-        curveHandle.onMouseDown = () => {
-            this.state = "dragCurve";
-        };
-        curveHandle.onMouseUp = () => {
-            this.state = "idle";
-        };
-
-        curveHandle.onMouseDrag = (event: ToolEvent) => {
-            if (this.state !== "dragCurve") {
-                return;
-            }
-            if (!this.okToMoveHandleTo(event.point!)) {
-                return;
-            }
-            this.spec.autoCurve = false;
-            curveHandle.fillColor!.alpha = 1;
-            curveHandle.position = event.point;
-            this.mid = event.point!;
-            this.makeShapes();
-
-            // Update this.spec.tips to reflect the new handle positions
-            this.spec.midpointX = curveHandle!.position!.x!;
-            this.spec.midpointY = curveHandle!.position!.y!;
-            this.persistSpecChanges();
-        };
-
-        curveHandle.onDoubleClick = () => {
-            this.spec.autoCurve = true;
-            this.adjustForChangedRoot(new Point(0, 0));
-            this.makeShapes();
-            this.persistSpecChanges();
-            Tail.makeTransparentClickable(curveHandle);
-        };
-    }
-
-    public setTailAndHandleVisibility(newVisibility: boolean) {
-        super.setTailAndHandleVisibility(newVisibility);
-        if (this.midHandle) {
-            this.midHandle.visible = newVisibility;
         }
     }
 }
