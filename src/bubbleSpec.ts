@@ -45,6 +45,7 @@ export interface TailSpec {
     midpointY: number;
     joiner?: boolean; // true if it joins to its parent bubble
     style?: string; // currently one of arc or straight
+    autoCurve?: boolean;
 }
 // Do we need to specify a width? Other attributes for bezier curve?
 // Current design: start with three points, the target, midpoint, and the root (center of the text block).

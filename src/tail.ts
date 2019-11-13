@@ -1,4 +1,4 @@
-import { Path, Point, Color, Layer, ToolEvent } from "paper";
+import { Path, Point, Color, Layer, ToolEvent, Item } from "paper";
 import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
@@ -217,15 +217,22 @@ export class Tail {
         result.strokeColor = new Color("#1d94a4");
         result.fillColor = new Color("#1d94a4"); // a distinct instance of Color, may get made transparent below
         result.strokeWidth = 1;
-        // We basically want non-solid bubbles transparent, especially for the tip, so
-        // you can see where the tip actually ends up. But if it's perfectly transparent,
-        // paper.js doesn't register hit tests on the transparent part. So go for a very
-        // small alpha.
         if (!solid) {
-            result.fillColor.alpha = 0.01;
+            Tail.makeTransparentClickable(result);
         }
         result.name = "handle" + Tail.handleIndex++;
         result.visible = true;
         return result;
+    }
+
+    // We basically want non-solid bubbles transparent, especially for the tip, so
+    // you can see where the tip actually ends up. But if it's perfectly transparent,
+    // paper.js doesn't register hit tests on the transparent part. So go for a very
+    // small alpha.
+    static makeTransparentClickable(item: Item) {
+        if (!item.fillColor) {
+            item.fillColor = new Color("#1d94a4");
+        }
+        item.fillColor.alpha = 0.01;
     }
 }
