@@ -33,13 +33,17 @@ export class ArcTail extends Tail {
     }
 
     private static makeArc(start: Point, mid: Point, end: Point): Path {
-        try {
-            return new Path.Arc(start, mid, end);
-        } catch (e) {
-            // Path.Arc fails when the points are on a straight line.
-            // In that case, just return the line.
+        // Path.Arc fails when the points are on a straight line.
+        // In that case, just return the line.
+        // This includes the pathological case where mid on the line through start and end,
+        // but not between them. In that case, it's not possible to draw an arc
+        // that includes the three points, so we'll still go with a line from
+        // start to end.
+        const angleDiff = Math.abs(mid.subtract(start).angle! - end.subtract(start).angle!);
+        if (angleDiff < 0.0001 || Math.abs(angleDiff - 180) < 0.0001) {
             return new Path.Line(start, end);
         }
+        return new Path.Arc(start, mid, end);
     }
 
     // Make the shapes that implement the tail.
