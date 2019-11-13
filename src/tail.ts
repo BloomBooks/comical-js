@@ -134,6 +134,13 @@ export class Tail {
         }
     }
 
+    okToMoveHandleTo(p: Point): boolean {
+        if (!this.bubble) {
+            return true; // pathological, or maybe in testing...can't really test
+        }
+        return Comical.okToMoveTo(this.bubble.content, p);
+    }
+
     protected showHandlesInternal() {
         // Setup event handlers
         this.state = "idle";
@@ -155,6 +162,9 @@ export class Tail {
             tipHandle.onMouseDrag = (event: ToolEvent) => {
                 if (this.state !== "dragTip") {
                     return;
+                }
+                if (!this.okToMoveHandleTo(event.point!)) {
+                    return; // refuse to drag tip to a point inside a bubble
                 }
                 // tipHandle can't be undefined at this point
                 const delta = event.point!.subtract(tipHandle!.position!).divide(2);
