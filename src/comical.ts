@@ -407,53 +407,56 @@ export class Comical {
         };
     }
 
-    // If the specified position is inside the content area of a bubble in the same
+    // If the specified position is inside a bubble in the same
     // parentContainer as element, return
     // a nearby point that is not inside any bubble content area.
-    // If the point is not inside a content area, return it unmodified.
-    static movePointOutsideBubbleContent(element: HTMLElement, position: Point): Point {
+    // If the point is not inside a bubble, return it unmodified.
+    // We choose a 'nearby' point by moving along the line from position
+    // to 'towards' until we find a point that isn't in a bubble.
+    // It is assumed that 'towards' itself isn't in a bubble.
+    // If it is, we may return 'towards' itself even though it's not
+    // outside a bubble.
+    static movePointOutsideBubble(element: HTMLElement, position: Point, towards: Point): Point {
         const [parentContainer] = Comical.comicalParentOf(element);
         if (!parentContainer) {
             return position;
         }
-        let bubble = this.bubbleWithContentAtPoint(parentContainer, position.x!, position.y!);
-        let result = position;
-        while (bubble) {
-            // Point is at a problem location. We will try the points closest to it on each
-            // side of the content area, but eliminating any that are in yet another content
-            // area. If all four positions are in some other bubble, we move
-            // down; the next iteration will move us outside that bubble.
-            const bounds = Comical.getBoundsRelativeToParent(parentContainer, bubble.content);
-            let delta = new Point(result.x!, bounds.bottom + 1).subtract(result); // down (default)
-            delta = Comical.chooseBetterDelta(parentContainer, result, delta, new Point(result.x!, bounds.top - 1)); // up
-            delta = Comical.chooseBetterDelta(parentContainer, result, delta, new Point(bounds.left - 1, result.y!)); // left
-            delta = Comical.chooseBetterDelta(parentContainer, result, delta, new Point(bounds.right + 1, result.y!)); // right
-            result = result.add(delta);
-            // if we didn't manage to get outside all content areas, we'll try again.
-            bubble = this.bubbleWithContentAtPoint(parentContainer, result.x!, result.y!);
+        let bubble = this.getBubbleHit(parentContainer, position.x!, position.y!);
+        if (!bubble) {
+            return position;
         }
-        return result;
-    }
-
-    // Return a delta from start, either delta1 or candidate.subtract(start).
-    // In general we prefer the shorter delta.
-    // However, even more strongly we prefer a delta that puts us outside of any bubble
-    // and inside the containing canvas.
-    // If neither option is outside a bubble and inside the canvas, return delta1.
-    private static chooseBetterDelta(element: HTMLElement, start: Point, delta1: Point, candidate: Point): Point {
-        const delta2 = candidate.subtract(start);
-        const okToMoveTo2 = this.okToMoveTo(element, candidate);
-        const delta2IsCloser = delta2.length! < delta1.length!;
-        const original = start.add(delta1); // the point we're comparing with candidate
-        // We prefer to move to candidate if it is OK and either
-        // (1) it is closer, or
-        // (2) original is NOT OK.
-        if (okToMoveTo2 && (delta2IsCloser || !this.okToMoveTo(element, original))) {
-            return delta2;
+        let farPoint = towards; // the furthest we might move position
+        let nearPoint = position; // the least distance we might move position
+        // We will return a point along the line from position to towards,
+        // generally as close to position as allowed.
+        // If there are other bubbles in the way, or the original bubble has
+        // an irregular shape, the binary search algorithm
+        // may do something a little odd, moving the point unnecessarily
+        // far; but it should still be a plausible
+        // (and definitely valid, outside any bubble) place to put it.
+        while (true) {
+            const delta = farPoint.subtract(nearPoint).divide(2);
+            if (delta.length! < 1) {
+                return farPoint;
+            }
+            const newPoint = nearPoint.add(delta);
+            const newBubble = this.getBubbleHit(parentContainer, newPoint.x!, newPoint.y!);
+            // Basic idea here is a binary search for a point that's not in a bubble. If newPoint
+            // is in the original bubble, we need to move further, so we move badPoint. If it's not
+            // in a bubble, we can try closer to the bubble, so we move goodPoint.
+            // If newBubble is different from bubble and doesn't intersect, there must be some
+            // space between them. newPoint is not actually good, but we want to move the search
+            // in that direction so we end up with a point closer to the bubble that contains
+            // position. (There's probably a pathological case involving convex bubbles where
+            // they do intersect and yet there's open space along the line closer to position.
+            // But I think this is good enough. The user can always take control and position
+            // the handle manually.)
+            if (newBubble && (newBubble === bubble || newBubble.outline.intersects(bubble.outline))) {
+                nearPoint = newPoint;
+            } else {
+                farPoint = newPoint;
+            }
         }
-        // this covers cases where delta1 is closer, where it's OK but delta2 is not,
-        // or where neither is OK.
-        return delta1;
     }
 
     static okToMoveTo(element: HTMLElement, dest: Point): boolean {
@@ -461,7 +464,7 @@ export class Comical {
         if (!parentContainer) {
             return true; // shouldn't happen, I think.
         }
-        if (this.bubbleWithContentAtPoint(parentContainer, dest.x!, dest.y!)) {
+        if (this.getBubbleHit(parentContainer, dest.x!, dest.y!)) {
             return false;
         }
 
