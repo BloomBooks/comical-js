@@ -20,7 +20,7 @@ export class CurveTail extends Tail {
             newPosition = Bubble.defaultMid(this.currentStartPoint(), this.tip);
         }
         if (this.bubble) {
-            newPosition = Comical.movePointOutsideBubbleContent(this.bubble.content, newPosition);
+            newPosition = Comical.movePointOutsideBubble(this.bubble.content, newPosition, this.tip);
         }
         this.mid = newPosition;
         if (this.midHandle) {
@@ -57,10 +57,7 @@ export class CurveTail extends Tail {
             }
             if (this.bubble) {
                 const [parentElement] = Comical.comicalParentOf(this.bubble.content);
-                if (
-                    parentElement &&
-                    Comical.bubbleWithContentAtPoint(parentElement, event.point!.x!, event.point!.y!)
-                ) {
+                if (parentElement && Comical.getBubbleHit(parentElement, event.point!.x!, event.point!.y!)) {
                     return; // refuse to drag mid to a point inside a bubble
                 }
             }
