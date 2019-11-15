@@ -1,7 +1,8 @@
 import { Tail } from "./tail";
 import { Point, Layer, Path, Color } from "paper";
-import { TailSpec } from "bubbleSpec";
-import { Bubble } from "bubble";
+import { TailSpec } from "./bubbleSpec";
+import { Bubble } from "./bubble";
+import { Comical } from "./comical";
 
 export class LineTail extends Tail {
     private tailWidth: number = 1;
@@ -42,14 +43,15 @@ export class LineTail extends Tail {
             // the tail. Otherwise clicking on it is really hard. The onMouseLeave event is so that it
             // returns the tail to the default width (this.tailWidth) of the LineTail
 
-            this.pathstroke.onMouseEnter = () => {
-                this.pathstroke.strokeWidth = 4;
-            };
+            // Enhance: If we still want this behavior, we have to enhance it to cope with scale
+            // this.pathstroke.onMouseEnter = () => {
+            //     this.pathstroke.strokeWidth = 4;
+            // };
 
-            this.pathstroke.onMouseLeave = () => {
-                this.pathstroke.strokeWidth = this.tailWidth;
-            };
-            this.pathstroke.onClick = action;
+            // this.pathstroke.onMouseLeave = () => {
+            //     this.pathstroke.strokeWidth = this.tailWidth;
+            // };
+            Comical.setItemClickAction(this.pathstroke, action);
         }
     }
 }

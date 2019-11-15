@@ -3,6 +3,7 @@ import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer, makeArc } from "./utilities";
 import { CurveTail } from "./curveTail";
+import { Comical } from "./comical";
 
 // A ThoughtTail is a succession of mini-bubbles, ellipses drawn along the curve.
 // One of them may partly overlap the main bubble.
@@ -99,7 +100,7 @@ export class ThoughtTail extends CurveTail {
             newFill.strokeColor.alpha = 0;
 
             if (this.clickAction) {
-                newFill.onClick = this.clickAction;
+                Comical.setItemClickAction(newFill, this.clickAction);
             }
 
             this.miniBubbleFillPaths.push(newFill);

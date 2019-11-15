@@ -412,6 +412,8 @@ storiesOf("comical", module)
         wrapDiv.style.position = "relative";
         wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
         wrapDiv.style.height = "600px";
+        wrapDiv.style.transform = "scale(1.3)";
+        wrapDiv.style.transformOrigin = "left top";
 
         var div1 = makeTextBlock(wrapDiv, "Sweet! Rad glasses!", 20, 50, 100);
 

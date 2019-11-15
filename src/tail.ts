@@ -1,8 +1,9 @@
-import { Path, Point, Color, Layer, ToolEvent, Item } from "paper";
+import { Path, Point, Color, Layer, Item } from "paper";
 import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
+import { Handle } from "./handle";
 
 // This is an abstract base class for tails. A concrete class must at least
 // override makeShapes; if it has additional control points, it will probably
@@ -83,7 +84,7 @@ export class Tail {
     public onClick(action: () => void): void {
         this.clickAction = action;
         this.fillPaths().forEach(p => {
-            p.onClick = action;
+            Comical.setItemClickAction(p, action);
         });
     }
 
@@ -164,29 +165,21 @@ export class Tail {
         activateLayer(this.handleLayer);
 
         this.handleLayer.visible = true;
-        let tipHandle: Path.Circle | undefined;
+        let tipHandle: Handle;
 
         if (!this.spec.joiner) {
             // usual case...we want a handle for the tip.
             const isHandleSolid = false;
-            tipHandle = this.makeHandle(this.tip, isHandleSolid);
-            tipHandle.onMouseDown = () => {
-                this.state = "dragTip";
-            };
-            tipHandle.onMouseUp = () => {
-                this.state = "idle";
-            };
-            tipHandle.onMouseDrag = (event: ToolEvent) => {
-                if (this.state !== "dragTip") {
-                    return;
-                }
-                if (!this.okToMoveHandleTo(event.point!)) {
+            tipHandle = new Handle(this.handleLayer, this.tip, isHandleSolid);
+
+            tipHandle.onDrag = (where: Point) => {
+                if (!this.okToMoveHandleTo(where)) {
                     return; // refuse to drag tip to a point inside a bubble
                 }
                 // tipHandle can't be undefined at this point
-                const delta = event.point!.subtract(tipHandle!.position!).divide(2);
-                tipHandle!.position = event.point;
-                this.tip = event.point!;
+                const delta = where.subtract(tipHandle!.getPosition()).divide(2);
+                tipHandle!.setPosition(where);
+                this.tip = where;
                 this.adjustForChangedTip(delta);
                 this.makeShapes();
 
@@ -226,20 +219,6 @@ export class Tail {
 
     // Helps determine unique names for the handles
     static handleIndex = 0;
-
-    makeHandle(tip: Point, solid: boolean): Path.Circle {
-        activateLayer(this.handleLayer);
-        const result = new Path.Circle(tip, 5);
-        result.strokeColor = new Color("#1d94a4");
-        result.fillColor = new Color("#1d94a4"); // a distinct instance of Color, may get made transparent below
-        result.strokeWidth = 1;
-        if (!solid) {
-            Tail.makeTransparentClickable(result);
-        }
-        result.name = "handle" + Tail.handleIndex++;
-        result.visible = true;
-        return result;
-    }
 
     // We basically want non-solid bubbles transparent, especially for the tip, so
     // you can see where the tip actually ends up. But if it's perfectly transparent,

@@ -1,4 +1,4 @@
-import { Color, project, setup, Layer, Point } from "paper";
+import { Color, project, setup, Layer, Point, Item } from "paper";
 
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
@@ -229,6 +229,23 @@ export class Comical {
         return maxLevel;
     }
 
+    // Arrange for the specified action to occur when the item is clicked.
+    // The natural way to do this would be item.onClick = clickAction.
+    // However, paper.js has a bug that makes it treat clicks as being in
+    // the wrong place when a scale is applied to the canvas (as at least one
+    // client does to produce a zoom effect). So we instead attach our own
+    // click handler to the whole canvas, perform the hit test correctly,
+    // and if an item is clicked and its data object has this property,
+    // we invoke it. Item.data is not used by Paper.js; it's just an 'any' we
+    // can use for anything we want. In Comical, we use it for some mouse
+    // event handlers.
+    static setItemClickAction(item: Item, clickAction: () => void): void {
+        if (!item.data) {
+            item.data = {};
+        }
+        item.data.onClick = clickAction;
+    }
+
     public static convertBubbleJsonToCanvas(parent: HTMLElement) {
         const canvas = parent.ownerDocument!.createElement("canvas");
         canvas.style.position = "absolute";
@@ -246,10 +263,52 @@ export class Comical {
         canvas.width = parent.clientWidth;
         canvas.height = parent.clientHeight;
         setup(canvas); // updates the global project variable to a new project associated with this canvas
-        this.activeContainers.set(parent, {
+
+        // Now we set up some mouse event handlers. It would be much nicer to use the paper.js
+        // handlers, like the mousedown and mousedrag properties of each paper.js Item,
+        // but they get the coordinates wrong when mousing on an object that has transform:scale.
+        // (See  https://github.com/paperjs/paper.js/issues/1729; also the 'playing with scale'
+        // test case (which demonstrates the problem) and the "three bubbles on picture" one
+        // which can be used to check that Comical works when scaled).
+        // So instead, we set up canvas-level event handlers for the few mouse events we care about.
+
+        // We have to keep track of the most recent mouse-down item, because if it has a drag handler,
+        // we want to keep invoking it even if the mouse gets out of the item, as long as it is down.
+        let dragging: Item | null = null; // null instead of undefined to match HitResult.item.
+        const myProject = project!; // event handlers must use the one that is now active, not what is current when they run
+        canvas.addEventListener("mousedown", (event: MouseEvent) => {
+            const where = new Point(event.offsetX, event.offsetY);
+            const hit = myProject.hitTest(where);
+            dragging = hit ? hit.item : null;
+        });
+        canvas.addEventListener("mousemove", (event: MouseEvent) => {
+            const where = new Point(event.offsetX, event.offsetY);
+            if (dragging && event.buttons === 1 && dragging.data && dragging.data.hasOwnProperty("onDrag")) {
+                dragging.data.onDrag(where);
+            }
+        });
+        canvas.addEventListener("mouseup", (event: MouseEvent) => {
+            dragging = null;
+        });
+        canvas.addEventListener("click", (event: MouseEvent) => {
+            const where = new Point(event.offsetX, event.offsetY);
+            const hit = myProject.hitTest(where);
+            if (hit && hit.item && hit.item.data && hit.item.data.hasOwnProperty("onClick")) {
+                hit.item.data.onClick();
+            }
+        });
+        canvas.addEventListener("dblclick", (event: MouseEvent) => {
+            const where = new Point(event.offsetX, event.offsetY);
+            const hit = myProject.hitTest(where);
+            if (hit && hit.item && hit.item.data && hit.item.data.hasOwnProperty("onDoubleClick")) {
+                hit.item.data.onDoubleClick();
+            }
+        });
+        var containerData: ContainerData = {
             project: project!,
             bubbleList: []
-        });
+        };
+        this.activeContainers.set(parent, containerData);
         Comical.update(parent);
     }
 
@@ -321,6 +380,8 @@ export class Comical {
     // Return true if a click at the specified point (relative to the top left
     // of the specified container element) hits something Comical has put into
     // the canvas...any of the bubble shapes, tail shapes, handles.
+    // Note that this must be a point in real pixels (like MouseEvent.offsetX/Y), not scaled pixels,
+    // if some transform:scale has been applied to the Comical canvas.
     public static somethingHit(element: HTMLElement, x: number, y: number): boolean {
         const containerData = Comical.activeContainers.get(element);
         if (!containerData) {
@@ -331,6 +392,8 @@ export class Comical {
     }
 
     // Returns the first bubble at the point (x, y), or undefined if no bubble is present at that point.
+    // Note that this must be a point in real pixels (like MouseEvent.offsetX/Y), not scaled pixels,
+    // if some transform:scale has been applied to the Comical canvas.
     public static getBubbleHit(parentContainer: HTMLElement, x: number, y: number): Bubble | undefined {
         const containerData = Comical.activeContainers.get(parentContainer);
         if (!containerData) {

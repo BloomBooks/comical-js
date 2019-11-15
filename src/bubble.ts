@@ -481,9 +481,9 @@ export class Bubble {
 
         this.contentHolder.strokeWidth = 0;
         this.fillArea = this.outline.clone({ insert: false });
-        this.fillArea.onClick = () => {
+        Comical.setItemClickAction(this.fillArea, () => {
             Comical.activateBubble(this);
-        };
+        });
 
         // If we get rid of the stroke of the fill area, then it hides the outline
         // completely. Then we have to try to guess how much to shrink it so it
