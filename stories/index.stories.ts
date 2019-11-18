@@ -420,9 +420,6 @@ storiesOf("comical", module)
         var div2 = makeTextBlock(wrapDiv, "I got a blue hat. I love it! Better not lose it...", 100, 170, 200);
         div2.setAttribute("contenteditable", "true");
 
-        // This length of text and block size illustrates one case where the shape
-        // currently produced is not very pretty. A better algorithm might involve an ellipse
-        // (or speech-bubble curve?) around the text, and then points more-or-less evenly spaced along it.
         var div3 = makeTextBlock(
             wrapDiv,
             "Yum! This tastes really good!  I want more and more and more...",
