@@ -501,6 +501,46 @@ export class Bubble {
         } else {
             this.upperLayer.addChild(this.fillArea);
         }
+        if (this.spec.outerBorderColor && this.spec.outerBorderColor !== "none") {
+            var outerBorder = this.outline.clone();
+            // We want two more borders, a thick one in the outerBorderColor,
+            // and a thin black one (or perhaps eventually the color of the main
+            // border, if we allow that to be controlled). However, doing the main outer border as a
+            // stroke color is problematic: there doesn't seem to be a way to put
+            // more than one stroke on a single shape, and if we try to wrap another
+            // shape around it and use stroke, we'll tend to get white space in between,
+            // especially since I also can't find a way to grow a shape by an exact
+            // distance in all directions. So instead, we make a clone shape and set
+            // its FILL color to the outerBorderColor...and then put it behind the
+            // main shape so only the part outside it shows. And we can use its stroke for
+            // the second outer border.
+            outerBorder.fillColor = new Color(this.spec.outerBorderColor);
+            outerBorder.insertBelow(this.outline);
+            // Now we have to get it the right size, which is also tricky.
+            // We want about 8 px of red. The overall shape will eventually be scaled
+            // by this.content.offsetWidth/(contentHolder width), so first we
+            // apply the inverse of that to 16 to get the absolute increase in width
+            // that we want (there's a factor of two for border on each side).
+            // Scaling is a fraction, so to make the outerBorder 16/scale wider, we scale by
+            // (width + 16/scale)/width, which when multiplied by width is 16/scale bigger.
+            // And similarly for the vertical scale, which is very likely different.
+            const chWidth = (this.contentHolder as any).size.width;
+            const hScale = this.content.offsetWidth / chWidth;
+            const chHeight = (this.contentHolder as any).size.height;
+            const vScale = this.content.offsetHeight / chHeight;
+            const obWidth = outerBorder.bounds!.width!;
+            const obHeight = outerBorder.bounds!.height!;
+            outerBorder.scale((obWidth + 16 / hScale) / obWidth, (obHeight + 16 / vScale) / obHeight);
+
+            // Visually this seems to give the right effect. I have not yet
+            // figured out why the main border is not coming out as thick as I think
+            // it should (and does, in the absense of the overlaying fill shape).
+            outerBorder.strokeWidth = 1;
+            // We don't have to insert this group, just make it and set it as this.outline,
+            // so that when we adjustShapes() both shapes get adjusted.
+            const newOutline = new Group([outerBorder, this.outline]);
+            this.outline = newOutline;
+        }
     }
 
     public getBorderWidth() {

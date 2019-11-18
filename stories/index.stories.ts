@@ -442,7 +442,8 @@ storiesOf("comical", module)
                 version: "1.0",
                 style: "speech",
                 tails: [tail],
-                level: 1
+                level: 1,
+                outerBorderColor: "red"
             });
 
             const bubble2 = new Bubble(div2);
