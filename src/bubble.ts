@@ -481,7 +481,7 @@ export class Bubble {
 
         this.contentHolder.strokeWidth = 0;
         this.fillArea = this.outline.clone({ insert: false });
-        Comical.setItemClickAction(this.fillArea, () => {
+        Comical.setItemOnClick(this.fillArea, () => {
             Comical.activateBubble(this);
         });
 
@@ -799,26 +799,40 @@ export class Bubble {
     }
 
     public static makeDefaultTail(targetDiv: HTMLElement): TailSpec {
+        // careful here to use dimensions like offset that don't get inflated
+        // by transform:scale. getBoundingContextRect() would need to be unscaled.
         const parent: HTMLElement = targetDiv.parentElement as HTMLElement;
-        const targetBox = targetDiv.getBoundingClientRect();
-        const parentBox = parent.getBoundingClientRect();
+        const targetLeft = targetDiv.offsetLeft;
+        const targetWidth = targetDiv.offsetWidth;
+        const targetRight = targetLeft + targetWidth;
+
+        const targetTop = targetDiv.offsetTop;
+        const targetHeight = targetDiv.offsetHeight;
+        const targetBottom = targetTop + targetHeight;
+
+        const parentLeft = parent.offsetLeft;
+        const parentWidth = parent.offsetWidth;
+        const parentRight = parentLeft + parentWidth;
+
+        const parentTop = parent.offsetTop;
+        const parentHeight = parent.offsetHeight;
         // center of targetbox relative to parent.
         const rootCenter = new Point(
-            targetBox.left - parentBox.left + targetBox.width / 2,
-            targetBox.top - parentBox.top + targetBox.height / 2
+            targetLeft - parentLeft + targetWidth / 2,
+            targetTop - parentTop + targetHeight / 2
         );
-        let targetX = targetBox.left - parentBox.left - targetBox.width / 2;
-        if (targetBox.left - parentBox.left < parentBox.right - targetBox.right) {
+        let targetX = targetLeft - parentLeft - targetWidth / 2;
+        if (targetLeft - parentLeft < parentRight - targetRight) {
             // box is closer to left than right...make the tail point right
-            targetX = targetBox.right - parentBox.left + targetBox.width / 2;
+            targetX = targetRight - parentLeft + targetWidth / 2;
         }
-        let targetY = targetBox.bottom - parentBox.top + 20;
-        if (targetY > parentBox.height - 5) {
-            targetY = parentBox.height - 5;
+        let targetY = targetBottom - parentTop + 20;
+        if (targetY > parentHeight - 5) {
+            targetY = parentHeight - 5;
         }
-        if (targetY < targetBox.bottom - parentBox.top) {
+        if (targetY < targetBottom - parentTop) {
             // try pointing up
-            targetY = targetBox.top - parentBox.top - 20;
+            targetY = targetTop - parentTop - 20;
             if (targetY < 5) {
                 targetY = 5;
             }
@@ -827,14 +841,14 @@ export class Bubble {
         if (targetX < 0) {
             targetX = 0;
         }
-        if (targetX > parentBox.width) {
-            targetX = parentBox.width;
+        if (targetX > parentWidth) {
+            targetX = parentWidth;
         }
         if (targetY < 0) {
             targetY = 0;
         }
-        if (targetY > parentBox.height) {
-            targetY = parentBox.height;
+        if (targetY > parentHeight) {
+            targetY = parentHeight;
         }
         const target = new Point(targetX, targetY);
         const mid: Point = Bubble.defaultMid(rootCenter, target);

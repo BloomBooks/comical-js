@@ -63,7 +63,7 @@ export class StraightTail extends Tail {
         this.pathstroke.strokeColor = new Color("black");
         this.pathFill.fillColor = this.getFillColor();
         if (this.clickAction) {
-            Comical.setItemClickAction(this.pathFill, this.clickAction);
+            Comical.setItemOnClick(this.pathFill, this.clickAction);
         }
     }
 }

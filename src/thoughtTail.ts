@@ -100,7 +100,7 @@ export class ThoughtTail extends CurveTail {
             newFill.strokeColor.alpha = 0;
 
             if (this.clickAction) {
-                Comical.setItemClickAction(newFill, this.clickAction);
+                Comical.setItemOnClick(newFill, this.clickAction);
             }
 
             this.miniBubbleFillPaths.push(newFill);
