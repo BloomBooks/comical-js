@@ -34,7 +34,7 @@ export class ArcTail extends CurveTail {
 
         activateLayer(this.lowerLayer);
 
-        const tailWidth = 18;
+        const tailWidth = 24;
 
         // We want to make two arcs, basically from the tip to a bit either side
         // of the root, and passing through mid.
@@ -42,14 +42,21 @@ export class ArcTail extends CurveTail {
         // to NOT depend on how close the mid-point is to either end, and definitely
         // don't want the arcs to cross.
         // The best thing I've come up with is to start with an arc through the three
-        // points. Then make a line that bisects the tip/root line, and find where
-        // the arc intersects it. Then we move along the bisector a quarter of the base tailWidth
+        // points. Then make a line at right angles to the tip/root line, and find where
+        // the arc intersects it. Then we move along this line a quarter of the base tailWidth
         // in either direction. This gives us two points which define the middle of each arc.
         // The two points near the root are made by going a half base-width in either
         // direction along a line perpendicular to the line from the root to the
         // control point.
-
-        const midPointRootTip = new Point((this.tip.x! + this.root.x!) / 2, (this.tip.y! + this.root.y!) / 2);
+        // Originally the perpendicular line was bisecting the root/tip line.
+        // However, comics we liked the look of seemed to narrow the tail faster near
+        // the bubble than at the end. To get something of this effect, we made
+        // the point where the tail is half as thick as the root only a third of the way from
+        // the root to the tip.
+        const halfThicknessPoint = this.tip
+            .subtract(this.root)
+            .divide(3)
+            .add(this.root);
         const angleRootTip = new Point(this.tip.x! - this.root.x!, this.tip.y! - this.root.y!).angle!;
 
         // make the perpendicular bisector. Note that these deltas are not really
@@ -58,8 +65,8 @@ export class ArcTail extends CurveTail {
         const deltaMidLine = new Point(0, 0);
         deltaMidLine.angle = angleRootTip + 90;
         deltaMidLine.length = 1000000;
-        const bisectorStart = midPointRootTip.add(deltaMidLine);
-        const bisectorEnd = midPointRootTip.subtract(deltaMidLine);
+        const bisectorStart = halfThicknessPoint.add(deltaMidLine);
+        const bisectorEnd = halfThicknessPoint.subtract(deltaMidLine);
         const tempBisector = new Path.Line(bisectorStart, bisectorEnd);
 
         // find where it intersects an arc through the three original control points.
