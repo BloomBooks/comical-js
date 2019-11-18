@@ -6,6 +6,10 @@ import { Tail } from "./tail";
 export class Handle {
     // Enhance/refactor: with a few more functions, we could make this private.
     handle: Path.Circle;
+
+    // Helps determine unique names for the handles
+    static handleIndex = 0;
+
     constructor(layer: Layer, position: Point, solid: boolean) {
         activateLayer(layer);
         const result = new Path.Circle(position, 5);
@@ -15,7 +19,7 @@ export class Handle {
         if (!solid) {
             Tail.makeTransparentClickable(result);
         }
-        result.name = "handle" + Tail.handleIndex++;
+        result.name = "handle" + Handle.handleIndex++;
         result.visible = true;
         result.data = this;
         this.handle = result;

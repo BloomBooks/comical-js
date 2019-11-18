@@ -51,7 +51,7 @@ export class LineTail extends Tail {
             // this.pathstroke.onMouseLeave = () => {
             //     this.pathstroke.strokeWidth = this.tailWidth;
             // };
-            Comical.setItemClickAction(this.pathstroke, action);
+            Comical.setItemOnClick(this.pathstroke, action);
         }
     }
 }

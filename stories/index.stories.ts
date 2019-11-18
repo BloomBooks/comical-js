@@ -407,7 +407,7 @@ storiesOf("comical", module)
         });
         return wrapDiv;
     })
-    .add("three bubbles on picture", () => {
+    .add("three bubbles on picture (scaled)", () => {
         const wrapDiv = document.createElement("div");
         wrapDiv.style.position = "relative";
         wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";

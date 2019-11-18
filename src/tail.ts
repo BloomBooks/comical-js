@@ -84,7 +84,7 @@ export class Tail {
     public onClick(action: () => void): void {
         this.clickAction = action;
         this.fillPaths().forEach(p => {
-            Comical.setItemClickAction(p, action);
+            Comical.setItemOnClick(p, action);
         });
     }
 
@@ -216,9 +216,6 @@ export class Tail {
 
         // ENHANCE: It'd be nice to hide the tipHandle too, but that doesn't make a difference yet.
     }
-
-    // Helps determine unique names for the handles
-    static handleIndex = 0;
 
     // We basically want non-solid bubbles transparent, especially for the tip, so
     // you can see where the tip actually ends up. But if it's perfectly transparent,

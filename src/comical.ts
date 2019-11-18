@@ -239,7 +239,7 @@ export class Comical {
     // we invoke it. Item.data is not used by Paper.js; it's just an 'any' we
     // can use for anything we want. In Comical, we use it for some mouse
     // event handlers.
-    static setItemClickAction(item: Item, clickAction: () => void): void {
+    static setItemOnClick(item: Item, clickAction: () => void): void {
         if (!item.data) {
             item.data = {};
         }
