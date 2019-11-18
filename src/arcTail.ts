@@ -1,8 +1,9 @@
 import { Point, Layer, Path, Color } from "paper";
-import { TailSpec } from "bubbleSpec";
+import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer, makeArc } from "./utilities";
 import { CurveTail } from "./curveTail";
+import { Comical } from "./comical";
 
 // An ArcTail is currently our default: a tail that is an arc from the tip through a third
 // control point, mid, which can also be dragged.
@@ -136,7 +137,7 @@ export class ArcTail extends CurveTail {
         this.pathstroke.strokeColor = new Color("black");
         this.pathFill.fillColor = this.getFillColor();
         if (this.clickAction) {
-            this.pathFill.onClick = this.clickAction;
+            Comical.setItemOnClick(this.pathFill, this.clickAction);
         }
     }
 }

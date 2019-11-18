@@ -1,8 +1,9 @@
 import { Tail } from "./tail";
 import { Point, Layer, Path, Color } from "paper";
-import { TailSpec } from "bubbleSpec";
-import { Bubble } from "bubble";
+import { TailSpec } from "./bubbleSpec";
+import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
+import { Comical } from "./comical";
 
 //  straight tail is a simple triangle, with only the tip handle
 export class StraightTail extends Tail {
@@ -62,7 +63,7 @@ export class StraightTail extends Tail {
         this.pathstroke.strokeColor = new Color("black");
         this.pathFill.fillColor = this.getFillColor();
         if (this.clickAction) {
-            this.pathFill.onClick = this.clickAction;
+            Comical.setItemOnClick(this.pathFill, this.clickAction);
         }
     }
 }

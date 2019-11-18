@@ -1,7 +1,8 @@
 import { Tail } from "./tail";
-import { Point, Path, ToolEvent } from "paper";
+import { Point, Path } from "paper";
 import { Comical } from "./comical";
 import { Bubble } from "./bubble";
+import { Handle } from "./handle";
 
 // An abstract class for tails which, like ArcTail and ThoughtTail,
 // have a handle to control a mid-point which configures their shape.
@@ -39,37 +40,28 @@ export class CurveTail extends Tail {
     protected showHandlesInternal(): void {
         super.showHandlesInternal();
         const isHandleSolid = !this.spec.autoCurve;
-        const curveHandle = this.makeHandle(this.mid, isHandleSolid);
+        const curveHandle = new Handle(this.handleLayer, this.mid, isHandleSolid);
 
-        this.midHandle = curveHandle;
+        this.midHandle = curveHandle.handle;
 
-        curveHandle.bringToFront();
-        curveHandle.onMouseDown = () => {
-            this.state = "dragCurve";
-        };
-        curveHandle.onMouseUp = () => {
-            this.state = "idle";
-        };
+        this.midHandle.bringToFront();
 
-        curveHandle.onMouseDrag = (event: ToolEvent) => {
-            if (this.state !== "dragCurve") {
-                return;
-            }
+        curveHandle.onDrag = (where: Point) => {
             if (this.bubble) {
                 const [parentElement] = Comical.comicalParentOf(this.bubble.content);
-                if (parentElement && Comical.getBubbleHit(parentElement, event.point!.x!, event.point!.y!)) {
+                if (parentElement && Comical.getBubbleHit(parentElement, where.x!, where.y!)) {
                     return; // refuse to drag mid to a point inside a bubble
                 }
             }
             this.spec.autoCurve = false;
-            curveHandle.fillColor!.alpha = 1;
-            curveHandle.position = event.point;
-            this.mid = event.point!;
+            this.midHandle!.fillColor!.alpha = 1;
+            this.midHandle!.position = where;
+            this.mid = where;
             this.makeShapes();
 
             // Update this.spec.tips to reflect the new handle positions
-            this.spec.midpointX = curveHandle!.position!.x!;
-            this.spec.midpointY = curveHandle!.position!.y!;
+            this.spec.midpointX = where.x!;
+            this.spec.midpointY = where.y!;
             this.persistSpecChanges();
         };
 
@@ -78,7 +70,7 @@ export class CurveTail extends Tail {
             this.adjustForChangedRoot(new Point(0, 0));
             this.makeShapes();
             this.persistSpecChanges();
-            Tail.makeTransparentClickable(curveHandle);
+            Tail.makeTransparentClickable(this.midHandle!);
         };
     }
 
