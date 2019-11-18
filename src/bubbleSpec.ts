@@ -20,7 +20,8 @@ export interface BubbleSpecPattern {
     // Typical CSS color names are supported, and also #RRGGBB. Possibly others, but lets not
     // count on any more options yet.
     backgroundColors?: string[];
-    outerBorderColor?: string; // omit for black; not implemented.
+    outerBorderColor?: string; // omit for none.
+
     // bubbles on the same level with this property are linked in an order specified by this.
     // bubbles without order (or with order zero) are not linked.
     // Do not use negative numbers or zero as an order.
