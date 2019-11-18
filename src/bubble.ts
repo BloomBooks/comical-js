@@ -1,4 +1,4 @@
-import { Point, Color, Item, Shape, Layer, Gradient, GradientStop, Path, Rectangle, Group, HitResult } from "paper";
+import { Point, Color, Item, Shape, Layer, Gradient, GradientStop, Path, Group, HitResult, Size } from "paper";
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import { Comical } from "./comical";
 import { Tail } from "./tail";
@@ -6,9 +6,10 @@ import { ArcTail } from "./arcTail";
 import { ThoughtTail } from "./thoughtTail";
 import { StraightTail } from "./straightTail";
 import { LineTail } from "./lineTail";
-import { makeSpeechBubble } from "./speechBubble";
+import { makeSpeechBubble, makeSpeechBubbleParts } from "./speechBubble";
 import { makeThoughtBubble } from "./thoughtBubble";
 import { activateLayer } from "./utilities";
+import { SimpleRandom } from "./random";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles:
@@ -886,87 +887,100 @@ export class Bubble {
         return mid.add(delta);
     }
 
-    // This is a helper method which, possibly with some enhancements,
-    // should be useful for making a variety of computed bubble types.
+    // This is a helper method which is useful for making a variety of computed bubble types.
     // It returns a Group containing a path and a content-holder rectangle
     // as makeShapes requires, given a function that makes a path from
     // an array of points and a center.
-    // The content-holder rectangle is made the size of the content element
-    // and placed at (borderWidth, borderWidth).
-    // Then the array of points is constructed in an area of width borderWidth
-    // around that rectangle, at least padWidth away from the inner rectangle.
-    // They are roughly, but not exactly, equally spaced and the number of them
-    // is proportional to the size of the content block.
+    // The content-holder rectangle is made a bit smaller than the actual height and width
+    // of the bubble's content; makeShapes will scale it back up.
+    // The array of points is created by first making our standard speech bubble shape
+    // for a text box this shape (plus the requested padding, if any),
+    // then breaking it up into segments about 30px long.
+    // A little randomness (but predictable for a box of a given size) is
+    // introduced to make things look more natural.
     // Enhance: could provide some parameter to control the ratio between
     // the border length and the number of points.
-    // Fix/enhance: for smaller blocks, the spacing may be a bit too irregular.
-    // Fix/enhance: for larger blocks, the points nearest the four corners tend to be
-    // too far apart, and the line between them may come inside the padding area.
-    makeBubbleItem(borderWidth: number, padWidth: number, pathMaker: (points: Point[], center: Point) => Path): Item {
-        console.assert(
-            padWidth < borderWidth,
-            "padWidth is supposed to be an inner part of borderWidth and should be less than it."
-        );
+    makeBubbleItem(padWidth: number, pathMaker: (points: Point[], center: Point) => Path): Item {
         const width = this.content.clientWidth;
         const height = this.content.clientHeight;
-        // aiming for arcs ~40px long, but fewer than 5 would look weird.
-        const computedArcCount = Math.round(((width + height) * 2) / 40);
+        const [outlineShape, contentHolder] = makeSpeechBubbleParts(
+            width + padWidth * 2,
+            height + padWidth * 2,
+            0.6,
+            0.8
+        );
+        outlineShape.remove(); // don't want it on the canvas, just use it to make points.
+
+        // contentHolder isn't actually width+padWidth*2 wide and height + padWidth * 2 high.
+        // It's a rectangle fitting inside an oval that size.
+        // We want contentHolder to end up a size such that, when it is scaled to (width, height),
+        // the oval is padWidth outside it.
+        // This is difficult to visualize. The "playing with beziers" story may help. We've
+        // asked for a speech bubble width + padWidth*2 wide...that's the width of the blue
+        // oval. Along with it we get a contentHolder, like the red rectangle, that touches
+        // the oval. We now want to make contentHolder smaller, so the red rectangle doesn't
+        // touch the oval, but is 'padWidth' clear of it in both directions. However, we don't
+        // just want it to be smaller by padWidth...we want that much clearance AFTER other
+        // code makes the transformation that maps contentHolder onto our bubble's content
+        // (which is 'width' wide).
+        //
+        // We want to solve for xRatio, which is the scaling factor we need to apply to
+        // the eventual content holder (with the new width we are about to set) to grow
+        // it (and the final bubble shape) to fit our content (width wide).
+        // To do so, we can set up a system of 3 equations, 3 unknowns, and then use algebra
+        // The equations we know:
+        // 1) xRatio = shrunkPadWidth / padWidth
+        // 2) xRatio = newContentHolderWidth / width
+        // 3) newContentHolderWidth + 2 * shrunkPadWidth = contentHolderWidth
+        // where xRatio is the ratio between what we're going to make the contentHolder width
+        // and the actual width of the content, and shrunkPadWidth is the pad width
+        // we need in the shape we're making (that will be scaled up by xRatio to padWidth).
+        //
+        // Of these, xRatio, shrunkPadWidth, and newContentHolderWidth are variables.
+        // (padWidth, width, and contentHolderWidth are already known)
+        // From here, you can do algebra to get this:
+        const xRatio = contentHolder.size!.width! / (width + padWidth * 2);
+        const yRatio = contentHolder.size!.height! / (height + padWidth * 2);
+        contentHolder.set({
+            center: contentHolder.position,
+            size: new Size(width * xRatio, height * yRatio)
+        });
+
+        // aiming for arcs ~30px long, but fewer than 5 would look weird.
+        const computedArcCount = Math.round(((width + height) * 2) / 30);
         const arcCount = Math.max(computedArcCount, 5);
-        const center = new Point(width / 2 + borderWidth, height / 2 + borderWidth);
-        const contentHolder = new Shape.Rectangle(new Rectangle(borderWidth, borderWidth, width, height));
-        contentHolder.remove();
-        contentHolder.name = "content-holder";
-        const angleDelta = 360 / arcCount;
         const points: Point[] = [];
-        const widthOfSpaceForPoints = borderWidth - padWidth;
-        const heightOfSpaceForPoints = widthOfSpaceForPoints;
+
+        // We need a 'random' number generator that is predictable so
+        // the points don't move every time we open the page.
+        const rng = new SimpleRandom(width + height);
+
+        let remainingLength = outlineShape.length;
+        const delta = remainingLength / arcCount;
+        const maxJitter = delta / 5;
         for (let i = 0; i < arcCount; i++) {
-            const delta = new Point(0, 0);
-            delta.angle = angleDelta * i;
-            delta.length = Math.max(center.x!, center.y!);
-            // Without modification, adding delta to center would make a regular
-            // polyhedron around the center.
-            // We want the points outside the contentHolder rectangle and padWidth,
-            // but closer to it as they get away from the center, putting the points on
-            // a somewhat oval shape.
-            // There's definitely room to enhance this algorithm!
-            const isXInContentArea = Math.abs(delta.x!) <= width / 2;
-            let isYInContentArea = Math.abs(delta.y!) <= height / 2;
-            // Adjust the y value of delta so it is in the space above or below the
-            // content box and its padding, unless the point is already in the area
-            // left or right of the content. It seems to work better to make this
-            // adjustment before we fiddle with the x coordinates.
-            if (isXInContentArea || !isYInContentArea) {
-                // point needs to be above or below the content box, but not outside
-                // the content + borderWidth box. For a more nearly oval shape,
-                // we put them along a slope from the center to the outside of the whole
-                // shape. So the delta.y depends inversely on how far it is horizontally
-                // from the center.
-                const xDistanceFromCenter = Math.abs(delta.x!);
-                const heightProportion = 1 - xDistanceFromCenter / width;
-                const distanceFromText = heightOfSpaceForPoints * heightProportion + padWidth;
-                delta.y = (height / 2 + distanceFromText) * (delta.y! > 0 ? 1 : -1);
-            }
-            isYInContentArea = Math.abs(delta.y!) <= height / 2; // update since we changed delta.y
-            if (isYInContentArea || !isXInContentArea) {
-                // point needs to be left or right of the box (but not TOO far from it).
-                const yDistanceFromCenter = Math.abs(delta.y!);
-                const widthProportion = 1 - yDistanceFromCenter / height;
-                const distanceFromText = widthOfSpaceForPoints * widthProportion + padWidth;
-                delta.x = (width / 2 + distanceFromText) * (delta.x! > 0 ? 1 : -1);
-            }
-            points.push(center.add(delta));
+            const expectedPlace = i * delta;
+            // This introduces a bit of randomness to make it look more natural.
+            // (Since we're working around an oval, it doesn't matter whether
+            // all the jitters are positive or whether they go both ways,
+            // except that we have to be careful not to produce a negative
+            // actualPlace or one beyond the length of the curve, since that
+            // will throw an exception.)
+            const jitter = maxJitter * rng.nextDouble();
+            const actualPlace = expectedPlace + jitter;
+            const point = outlineShape.getLocationAt(actualPlace).point;
+            points.push(point);
         }
-        const outline = pathMaker(points, center);
+
+        const outline = pathMaker(points, contentHolder.position!);
         return new Group([outline, contentHolder]);
     }
 
     // Make a computed bubble shape by drawing an inward arc between each pair of points
     // in the array produced by makeBubbleItem.
     makePointedArcBubble(): Item {
-        const borderWidth = 30;
-        const arcDepth = 10;
-        return this.makeBubbleItem(borderWidth, arcDepth, (points, center) => {
+        const arcDepth = 7;
+        return this.makeBubbleItem(arcDepth, (points, center) => {
             const outline = new Path();
             for (let i = 0; i < points.length; i++) {
                 const start = points[i];
