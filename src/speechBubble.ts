@@ -8,12 +8,12 @@ import { Segment, Point, Path, Color, Group, Shape, Item } from "paper";
 // what fraction of the distance to the corner the handles are placed. 0.6, 0.8 seems
 // to give a nice default. Larger values make the shape more like a rounded rectangle,
 // smaller ones more like an ellipse (or even a diamond).
-export function makeSpeechBubble(
+export function makeSpeechBubbleParts(
     width: number,
     height: number,
     xHandleFraction: number,
     yHandleFraction: number
-): Item {
+): [Path, Shape.Rectangle] {
     if (width <= 0) {
         console.assert(false, `Invalid width. Received: ${width}. Expected: width > 0`);
         width = 1;
@@ -74,6 +74,16 @@ export function makeSpeechBubble(
     contentHolder.fillColor = new Color("transparent");
     contentHolder.name = "content-holder";
     path.closed = true; // causes it to fill in the curve back to the start
+    return [path, contentHolder];
+}
+
+export function makeSpeechBubble(
+    width: number,
+    height: number,
+    xHandleFraction: number,
+    yHandleFraction: number
+): Item {
+    const [path, contentHolder] = makeSpeechBubbleParts(width, height, xHandleFraction, yHandleFraction);
     const result = new Group([path, contentHolder]);
     return result;
 }

@@ -1,5 +1,6 @@
 import { Point, Path, Color, Item } from "paper";
 import { Bubble } from "./bubble";
+import { SimpleRandom } from "./random";
 
 // Make a computed bubble shape by drawing an outward arc between each pair of points
 // in the array produced by makeBubbleItem.
@@ -8,16 +9,26 @@ import { Bubble } from "./bubble";
 // However, I'm not sure things will stay that way, so I'm leaving the
 // duplication for now. It's a fairly small chunk of code.
 export function makeThoughtBubble(bubble: Bubble): Item {
-    const borderWidth = 10;
     const arcDepth = 15;
-    return bubble.makeBubbleItem(borderWidth, 0, (points, center) => {
+    // Seed the random number generator with a value predictable enough
+    // that it will look the same each time the page is opened...
+    // in fact it will go back to the same shape if the bubble grows
+    // and then shrinks back to its original size.
+    const width = bubble.content.clientWidth;
+    const height = bubble.content.clientHeight;
+    const rng = new SimpleRandom(width + height);
+
+    return bubble.makeBubbleItem(0, (points, center) => {
         const outline = new Path();
+        const maxJitter = arcDepth / 4;
         for (let i = 0; i < points.length; i++) {
             const start = points[i];
             const end = i < points.length - 1 ? points[i + 1] : points[0];
             const mid = new Point((start.x! + end.x!) / 2, (start.y! + end.y!) / 2);
             const deltaCenter = mid.subtract(center);
-            deltaCenter.length = arcDepth;
+            // The rng here gives the bubbles a slightly 'random' depth of curve
+            const jitter = maxJitter * rng.nextDouble();
+            deltaCenter.length = arcDepth - jitter;
             const arcPoint = mid.add(deltaCenter);
             const arc = new Path.Arc(start, arcPoint, end);
             arc.remove();
