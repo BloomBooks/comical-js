@@ -195,7 +195,7 @@ export class Bubble {
         // specified in data, including a tail in a default position.
         // In certain cases some of these properties may override values in
         // oldData (but never newBubbleProps).
-        const newDefaultData = Bubble.getDefaultBubbleSpec(this.content, newBubbleProps.style);
+        const newDefaultData = Bubble.getDefaultBubbleSpec(this.content, newBubbleProps.style || this.spec.style);
 
         const oldData: BubbleSpec = this.spec;
         const oldDataOverrides: BubbleSpecPattern = {};
