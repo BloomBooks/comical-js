@@ -348,7 +348,7 @@ export class Comical {
         const maxOrder = lastInFamily.getBubbleSpec().order || 1;
         const tip = lastInFamily.calculateTailStartPoint();
         const root = childBubble.calculateTailStartPoint();
-        const mid = Bubble.defaultMid(root, tip);
+        const mid = Bubble.defaultMid(root, tip, childElement.offsetWidth, childElement.offsetHeight);
         // We deliberately do NOT keep any properties the child bubble already has.
         // Apart from the necessary properties for being a child, it will take
         // all its properties from the parent.
