@@ -731,8 +731,7 @@ storiesOf("comical", module)
                 version: "1.0",
                 style: "speech",
                 tails: [Bubble.makeDefaultTail(div4)],
-                level: 2,
-                backgroundColors: ["white", "yellow", "cyan"]
+                level: 2
             });
             // To get the right behaviour from initializeChild,
             // convertCanvasToSvgImg must have been called with
@@ -1095,6 +1094,57 @@ storiesOf("comical", module)
                 tails: [Bubble.makeDefaultTail(div2)],
                 level: 2
             });
+            const bubble3 = new Bubble(div3);
+            bubble3.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [Bubble.makeDefaultTail(div3)],
+                level: 1
+            });
+            Comical.startEditing([firstPicDiv, secondPicDiv]);
+        }, 200);
+
+        const button = addFinishButton(wrapDiv, undefined, undefined, [firstPicDiv, secondPicDiv]);
+        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "600px";
+        button.style.left = "0";
+        return wrapDiv;
+    })
+    .add("compare with real bubbles", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        const firstPicDiv = document.createElement("div");
+        firstPicDiv.style.position = "relative";
+        firstPicDiv.style.background = "url('HowDidItGoMyDaughter.png') no-repeat 0/150px";
+        firstPicDiv.style.backgroundColor = "cyan";
+        firstPicDiv.style.height = "250px";
+        wrapDiv.appendChild(firstPicDiv);
+
+        const secondPicDiv = document.createElement("div");
+        secondPicDiv.style.position = "relative";
+        secondPicDiv.style.background = "url('MotherNaomi.png') no-repeat 0/150px";
+        secondPicDiv.style.backgroundColor = "pink";
+        secondPicDiv.style.height = "300px";
+        wrapDiv.appendChild(secondPicDiv);
+
+        var div1 = makeTextBlock(firstPicDiv, "How did it go, my daughter?", 180, 100, 80);
+
+        var div3 = makeTextBlock(secondPicDiv, "Mother Naomi, we want to be with you!", 180, 100, 100);
+        div3.setAttribute("contenteditable", "true");
+
+        // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+        // as does convertBubbleJsonToCanvas.
+        window.setTimeout(() => {
+            const bubble1 = new Bubble(div1);
+            var tail = Bubble.makeDefaultTail(div1);
+            bubble1.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [tail],
+                level: 1
+            });
+
             const bubble3 = new Bubble(div3);
             bubble3.setBubbleSpec({
                 version: "1.0",

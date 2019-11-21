@@ -851,11 +851,11 @@ export class Bubble {
         const targetHeight = targetDiv.offsetHeight;
         const targetBottom = targetTop + targetHeight;
 
-        const parentLeft = parent.offsetLeft;
+        const parentLeft = 0; // offset of target is already relative to parent.
         const parentWidth = parent.offsetWidth;
         const parentRight = parentLeft + parentWidth;
 
-        const parentTop = parent.offsetTop;
+        const parentTop = 0;
         const parentHeight = parent.offsetHeight;
         // center of targetbox relative to parent.
         const rootCenter = new Point(
@@ -892,7 +892,7 @@ export class Bubble {
             targetY = parentHeight;
         }
         const target = new Point(targetX, targetY);
-        const mid: Point = Bubble.defaultMid(rootCenter, target);
+        const mid: Point = Bubble.defaultMid(rootCenter, target, targetDiv.offsetWidth, targetDiv.offsetHeight);
         const result: TailSpec = {
             tipX: targetX,
             tipY: targetY,
@@ -903,10 +903,27 @@ export class Bubble {
         return result;
     }
 
-    static defaultMid(start: Point, target: Point): Point {
+    static defaultMid(start: Point, target: Point, width?: number, height?: number): Point {
         let delta = target.subtract(start);
         let mid = start.add(delta.divide(2));
-        delta = delta.divide(10);
+        if (width !== undefined && height !== undefined) {
+            // Given the width and height (typically of the content element),
+            // we can adjust the defaultMid so it is half way between the
+            // border of that box and the tip. It would be even nicer,
+            // but a lot more expensive and complex, to make it the mid-point
+            // between the actual bubble border and the tip, but this seems
+            // to be close enough.
+            // Think of these ratios as how much delta would have to change to put it
+            // on a vertical side or a horizontal side.
+            const xRatio = delta.x == 0 ? Number.MAX_VALUE : width / 2 / Math.abs(delta.x!);
+            const yRatio = delta.y == 0 ? Number.MAX_VALUE : height / 2 / Math.abs(delta.y!);
+            const borderRatio = Math.min(xRatio, yRatio); // use whichever is closer
+            const borderPoint = start.add(delta.multiply(borderRatio));
+            delta = target.subtract(borderPoint);
+            mid = borderPoint.add(delta.divide(2));
+        }
+
+        delta = delta.divide(5);
         delta.angle! -= 90;
         // At this point, delta is 10% of the distance from start to target,
         // at right angles to that line, and on the side of it toward
