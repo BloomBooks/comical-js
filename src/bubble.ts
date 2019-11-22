@@ -110,6 +110,9 @@ export class Bubble {
             result.tails = [];
             result.shadowOffset = 5;
         }
+        if (style === "pointedArcs") {
+            result.tails = [];
+        }
         return result;
     }
 
