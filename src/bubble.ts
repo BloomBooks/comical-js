@@ -502,7 +502,7 @@ export class Bubble {
         } else {
             this.upperLayer.addChild(this.fillArea);
         }
-        if (this.spec.outerBorderColor && this.spec.outerBorderColor !== "none") {
+        if (this.getFullSpec().outerBorderColor && this.spec.outerBorderColor !== "none") {
             var outerBorder = this.outline.clone();
             // We want two more borders, a thick one in the outerBorderColor,
             // and a thin black one (or perhaps eventually the color of the main
@@ -515,7 +515,7 @@ export class Bubble {
             // its FILL color to the outerBorderColor...and then put it behind the
             // main shape so only the part outside it shows. And we can use its stroke for
             // the second outer border.
-            outerBorder.fillColor = new Color(this.spec.outerBorderColor);
+            outerBorder.fillColor = new Color(this.getFullSpec().outerBorderColor!);
             outerBorder.insertBelow(this.outline);
             // Now we have to get it the right size, which is also tricky.
             // We want about 8 px of red. The overall shape will eventually be scaled

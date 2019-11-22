@@ -1,4 +1,4 @@
-import { Point, Layer, Path, Color, Segment } from "paper";
+import { Point, Layer, Path, Color, Segment, Group } from "paper";
 import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
@@ -43,7 +43,7 @@ export class ArcTail extends CurveTail {
         // First we want to find a starting point for the tail. In general this is
         // the center of the content box.
         let baseOfTail = this.root;
-        const doingSpeechBubble = this.bubble && this.bubble.getFullSpec().style === "speech";
+        let doingSpeechBubble = this.bubble && this.bubble.getFullSpec().style === "speech";
         if (doingSpeechBubble) {
             // We're going to make the base of the tail a point on the bubble itself,
             // from which we will eventually calculate a fixed distance along the
@@ -53,20 +53,25 @@ export class ArcTail extends CurveTail {
             // through mid to the tip. Then we see where this intersects the bubble.
             const rootTipCurve = this.makeBezier(this.root, this.mid, this.tip);
             rootTipCurve.remove(); // don't want to see this, it's just for calculations.
-            const bubblePath = this.bubble!.outline as Path; // speech bubble outline always is a Path
-            const intersections = rootTipCurve.getIntersections(bubblePath);
-            if (intersections.length === 0) {
-                // This is very pathological and could only happen if the tip and mid are
-                // both inside the bubble. In that case any tail will be inside the bubble
-                // and invisible anyway, so we may as well just give up and not make any shapes.
-                return;
+            const bubblePath = this.getBubblePath();
+            if (bubblePath instanceof Path) {
+                const intersections = rootTipCurve.getIntersections(bubblePath);
+                if (intersections.length === 0) {
+                    // This is very pathological and could only happen if the tip and mid are
+                    // both inside the bubble. In that case any tail will be inside the bubble
+                    // and invisible anyway, so we may as well just give up and not make any shapes.
+                    return;
+                }
+                // in the pathological case where there's more than one intersection,
+                // choose the one closest to the root. We're going to get a bizarre
+                // tail that loops out of the bubble and back through it anyway,
+                // so better to have it start at the natural place.
+                intersections.sort((a, b) => a.curveOffset - b.curveOffset);
+                baseOfTail = intersections[0].point;
+            } else {
+                console.assert(false, "speech bubble outline should be a path or a group with second element path");
+                doingSpeechBubble = false; // fall back to default mode.
             }
-            // in the pathological case where there's more than one intersection,
-            // choose the one closest to the root. We're going to get a bizarre
-            // tail that loops out of the bubble and back through it anyway,
-            // so better to have it start at the natural place.
-            intersections.sort((a, b) => a.curveOffset - b.curveOffset);
-            baseOfTail = intersections[0].point;
         }
 
         const angleBaseTip = this.tip.subtract(baseOfTail).angle!;
@@ -82,7 +87,7 @@ export class ArcTail extends CurveTail {
         let end: Point; // where it ends
         if (doingSpeechBubble) {
             // we want to move along the bubble curve a specified distance
-            const bubblePath = this.bubble!.outline as Path;
+            const bubblePath = this.getBubblePath();
             const offset = bubblePath.getOffsetOf(baseOfTail);
             const offsetBegin = (offset + baseAlongPathLength / 2) % bubblePath.length;
             // nudge it towards the center to make sure we don't get even a hint
@@ -205,6 +210,16 @@ export class ArcTail extends CurveTail {
         if (this.clickAction) {
             Comical.setItemOnClick(this.pathFill, this.clickAction);
         }
+    }
+
+    getBubblePath(): Path {
+        let bubblePath = this.bubble!.outline as Path;
+        if (!(bubblePath instanceof Path)) {
+            // We make a group when drawing the outer outline.
+            let group = this.bubble!.outline as Group;
+            bubblePath = group.children![1] as Path;
+        }
+        return bubblePath;
     }
 
     // Move the start point a single pixel towards the target point.
