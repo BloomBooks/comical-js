@@ -627,13 +627,18 @@ storiesOf("comical", module)
             Comical.startEditing([wrapDiv]);
         }, 200);
 
+        // Using mergeWithNewBubbleProps here is a better test than just changing
+        // the bubble spec and updating. But somehow it's not working quite like
+        // it does in Bloom, because although the number of tails changes like
+        // it should, we don't keep the existing tail position when not changing
+        // the number. The problem doesn't seem to be in mergeWithNewBubbleProps;
+        // rather, the dragged tail position is not making it into the spec. It
+        // works right in Bloom, though.
         addButtonBelow(
             wrapDiv,
             "None",
             () => {
-                const spec = Bubble.getBubbleSpec(textDiv2);
-                spec.style = "none";
-                bubble.setBubbleSpec(spec);
+                bubble.mergeWithNewBubbleProps({ style: "none" });
                 Comical.update(wrapDiv);
             },
             "430px"
@@ -642,9 +647,7 @@ storiesOf("comical", module)
             wrapDiv,
             "Speech",
             () => {
-                const spec = Bubble.getBubbleSpec(textDiv2);
-                spec.style = "speech";
-                bubble.setBubbleSpec(spec);
+                bubble.mergeWithNewBubbleProps({ style: "speech" });
                 Comical.update(wrapDiv);
             },
             "460px"
@@ -653,12 +656,20 @@ storiesOf("comical", module)
             wrapDiv,
             "Shout",
             () => {
-                const spec = Bubble.getBubbleSpec(textDiv2);
-                spec.style = "shout";
-                bubble.setBubbleSpec(spec);
+                bubble.mergeWithNewBubbleProps({ style: "shout" });
                 Comical.update(wrapDiv);
             },
             "490px"
+        );
+
+        addButtonBelow(
+            wrapDiv,
+            "Exclamation",
+            () => {
+                bubble.mergeWithNewBubbleProps({ style: "pointedArcs" });
+                Comical.update(wrapDiv);
+            },
+            "520px"
         );
 
         const button = addFinishButton(wrapDiv);
