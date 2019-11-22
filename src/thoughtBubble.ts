@@ -9,7 +9,7 @@ import { SimpleRandom } from "./random";
 // However, I'm not sure things will stay that way, so I'm leaving the
 // duplication for now. It's a fairly small chunk of code.
 export function makeThoughtBubble(bubble: Bubble): Item {
-    const arcDepth = 15;
+    const arcDepth = 9;
     // Seed the random number generator with a value predictable enough
     // that it will look the same each time the page is opened...
     // in fact it will go back to the same shape if the bubble grows
@@ -20,7 +20,7 @@ export function makeThoughtBubble(bubble: Bubble): Item {
 
     return bubble.makeBubbleItem(0, (points, center) => {
         const outline = new Path();
-        const maxJitter = arcDepth / 4;
+        const maxJitter = arcDepth / 2;
         for (let i = 0; i < points.length; i++) {
             const start = points[i];
             const end = i < points.length - 1 ? points[i + 1] : points[0];
