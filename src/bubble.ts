@@ -483,7 +483,10 @@ export class Bubble {
             this.shadowShape.fillColor = this.shadowShape.strokeColor;
         }
 
-        this.contentHolder.strokeWidth = 0;
+        // If we don't do this it somehow shows up in the fill area clone,
+        // on top of the outline if it dips inside the rectangle
+        this.contentHolder.remove();
+
         this.fillArea = this.outline.clone({ insert: false });
         Comical.setItemOnClick(this.fillArea, () => {
             Comical.activateBubble(this);
@@ -1017,7 +1020,7 @@ export class Bubble {
 
         let remainingLength = outlineShape.length;
         const delta = remainingLength / arcCount;
-        const maxJitter = delta / 5;
+        const maxJitter = delta / 2;
         for (let i = 0; i < arcCount; i++) {
             const expectedPlace = i * delta;
             // This introduces a bit of randomness to make it look more natural.
