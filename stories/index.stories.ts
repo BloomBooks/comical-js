@@ -1123,6 +1123,7 @@ storiesOf("comical", module)
         return wrapDiv;
     })
     .add("compare with real bubbles", () => {
+        Comical.setUserInterfaceProperties({ tailHandleColor: "pink" });
         const wrapDiv = document.createElement("div");
         wrapDiv.style.position = "relative";
         const firstPicDiv = document.createElement("div");
