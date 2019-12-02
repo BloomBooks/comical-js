@@ -38,6 +38,8 @@ export class Comical {
 
     static activeBubbleListener: ((active: HTMLElement | undefined) => void) | undefined;
 
+    // This is something the client calls only once when setting up comical. After that,
+    // there is no attempt to update anything already showing on screen.
     public static setUserInterfaceProperties(props: IUserInterfaceProperties) {
         Comical.tailHandleColor = new Color(props.tailHandleColor);
     }
