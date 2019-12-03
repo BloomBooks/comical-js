@@ -21,14 +21,28 @@ import { ContainerData } from "./containerData";
 // Finally, Comical can replace a finished bubble canvas with a single SVG, resulting in
 // a visually identical set of bubbles that can be rendered without using Canvas and
 // Javascript.
+
+interface IUserInterfaceProperties {
+    tailHandleColor: string;
+}
+
 export class Comical {
     static backColor = new Color("white");
+
+    //client can change this using setUserInterfaceProperties
+    public static tailHandleColor = new Color("orange");
 
     static activeContainers = new Map<Element, ContainerData>();
 
     static activeBubble: Bubble | undefined;
 
     static activeBubbleListener: ((active: HTMLElement | undefined) => void) | undefined;
+
+    // This is something the client calls only once when setting up comical. After that,
+    // there is no attempt to update anything already showing on screen.
+    public static setUserInterfaceProperties(props: IUserInterfaceProperties) {
+        Comical.tailHandleColor = new Color(props.tailHandleColor);
+    }
 
     public static startEditing(parents: HTMLElement[]): void {
         parents.forEach(parent => Comical.convertBubbleJsonToCanvas(parent));

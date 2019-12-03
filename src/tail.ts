@@ -1,4 +1,4 @@
-import { Path, Point, Color, Layer, Item } from "paper";
+import { Path, Point, Color, Layer } from "paper";
 import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
@@ -168,9 +168,7 @@ export class Tail {
         let tipHandle: Handle;
 
         if (!this.spec.joiner) {
-            // usual case...we want a handle for the tip.
-            const isHandleSolid = false;
-            tipHandle = new Handle(this.handleLayer, this.tip, isHandleSolid);
+            tipHandle = new Handle(this.handleLayer, this.tip, true /* auto mode*/);
 
             tipHandle.onDrag = (where: Point) => {
                 if (!this.okToMoveHandleTo(where)) {
@@ -221,10 +219,5 @@ export class Tail {
     // you can see where the tip actually ends up. But if it's perfectly transparent,
     // paper.js doesn't register hit tests on the transparent part. So go for a very
     // small alpha.
-    static makeTransparentClickable(item: Item) {
-        if (!item.fillColor) {
-            item.fillColor = new Color("#1d94a4");
-        }
-        item.fillColor.alpha = 0.01;
-    }
+    public static transparentColor: Color = new Color("#FFFFFF11");
 }
