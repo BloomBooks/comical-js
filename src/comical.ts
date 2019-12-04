@@ -274,8 +274,17 @@ export class Comical {
         } else {
             parent.insertBefore(canvas, parent.firstChild); // want to use prepend, not in FF45.
         }
-        canvas.width = parent.clientWidth;
-        canvas.height = parent.clientHeight;
+
+        // Even though clientWidth seems to return the unscaled values, we observe that
+        // when this gets written to HTML, the width attribute is parent.clientWidth * scalingFactor.
+        // Then, the browser will apply the scaling factor to it A SECOND TIME, which is bad :(
+        //
+        // To get around this, we prematurely divided by the scaling factor, so that later on the width/height attributes
+        // will return their unscaled values.
+        const scaling = this.getScaling(parent);
+        canvas.width = parent.clientWidth / scaling.x!;
+        canvas.height = parent.clientHeight / scaling.y!;
+
         setup(canvas); // updates the global project variable to a new project associated with this canvas
 
         // Now we set up some mouse event handlers. It would be much nicer to use the paper.js
@@ -324,6 +333,45 @@ export class Comical {
         };
         this.activeContainers.set(parent, containerData);
         Comical.update(parent);
+    }
+
+    private static getScaling(element: Element | null): Point {
+        let scaleX = 1.0;
+        let scaleY = 1.0;
+
+        while (element) {
+            const styleInfo = window.getComputedStyle(element);
+            const transformStr: string | null = styleInfo.transform;
+            if (transformStr && transformStr != "none") {
+                // Try to parse the 6-field matrix transform
+                const startSearchText = "matrix(";
+                const startIndex = transformStr.indexOf(startSearchText);
+                if (startIndex >= 0) {
+                    const endIndex = transformStr.indexOf(")", startIndex + startSearchText.length);
+                    if (endIndex >= 0) {
+                        const matrixStr = transformStr.substring(startIndex + startSearchText.length, endIndex);
+
+                        const fields = matrixStr.split(",");
+                        if (fields.length == 6) {
+                            const scaleXStr = fields[0].trim();
+                            const scaleYStr = fields[3].trim();
+
+                            if (!isNaN(scaleXStr as any) && !isNaN(scaleYStr as any)) {
+                                scaleX = parseFloat(scaleXStr);
+                                scaleY = parseFloat(scaleYStr);
+
+                                // Only break on successful parse. Otherwise, allow it to keep searching further up the tree.
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            element = element.parentElement;
+        }
+
+        return new Point(scaleX, scaleY);
     }
 
     public static setActiveBubbleListener(listener: ((selected: HTMLElement | undefined) => void) | undefined) {
