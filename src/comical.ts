@@ -274,8 +274,17 @@ export class Comical {
         } else {
             parent.insertBefore(canvas, parent.firstChild); // want to use prepend, not in FF45.
         }
-        canvas.width = parent.clientWidth;
-        canvas.height = parent.clientHeight;
+
+        // Even though clientWidth seems to return the unscaled values, we observe that
+        // when this gets written to HTML, the width attribute is parent.clientWidth * scalingFactor.
+        // Then, the browser will apply the scaling factor to it A SECOND TIME, which is bad :(
+        //
+        // To get around this, we prematurely divided by the scaling factor, so that later on the width/height attributes
+        // will return their unscaled values.
+        const scaling = this.getScaling(parent);
+        canvas.width = parent.clientWidth / scaling.x!;
+        canvas.height = parent.clientHeight / scaling.y!;
+
         setup(canvas); // updates the global project variable to a new project associated with this canvas
 
         // Now we set up some mouse event handlers. It would be much nicer to use the paper.js
@@ -324,6 +333,30 @@ export class Comical {
         };
         this.activeContainers.set(parent, containerData);
         Comical.update(parent);
+    }
+
+    private static getScaling(element: HTMLElement): Point {
+        // getBoundingClientRect() returns the rendering size (aka scaled)
+        //  of the border box (i.e., what is needed to include everything inside and including the border)
+        const scaledBounds = element.getBoundingClientRect();
+        const scaledWidth = scaledBounds.width;
+        const scaledHeight = scaledBounds.height;
+
+        // offsetWidth returns the layout size (aka unscaled) that the element occupies (i.e., how much space the content, scrollbar, padding, and border take up)
+        // So this is a more apples-to-apples comparison than clientWidth/Height
+        //
+        // See https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model/Determining_the_dimensions_of_elements
+        //   "Most of the time these are the same as width and height of Element.getBoundingClientRect(), when there aren't any transforms applied to the element.
+        //   In case of transforms, the offsetWidth and offsetHeight returns the element's layout width and height,
+        //   while getBoundingClientRect() returns the rendering width and height. As an example, if the element has width: 100px; and transform: scale(0.5);
+        //   the getBoundingClientRect() will return 50 as the width, while offsetWidth will return 100.
+        const unscaledWidth = element.offsetWidth;
+        const unscaledHeight = element.offsetHeight;
+
+        const scaleX = scaledWidth / unscaledWidth;
+        const scaleY = scaledHeight / unscaledHeight;
+
+        return new Point(scaleX, scaleY);
     }
 
     public static setActiveBubbleListener(listener: ((selected: HTMLElement | undefined) => void) | undefined) {
