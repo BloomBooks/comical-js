@@ -335,41 +335,26 @@ export class Comical {
         Comical.update(parent);
     }
 
-    private static getScaling(element: Element | null): Point {
-        let scaleX = 1.0;
-        let scaleY = 1.0;
+    private static getScaling(element: HTMLElement): Point {
+        // getBoundingClientRect() returns the rendering size (aka scaled)
+        //  of the border box (i.e., what is needed to include everything inside and including the border)
+        const scaledBounds = element.getBoundingClientRect();
+        const scaledWidth = scaledBounds.width;
+        const scaledHeight = scaledBounds.height;
 
-        while (element) {
-            const styleInfo = window.getComputedStyle(element);
-            const transformStr: string | null = styleInfo.transform;
-            if (transformStr && transformStr != "none") {
-                // Try to parse the 6-field matrix transform
-                const startSearchText = "matrix(";
-                const startIndex = transformStr.indexOf(startSearchText);
-                if (startIndex >= 0) {
-                    const endIndex = transformStr.indexOf(")", startIndex + startSearchText.length);
-                    if (endIndex >= 0) {
-                        const matrixStr = transformStr.substring(startIndex + startSearchText.length, endIndex);
+        // offsetWidth returns the layout size (aka unscaled) that the element occupies (i.e., how much space the content, scrollbar, padding, and border take up)
+        // So this is a more apples-to-apples comparison than clientWidth/Height
+        //
+        // See https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model/Determining_the_dimensions_of_elements
+        //   "Most of the time these are the same as width and height of Element.getBoundingClientRect(), when there aren't any transforms applied to the element.
+        //   In case of transforms, the offsetWidth and offsetHeight returns the element's layout width and height,
+        //   while getBoundingClientRect() returns the rendering width and height. As an example, if the element has width: 100px; and transform: scale(0.5);
+        //   the getBoundingClientRect() will return 50 as the width, while offsetWidth will return 100.
+        const unscaledWidth = element.offsetWidth;
+        const unscaledHeight = element.offsetHeight;
 
-                        const fields = matrixStr.split(",");
-                        if (fields.length == 6) {
-                            const scaleXStr = fields[0].trim();
-                            const scaleYStr = fields[3].trim();
-
-                            if (!isNaN(scaleXStr as any) && !isNaN(scaleYStr as any)) {
-                                scaleX = parseFloat(scaleXStr);
-                                scaleY = parseFloat(scaleYStr);
-
-                                // Only break on successful parse. Otherwise, allow it to keep searching further up the tree.
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            element = element.parentElement;
-        }
+        const scaleX = scaledWidth / unscaledWidth;
+        const scaleY = scaledHeight / unscaledHeight;
 
         return new Point(scaleX, scaleY);
     }
