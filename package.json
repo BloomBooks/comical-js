@@ -23,7 +23,6 @@
         "copy-webpack-plugin": "^5.0.4",
         "globule": "^1.2.1",
         "husky": "^3.0.9",
-        "npx": "^10.2.0",
         "prettier": "^1.18.2",
         "pretty-quick": "^2.0.0",
         "shx": "^0.3.2",
