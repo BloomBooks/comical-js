@@ -566,7 +566,10 @@ export class Bubble {
 
             const gradient = new Gradient();
             const stops: GradientStop[] = [];
-            spec.backgroundColors!.forEach(x => stops.push(new GradientStop(new Color(x))));
+            // We want the gradient offsets evenly spaced from 0 to 1.
+            spec.backgroundColors!.forEach((x, index) =>
+                stops.push(new GradientStop(new Color(x), (1 / (spec.backgroundColors!.length - 1)) * index))
+            );
             gradient.stops = stops;
 
             // enhance: we'd like the gradient to extend over the whole fillArea,
@@ -581,9 +584,12 @@ export class Bubble {
             // transition where the tail joins the bubble. Rather, they have independent gradients.
             // There's probably something better we could do, but at present it's not a priority,
             // because we only want gradient for independent captions with no tails at all.
+            // It's important to use the outline height rather than this.content.height,
+            // because in some cases the outline gets scaled significantly, and the height
+            // we need to use is its unscaled height.
             const xCenter = this.content.offsetWidth / 2;
             const gradientOrigin = new Point(xCenter, 0);
-            const gradientDestination = new Point(xCenter, this.content.offsetHeight);
+            const gradientDestination = new Point(xCenter, this.outline ? this.outline.bounds!.height! : 50);
 
             const result: Color = new Color(gradient, gradientOrigin, gradientDestination);
             return result;
