@@ -904,7 +904,11 @@ export class Bubble {
             targetY = parentHeight;
         }
         const target = new Point(targetX, targetY);
-        const mid: Point = Bubble.defaultMid(rootCenter, target, targetDiv.offsetWidth, targetDiv.offsetHeight);
+        const mid: Point = Bubble.defaultMid(
+            rootCenter,
+            target,
+            new Size(targetDiv.offsetWidth, targetDiv.offsetHeight)
+        );
         const result: TailSpec = {
             tipX: targetX,
             tipY: targetY,
@@ -915,25 +919,30 @@ export class Bubble {
         return result;
     }
 
-    static defaultMid(start: Point, target: Point, width?: number, height?: number): Point {
-        let delta = target.subtract(start);
-        let mid = start.add(delta.divide(2));
-        if (width !== undefined && height !== undefined) {
-            // Given the width and height (typically of the content element),
-            // we can adjust the defaultMid so it is half way between the
-            // border of that box and the tip. It would be even nicer,
-            // but a lot more expensive and complex, to make it the mid-point
-            // between the actual bubble border and the tip, but this seems
-            // to be close enough.
-            // Think of these ratios as how much delta would have to change to put it
-            // on a vertical side or a horizontal side.
-            const xRatio = delta.x == 0 ? Number.MAX_VALUE : width / 2 / Math.abs(delta.x!);
-            const yRatio = delta.y == 0 ? Number.MAX_VALUE : height / 2 / Math.abs(delta.y!);
-            const borderRatio = Math.min(xRatio, yRatio); // use whichever is closer
-            const borderPoint = start.add(delta.multiply(borderRatio));
-            delta = target.subtract(borderPoint);
-            mid = borderPoint.add(delta.divide(2));
-        }
+    static adjustTowards(origin: Point, target: Point, originSize: Size): Point {
+        // Return the origin point adjusted along a line towards target far enough to fall on
+        // the border of a retangle of size originSize centered at origin.
+        let delta = target.subtract(origin);
+        const xRatio = delta.x == 0 ? Number.MAX_VALUE : originSize.width! / 2 / Math.abs(delta.x!);
+        const yRatio = delta.y == 0 ? Number.MAX_VALUE : originSize.height! / 2 / Math.abs(delta.y!);
+        const borderRatio = Math.min(xRatio, yRatio); // use whichever is closer
+        return origin.add(delta.multiply(borderRatio));
+    }
+
+    // Find the default midpoint for a tail from start to target, given the sizes of the
+    // bubbles at start and possibly (if start is a child) at target.
+    // First, we compute a point half way between where the line from start to target
+    // crosses the rectangle(s) of the specified size(s) centered at the points...an
+    // approximation of half way between the bubbles, or between the bubble and the tip.
+    // Then we bump it a little to one side so that the curve bends slightly towards
+    // the y axis, by an amount that decreases to zero as the line approaches
+    // horizontal or vertical.
+    static defaultMid(start: Point, target: Point, startSize: Size, targetSize?: Size): Point {
+        const startBorderPoint = Bubble.adjustTowards(start, target, startSize);
+        const targetBorderPoint = targetSize ? Bubble.adjustTowards(target, start, targetSize) : target;
+
+        let delta = targetBorderPoint.subtract(startBorderPoint);
+        const mid = startBorderPoint.add(delta.divide(2));
 
         delta = delta.divide(5);
         delta.angle! -= 90;

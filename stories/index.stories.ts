@@ -12,7 +12,8 @@ import {
     Shape,
     Segment,
     Path,
-    ToolEvent
+    ToolEvent,
+    Size
 } from "paper";
 import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
@@ -239,7 +240,7 @@ storiesOf("comical", module)
         const handleLayer = new Layer();
         project!.addLayer(layer2);
         project!.addLayer(handleLayer);
-        const mid = Bubble.defaultMid(start, tip);
+        const mid = Bubble.defaultMid(start, tip, new Size(0, 0));
         const tail = new ArcTail(
             start,
             tip,
@@ -1241,7 +1242,7 @@ storiesOf("comical", module)
         const handleLayer = new Layer();
         project!.addLayer(layer2);
         project!.addLayer(handleLayer);
-        const mid = Bubble.defaultMid(start, tip);
+        const mid = Bubble.defaultMid(start, tip, new Size(0, 0));
 
         const tail = new LineTail(
             start,
