@@ -399,6 +399,8 @@ export class Comical {
         // We deliberately do NOT keep any properties the child bubble already has.
         // Apart from the necessary properties for being a child, it will take
         // all its properties from the parent.
+        // BL-7908: If parent has outerBorderColor defined, child should have the same. And if the parent's
+        // outerBorderColor is undefined, this will make sure the child's is undefined as well.
         const newBubbleSpec: BubbleSpec = {
             version: Comical.bubbleVersion,
             style: parentSpec.style,
@@ -411,6 +413,7 @@ export class Comical {
                     joiner: true
                 }
             ],
+            outerBorderColor: parentSpec.outerBorderColor,
             level: parentSpec.level,
             order: maxOrder + 1
         };
