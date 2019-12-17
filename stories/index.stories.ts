@@ -864,7 +864,8 @@ storiesOf("comical", module)
                         style: "speech",
                         tails: [misguidedChildTailSpec],
                         level: i + 1,
-                        order: misguidedChildBubble.getBubbleSpec().order
+                        order: misguidedChildBubble.getBubbleSpec().order,
+                        outerBorderColor: misguidedChildBubble.getBubbleSpec().outerBorderColor
                     });
                 }
 
@@ -1021,7 +1022,8 @@ storiesOf("comical", module)
                     style: "speech",
                     tails: [misguidedChildTailSpec],
                     level: 1,
-                    order: misguidedChildBubble.getBubbleSpec().order
+                    order: misguidedChildBubble.getBubbleSpec().order,
+                    outerBorderColor: misguidedChildBubble.getBubbleSpec().outerBorderColor
                 });
             }
 
