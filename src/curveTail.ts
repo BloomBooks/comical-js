@@ -1,5 +1,5 @@
 import { Tail } from "./tail";
-import { Point } from "paper";
+import { Point, Size } from "paper";
 import { Comical } from "./comical";
 import { Bubble } from "./bubble";
 import { Handle } from "./handle";
@@ -18,15 +18,16 @@ export class CurveTail extends Tail {
     adjustForChangedRoot(delta: Point): void {
         let newPosition = this.mid.add(delta.divide(2));
         if (this.bubble && this.spec.autoCurve) {
+            const parent = Comical.findParent(this.bubble);
             newPosition = Bubble.defaultMid(
                 this.currentStartPoint(),
                 this.tip,
-                this.bubble.content.offsetWidth,
-                this.bubble.content.offsetHeight
+                new Size(this.bubble.content.offsetWidth, this.bubble.content.offsetHeight),
+                parent ? new Size(parent.content.offsetWidth, parent.content.offsetHeight) : undefined
             );
         }
         if (this.bubble) {
-            newPosition = Comical.movePointOutsideBubble(this.bubble.content, newPosition, this.tip);
+            newPosition = Comical.movePointOutsideBubble(this.bubble.content, newPosition, this.tip, this.root);
         }
         this.mid = newPosition;
         if (this.midHandle) {
