@@ -1,4 +1,4 @@
-import { Color, project, setup, Layer, Point, Item } from "paper";
+import { Color, project, setup, Layer, Point, Item, Size } from "paper";
 
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
@@ -395,7 +395,12 @@ export class Comical {
         const maxOrder = lastInFamily.getBubbleSpec().order || 1;
         const tip = lastInFamily.calculateTailStartPoint();
         const root = childBubble.calculateTailStartPoint();
-        const mid = Bubble.defaultMid(root, tip, childElement.offsetWidth, childElement.offsetHeight);
+        const mid = Bubble.defaultMid(
+            root,
+            tip,
+            new Size(childElement.offsetWidth, childElement.offsetHeight),
+            new Size(lastInFamily.content.offsetWidth, lastInFamily.content.offsetHeight)
+        );
         // We deliberately do NOT keep any properties the child bubble already has.
         // Apart from the necessary properties for being a child, it will take
         // all its properties from the parent.
@@ -410,7 +415,8 @@ export class Comical {
                     tipY: tip.y!,
                     midpointX: mid.x!,
                     midpointY: mid.y!,
-                    joiner: true
+                    joiner: true,
+                    autoCurve: true
                 }
             ],
             outerBorderColor: parentSpec.outerBorderColor,
@@ -520,16 +526,37 @@ export class Comical {
         };
     }
 
+    // Gets a point along the line from start to end that is not inside any bubble
+    // of parentContainer. Tests the specified number of points evenly spaced
+    // along the line, including the end point but not the start. If all such
+    // points are in bubbles, returns undefined.
+    static getPointOutsideBubblesAlong(
+        parentContainer: HTMLElement,
+        start: Point,
+        end: Point,
+        tries: number
+    ): Point | undefined {
+        const delta = end.subtract(start).divide(tries);
+        for (var i = 1; i <= tries; i++) {
+            const tryPoint = start.add(delta.multiply(i));
+            if (!this.getBubbleHit(parentContainer, tryPoint.x!, tryPoint.y!)) {
+                return tryPoint;
+            }
+        }
+        return undefined;
+    }
+
     // If the specified position is inside a bubble in the same
     // parentContainer as element, return
     // a nearby point that is not inside any bubble content area.
     // If the point is not inside a bubble, return it unmodified.
     // We choose a 'nearby' point by moving along the line from position
     // to 'towards' until we find a point that isn't in a bubble.
+    // If 'towards' is inside a bubble, we'll try for the closest point
     // It is assumed that 'towards' itself isn't in a bubble.
     // If it is, we may return 'towards' itself even though it's not
     // outside a bubble.
-    static movePointOutsideBubble(element: HTMLElement, position: Point, towards: Point): Point {
+    static movePointOutsideBubble(element: HTMLElement, position: Point, towards: Point, from: Point): Point {
         const [parentContainer] = Comical.comicalParentOf(element);
         if (!parentContainer) {
             return position;
@@ -538,9 +565,34 @@ export class Comical {
         if (!bubble) {
             return position;
         }
-        let farPoint = towards; // the furthest we might move position
+
+        // get a starting point, somewhere along the path from 'from' to 'towards' via 'position'
+        // that is not in a bubble, as close to position as we can easily manage, preferring on the
+        // side from position to 'towards'.
+        let farPoint: Point | undefined = undefined;
+        let maxDivisions = Math.max(position.subtract(towards).length!, position.subtract(from).length!);
+        let divisions = Math.max(Math.min(maxDivisions - 0.1, 5), 2); // at least one iteration, try at least both ends.
+        while (!farPoint && divisions < maxDivisions) {
+            farPoint = Comical.getPointOutsideBubblesAlong(parentContainer, position, towards, divisions);
+            // See if we can find one back towards its own bubble.
+            const altFarPoint = Comical.getPointOutsideBubblesAlong(parentContainer, position, from, divisions);
+            if (
+                (altFarPoint && !farPoint) ||
+                (altFarPoint &&
+                    farPoint &&
+                    altFarPoint.subtract(position).length! < farPoint.subtract(position).length!)
+            ) {
+                farPoint = altFarPoint;
+            }
+            // If we didn't find one yet, do a more detailed, slower search.
+            divisions *= 1.9; // roughly twice as many, don't repeat ones we tried.
+        }
+        if (!farPoint) {
+            return position; // we can't improve things.
+        }
+
         let nearPoint = position; // the least distance we might move position
-        // We will return a point along the line from position to towards,
+        // We will return a point along the line from position to farPoint,
         // generally as close to position as allowed.
         // If there are other bubbles in the way, or the original bubble has
         // an irregular shape, the binary search algorithm
@@ -548,7 +600,7 @@ export class Comical {
         // far; but it should still be a plausible
         // (and definitely valid, outside any bubble) place to put it.
         while (true) {
-            const delta = farPoint.subtract(nearPoint).divide(2);
+            const delta: Point = farPoint.subtract(nearPoint).divide(2);
             if (delta.length! < 1) {
                 return farPoint;
             }
