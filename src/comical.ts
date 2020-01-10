@@ -447,6 +447,25 @@ export class Comical {
         return !!hitResult;
     }
 
+    // Return true if a specified area (like a dragHandle) hits something Comical has put into
+    // the canvas...any of the bubble shapes, tail shapes, handles.
+    // Note that the coordinates specified must be points in real pixels (like MouseEvent.offsetX/Y),
+    // not scaled pixels, if some transform:scale has been applied to the Comical canvas.
+    public static somethingHitArea(
+        element: HTMLElement,
+        left: number,
+        right: number,
+        top: number,
+        bottom: number
+    ): boolean {
+        const upperLeftHit = this.somethingHit(element, left, top);
+        const upperRightHit = this.somethingHit(element, right, top);
+        const lowerLeftHit = this.somethingHit(element, left, bottom);
+        const lowerRightHit = this.somethingHit(element, right, bottom);
+        // Enhance: an argument could be made for testing what got hit to see if it's the same item or not.
+        return upperLeftHit && upperRightHit && lowerLeftHit && lowerRightHit;
+    }
+
     // Returns the first bubble at the point (x, y), or undefined if no bubble is present at that point.
     // Note that this must be a point in real pixels (like MouseEvent.offsetX/Y), not scaled pixels,
     // if some transform:scale has been applied to the Comical canvas.
