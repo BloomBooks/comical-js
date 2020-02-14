@@ -716,11 +716,30 @@ export class Bubble {
     public isHitByPoint(point: Point): boolean {
         if (!this.fillArea) {
             // If style = none, then fillArea can be undefined
-            return false;
+            // Do a hit test against the underlying content element directly (rather than the bubble fillArea, which doesn't exist)
+            return this.isContentHitByPoint(point);
         }
 
         const hitResult: HitResult | null = this.fillArea.hitTest(point);
         return !!hitResult;
+    }
+
+    // Returns true if the point is contained within the content element's borders.
+    public isContentHitByPoint(point: Point): boolean {
+        // The point is relative to the canvas... so you need to make sure to get the position of the content relative to the canvas too.
+        // OffsetLeft/Top works perfectly. It is relative to the offsetParent (which is the imageContainer).
+        // It goes from the inside edge of the parent's border (which coincides with where the canvas element is placed)
+        //     to the outside edge of the content's border.
+        //     That is perfect, because that means 0, 0 for content's offsetLeft/Top will be 0, 0 in the coordinate system our Comical canvas uses.
+        // Both systems are also independent of the zoom scaling
+        // So that works perfectly!
+
+        const left = this.content.offsetLeft;
+        const right = left + this.content.offsetWidth; // FYI, includes content's borders, which I think is good.
+        const top = this.content.offsetTop;
+        const bottom = top + this.content.offsetHeight;
+
+        return left <= point.x! && point.x! <= right && (top <= point.y! && point.y! <= bottom);
     }
 
     private adjustJoiners(newTip: Point): void {
