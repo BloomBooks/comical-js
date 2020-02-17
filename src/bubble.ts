@@ -627,12 +627,10 @@ export class Bubble {
             this.makeShapes(shape);
         }
         if (this.contentHolder) {
-            var holderWidth = (this.contentHolder as any).size.width;
-            var holderHeight = (this.contentHolder as any).size.height;
-            const desiredHScale = contentWidth / holderWidth;
-            const desiredVScale = contentHeight / holderHeight;
+            const [desiredHScale, desiredVScale] = this.getScaleFactors();
             const scaleXBy = desiredHScale / this.hScale;
             const scaleYBy = desiredVScale / this.vScale;
+
             this.outline.scale(scaleXBy, scaleYBy);
             if (this.shadowShape) {
                 this.shadowShape.scale(scaleXBy, scaleYBy);
@@ -693,6 +691,18 @@ export class Bubble {
                 tail.setTailAndHandleVisibility(shouldTailsBeVisible);
             });
         }
+    }
+
+    getScaleFactors(): [number, number] {
+        const contentWidth = this.content.offsetWidth;
+        const contentHeight = this.content.offsetHeight;
+
+        var holderWidth = (this.contentHolder as any).size.width;
+        var holderHeight = (this.contentHolder as any).size.height;
+        const desiredHScale = contentWidth / holderWidth;
+        const desiredVScale = contentHeight / holderHeight;
+
+        return [desiredHScale, desiredVScale];
     }
 
     // Returns true if the bubbles overlap. Otherwise, returns false
