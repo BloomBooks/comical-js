@@ -8,6 +8,7 @@ import { StraightTail } from "./straightTail";
 import { LineTail } from "./lineTail";
 import { makeSpeechBubble, makeSpeechBubbleParts } from "./speechBubble";
 import { makeThoughtBubble } from "./thoughtBubble";
+import { makeCaptionBox } from "./captionBubble";
 import { activateLayer } from "./utilities";
 import { SimpleRandom } from "./random";
 
@@ -365,9 +366,6 @@ export class Bubble {
             case "shout":
                 svg = Bubble.shoutBubble();
                 break;
-            case "caption":
-                svg = Bubble.captionBubble();
-                break;
             case "none":
                 break;
             default:
@@ -395,6 +393,8 @@ export class Bubble {
                 return makeThoughtBubble(this);
             case "speech":
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
+            case "caption":
+                return makeCaptionBox(this);
             default:
                 return undefined; // not a computed shape, may be svg...caller has real default
         }
@@ -572,24 +572,21 @@ export class Bubble {
             );
             gradient.stops = stops;
 
+            const xCenter = this.content.offsetWidth / 2;
+
             // enhance: we'd like the gradient to extend over the whole fillArea,
             // but we can't depend on that existing when we need this, especially when
             // called by one of the tails. So just make one from the top of the content
             // to the bottom.
-            // My expectation was that for this to work we'd need gradientOrigin to use the Y coordinate
-            // of the top of the box, and gradientDestination its bottom. In fact, we seem to need
-            // zero and the box's height. So apparently the gradient is relative to the object,
-            // not the canvas. This means we don't really get the effect we want when applied to
-            // tails...though they use an identical color object, it doesn't result in a smooth
-            // transition where the tail joins the bubble. Rather, they have independent gradients.
-            // There's probably something better we could do, but at present it's not a priority,
-            // because we only want gradient for independent captions with no tails at all.
-            // It's important to use the outline height rather than this.content.height,
-            // because in some cases the outline gets scaled significantly, and the height
-            // we need to use is its unscaled height.
-            const xCenter = this.content.offsetWidth / 2;
-            const gradientOrigin = new Point(xCenter, 0);
-            const gradientDestination = new Point(xCenter, this.outline ? this.outline.bounds!.height! : 50);
+            // After introducing new algorithmic captions, it seems to work in all cases to use
+            // the Y coordinate of the top of the box to the Y coordinate of the bottom.
+            // Previously, captions seemed to need using 0 to height instead.
+            const gradientOrigin = new Point(xCenter, this.outline.bounds!.top!);
+            const gradientDestination = new Point(xCenter, this.outline.bounds!.top! + this.outline.bounds!.height!);
+
+            // Old code which used 0 to height (seemed necessary for SVG captions)
+            // const gradientOrigin = new Point(xCenter, 0);
+            // const gradientDestination = new Point(xCenter, this.outline ? this.outline.bounds!.height! : 50);
 
             const result: Color = new Color(gradient, gradientOrigin, gradientDestination);
             return result;
@@ -1152,54 +1149,6 @@ export class Bubble {
              x="13.229166"
              height="65.956848"
              width="74.461304"
-             style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
-        </g>
-      </svg>`;
-    }
-
-    public static captionBubble() {
-        return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-      <svg
-         xmlns:dc="http://purl.org/dc/elements/1.1/"
-         xmlns:cc="http://creativecommons.org/ns#"
-         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-         xmlns:svg="http://www.w3.org/2000/svg"
-         xmlns="http://www.w3.org/2000/svg"
-         id="svg8"
-         version="1.1"
-         viewBox="0 0 100 50"
-         height="50mm"
-         width="100mm">
-        <defs
-           id="defs2" />
-        <metadata
-           id="metadata5">
-          <rdf:RDF>
-            <cc:Work
-               rdf:about="">
-              <dc:format>image/svg+xml</dc:format>
-              <dc:type
-                 rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-              <dc:title></dc:title>
-            </cc:Work>
-          </rdf:RDF>
-        </metadata>
-        <g
-            id="layer1">
-          <rect
-             y="2"
-             x="2"
-             height="46"
-             width="96"
-             id="outlineShape"
-             style="fill:#ffffff;stroke:#000000;stroke-width:1;stroke-opacity:1" />
-          <rect
-            id="content-holder"
-            class="content-holder"
-             y="3"
-             x="3"
-             height="44"
-             width="94"
              style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-opacity:1" />
         </g>
       </svg>`;
