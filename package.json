@@ -27,7 +27,7 @@
         "pretty-quick": "^2.0.0",
         "shx": "^0.3.2",
         "ts-loader": "^6.2.0",
-        "typescript": "^3.5.3",
+        "typescript": "^3.7.5",
         "webpack": "^4.39.2",
         "webpack-cli": "^3.3.6",
         "webpack-merge": "^4.2.2"
