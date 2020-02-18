@@ -62,6 +62,10 @@ export class Bubble {
     private hScale: number = 1; // Horizontal scaling
     private vScale: number = 1; // Vertical scaling
 
+    // An array of length 4. Specifies the delta from the holder to the outline
+    // [top, right, bottom, left] (Same order as CSS border shorthand)
+    private holderToOutlineDeltas: number[] | undefined = undefined;
+
     // The PaperJS layers in which to draw various pieces of the bubble into.
     private lowerLayer: Layer;
     private upperLayer: Layer;
@@ -474,6 +478,14 @@ export class Bubble {
                 return x.name === "content-holder";
             }
         });
+
+        if (this.contentHolder?.bounds?.topRight && outlineShape?.bounds?.topRight) {
+            // Save the values now, because later on contentHolder will still be based at 0, but this.outline will be re-centered.
+            const deltaTopRight = outlineShape.bounds.topRight.subtract(this.contentHolder.bounds.topRight);
+            const deltaBottomLeft = outlineShape.bounds.bottomLeft!.subtract(this.contentHolder.bounds.bottomLeft!);
+            this.holderToOutlineDeltas = [deltaTopRight.y!, deltaTopRight.x!, deltaBottomLeft.y!, deltaBottomLeft.x!];
+        }
+
         if (this.spec.shadowOffset) {
             if (this.shadowShape) {
                 this.shadowShape.remove();
@@ -693,16 +705,91 @@ export class Bubble {
         }
     }
 
+    // Calculates the scaling factor for both width / height
+    // The scaling factor tells how much the contentHolder should be scaled in order to match the content element
+    //
+    // Returns an array of two numbers. The first is the Width Scaling Factor, and the second is the Height Scaling Factor.
     getScaleFactors(): [number, number] {
-        const contentWidth = this.content.offsetWidth;
-        const contentHeight = this.content.offsetHeight;
+        // Precondition: assumes this.contentHolder is truthy.
+
+        let desiredHScale: number;
+        let desiredVScale: number;
+
+        const newContentWidth = this.content.offsetWidth;
+        const newContentHeight = this.content.offsetHeight;
 
         var holderWidth = (this.contentHolder as any).size.width;
         var holderHeight = (this.contentHolder as any).size.height;
-        const desiredHScale = contentWidth / holderWidth;
-        const desiredVScale = contentHeight / holderHeight;
+
+        if (this.getStyle() === "caption" && this.holderToOutlineDeltas && this.holderToOutlineDeltas.length >= 4) {
+            // Special calculation for captions so that their black edge (outlineShape) is positioned a fixed amount away from the content holder
+            // It's viewed as surprising / unexpected that the left edge of a caption box changes when the right edge of its content holder moves
+            // (whereas this isn't so surprising for speech style bubbles?)
+            // Another way to think of the problem: if you have a really wide caption box, do you really need more separation on the sides between the visible border and the content holder
+            // compared to the amount you have when the caption box is small??
+            // IMO, no real reason why that separation NEEDS to be scaled up in that case.
+            //
+            // So we calculate it differently so that the visible border (the outlineShape) is placed a fixed distance away from the content element.
+            //
+            // Alternative: It would actually be nice if we drew the two halves of the shape separately. We draw the contentHolder using the normal logic, so it stays in expected place.
+            // Then draw the outline shape at a specified position instead of scaling things up
+
+            const newContentLeft = this.content.offsetLeft;
+            const newContentRight = newContentLeft + this.content.offsetWidth;
+
+            const newContentTop = this.content.offsetTop;
+            const newContentBottom = newContentTop + this.content.offsetHeight;
+
+            const [deltaTop, deltaRight, deltaBottom, deltaLeft] = this.holderToOutlineDeltas;
+
+            desiredHScale = this.getScalingFactorForCaption(
+                newContentLeft,
+                newContentRight,
+                deltaLeft,
+                deltaRight,
+                holderWidth
+            );
+            desiredVScale = this.getScalingFactorForCaption(
+                newContentTop,
+                newContentBottom,
+                deltaTop,
+                deltaBottom,
+                holderHeight
+            );
+        } else {
+            // Normal case
+            desiredHScale = newContentWidth / holderWidth;
+            desiredVScale = newContentHeight / holderHeight;
+        }
 
         return [desiredHScale, desiredVScale];
+    }
+
+    // Returns the adjusted scaling factor for caption boxes
+    private getScalingFactorForCaption(
+        contentNearEdgePos: number, // The "left" position or "top" position of the new content element (the content ELEMENT, not the content HOLDER)
+        contentFarEdgePos: number, // The "right" position or "bottom" position of the new content element (the content ELEMENT, not the content HOLDER)
+        deltaNearEdge: number, // The distance between the edge of the contentHolder and the outlineShape on the left or top.
+        deltaFarEdge: number, // The distance between the edge of the contentHolder and the outlineShape on the right or bottom
+        holderEdgeDistance: number // The width or height of the contentHolder
+    ): number {
+        // Near edge refers to the one with smaller absolute value.
+        // e.g. left (because it has smaller x than right)
+        //   or top  (because it has smaller y than bottom)
+
+        // Calculate the new target positions of the OUTLINE
+        const targetOutlineFarEdgePos = contentFarEdgePos + deltaFarEdge;
+        const targetOutlineNearEdgePos = contentNearEdgePos + deltaNearEdge;
+
+        // That determines the implied target width/height
+        const targetOutlineEdgeDistance = targetOutlineFarEdgePos - targetOutlineNearEdgePos;
+
+        // Calculate the width/height of the current outline
+        // It's the contentHolder in the middle, plus the offsets between the contentHolder and the outlineShape on either side
+        const currentOutlineHeight = Math.abs(deltaNearEdge) + holderEdgeDistance + Math.abs(deltaFarEdge);
+
+        const scalingFactor = targetOutlineEdgeDistance / currentOutlineHeight;
+        return scalingFactor;
     }
 
     // Returns true if the bubbles overlap. Otherwise, returns false
@@ -749,7 +836,7 @@ export class Bubble {
         const top = this.content.offsetTop;
         const bottom = top + this.content.offsetHeight;
 
-        return left <= point.x! && point.x! <= right && (top <= point.y! && point.y! <= bottom);
+        return left <= point.x! && point.x! <= right && top <= point.y! && point.y! <= bottom;
     }
 
     private adjustJoiners(newTip: Point): void {
