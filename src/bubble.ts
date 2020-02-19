@@ -8,6 +8,7 @@ import { StraightTail } from "./straightTail";
 import { LineTail } from "./lineTail";
 import { makeSpeechBubble, makeSpeechBubbleParts } from "./speechBubble";
 import { makeThoughtBubble } from "./thoughtBubble";
+import { makeFixedEllipseBubble, makeScaledEllipseBubble } from "ellipseBubble";
 import { makeCaptionBox } from "./captionBubble";
 import { activateLayer } from "./utilities";
 import { SimpleRandom } from "./random";
@@ -393,6 +394,10 @@ export class Bubble {
                 return makeThoughtBubble(this);
             case "speech":
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
+            case "ellipse2":
+                return makeFixedEllipseBubble(this);
+            case "ellipse3":
+                return makeScaledEllipseBubble(this);
             case "caption":
                 return makeCaptionBox(this);
             default:
@@ -550,6 +555,19 @@ export class Bubble {
         }
     }
 
+    public getDefaultContentHolder(): Shape {
+        const contentTopLeft = new Point(this.content.offsetLeft, this.content.offsetTop);
+        const contentSize = new Size(this.content.offsetWidth, this.content.offsetHeight);
+        const contentHolder = new Shape.Rectangle(contentTopLeft, contentSize);
+
+        // the contentHolder is normally removed, but this might be useful in debugging.
+        contentHolder.strokeColor = new Color("red");
+        contentHolder.fillColor = new Color("transparent");
+        contentHolder.name = "content-holder";
+
+        return contentHolder;
+    }
+
     public getBorderWidth() {
         return Bubble.defaultBorderWidth;
     }
@@ -581,6 +599,8 @@ export class Bubble {
             // After introducing new algorithmic captions, it seems to work in all cases to use
             // the Y coordinate of the top of the box to the Y coordinate of the bottom.
             // Previously, captions seemed to need using 0 to height instead.
+            //
+            // enhance 2: If the tail is above the bubble, might make more sense to do gradient bottom -> top instead of top -> bottom
             const gradientOrigin = new Point(xCenter, this.outline.bounds!.top!);
             const gradientDestination = new Point(xCenter, this.outline.bounds!.top! + this.outline.bounds!.height!);
 
