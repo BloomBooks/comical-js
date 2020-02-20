@@ -1,13 +1,39 @@
 import { Color, Group, Item, Path, Point, Size } from "paper";
 import { Bubble } from "./bubble";
 
+// This is an ellipse that circumscribes the content element
+// and whose radii are proportional to the rectangle's proportions.
+//
+// This function is proportioned more correctly than the SVG or the algo port of the SVG,
+// but is not 100% backward compatible with the SVG
+// since the SVG was not perfectly made, placed, or proportioned.
+export function makeScaledEllipseBubble(bubble: Bubble): Item {
+    const contentHolder = bubble.getDefaultContentHolder();
+    const contentBounds = contentHolder.bounds!;
+
+    // See https://stackoverflow.com/a/6716520 if you care about the derivation
+    const radius = contentBounds.size!.divide(Math.SQRT2);
+
+    const outline = new Path.Ellipse({
+        center: [contentBounds.center!.x!, contentBounds.center!.y!],
+        radius: [radius.width!, radius.height!],
+        fillColor: "black"
+    });
+
+    outline.name = "outlineShape";
+    outline.strokeColor = new Color("black");
+
+    const result = new Group([outline, contentHolder]);
+    return result;
+}
+
 // This is just a port of the original ellipse SVG into algorithmic format instead.
 // It is supposed to look and operate pretty much identically.
 //
 // One key thing to note about both this and the SVG is that as the content size increases,
 // the axis length is scaled up accordingly. A ramification of this is that if only one edge of the
 // content element is increased, both edges of the ellipse on that axis will actually move, which may be surprising.
-export function makeScaledEllipseBubble(bubble: Bubble): Item {
+export function makeBackwardCompatibleScaledEllipseBubble(bubble: Bubble): Item {
     const contentHolder = bubble.getDefaultContentHolder();
     const contentBounds = contentHolder.bounds!;
 
@@ -47,7 +73,9 @@ export function makeScaledEllipseBubble(bubble: Bubble): Item {
 // This is helpful because if one edge of the content element moves, only the corresponding edge of the ellipse will move.
 // (If you scaled the ellipse, two edges of the ellipse would move)
 //
-// One downside is that you can't make the ellipse vertex any closer to the content edge,
+// One major problem with it is that it can't also guarantee that the ellipse passes through all 4 points of the content box.
+//
+// Another downside is that you can't make the ellipse vertex any closer to the content edge,
 // but while the scaledEllipse version does allow movement, it's not a very controllable or reliable thing
 export function makeFixedEllipseBubble(bubble: Bubble): Item {
     const contentHolder = bubble.getDefaultContentHolder();
