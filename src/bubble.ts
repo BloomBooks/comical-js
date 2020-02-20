@@ -8,7 +8,6 @@ import { StraightTail } from "./straightTail";
 import { LineTail } from "./lineTail";
 import { makeSpeechBubble, makeSpeechBubbleParts } from "./speechBubble";
 import { makeThoughtBubble } from "./thoughtBubble";
-import { makeFixedEllipseBubble, makeScaledEllipseBubble } from "ellipseBubble";
 import { makeCaptionBox } from "./captionBubble";
 import { activateLayer } from "./utilities";
 import { SimpleRandom } from "./random";
@@ -394,10 +393,6 @@ export class Bubble {
                 return makeThoughtBubble(this);
             case "speech":
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
-            case "ellipse2":
-                return makeFixedEllipseBubble(this);
-            case "ellipse3":
-                return makeScaledEllipseBubble(this);
             case "caption":
                 return makeCaptionBox(this);
             default:
@@ -1125,6 +1120,10 @@ export class Bubble {
     }
 
     // The SVG contents of a round (elliptical) bubble
+    //
+    // Note: An algorithmic (getComputedShapes) version of an ellipse exists here: https://github.com/BloomBooks/comical-js/blob/algorithimicEllipses/src/ellipseBubble.ts
+    //   The scaled ellipse bubble there is mathematically better proportioned and positioned, simpler, and probably faster than the SVG one here
+    //   However, as a result of the improvement, it is only very similar but not 100% identical to this existing SVG one
     public static ellipseBubble() {
         return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
       <svg
