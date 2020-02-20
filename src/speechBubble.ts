@@ -69,10 +69,11 @@ export function makeSpeechBubbleParts(
     const bottomLeftCurve = path.curves[2];
     const bottomLeft = bottomLeftCurve.getLocationAt((bottomLeftCurve.length * width) / (width + height)).point;
     const contentHolder = new Shape.Rectangle(topRight, bottomLeft);
+    contentHolder.name = "content-holder";
+
     // the contentHolder is normally removed, but this might be useful in debugging.
     contentHolder.strokeColor = new Color("red");
     contentHolder.fillColor = new Color("transparent");
-    contentHolder.name = "content-holder";
     path.closed = true; // causes it to fill in the curve back to the start
     return [path, contentHolder];
 }

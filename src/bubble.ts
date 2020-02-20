@@ -559,11 +559,11 @@ export class Bubble {
         const contentTopLeft = new Point(this.content.offsetLeft, this.content.offsetTop);
         const contentSize = new Size(this.content.offsetWidth, this.content.offsetHeight);
         const contentHolder = new Shape.Rectangle(contentTopLeft, contentSize);
+        contentHolder.name = "content-holder";
 
         // the contentHolder is normally removed, but this might be useful in debugging.
         contentHolder.strokeColor = new Color("red");
         contentHolder.fillColor = new Color("transparent");
-        contentHolder.name = "content-holder";
 
         return contentHolder;
     }
