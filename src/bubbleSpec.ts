@@ -45,7 +45,7 @@ export interface TailSpec {
     midpointX: number; // notionally, tip's curve passes through this point
     midpointY: number;
     joiner?: boolean; // true if it joins to its parent bubble
-    style?: string; // currently one of arc or straight
+    style?: string; // currently one of straight, line, or arc
     // true to automatically keep the shape of the tail matching
     // Comical's default shape for the current root and tip when
     // either moves. False for the user to control the shape using
