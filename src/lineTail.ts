@@ -23,8 +23,6 @@ export class LineTail extends Tail {
         const oldStroke = this.pathstroke;
         this.lowerLayer.activate();
 
-        this.tailWidth = 1; // Single pixel may not be thick enough to see it on an image
-
         this.pathstroke = new Path.Line(this.root, this.tip);
 
         if (oldStroke) {
