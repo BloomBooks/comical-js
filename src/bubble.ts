@@ -100,15 +100,22 @@ export class Bubble {
                 level: Comical.getMaxLevel(element) + 1
             };
         }
+        const tailSpec = Bubble.makeDefaultTail(element);
         const result: BubbleSpec = {
             version: Comical.bubbleVersion,
             style: style,
-            tails: [Bubble.makeDefaultTail(element)],
+            tails: [tailSpec],
             level: Comical.getMaxLevel(element) + 1
         };
         if (style === "caption") {
             result.backgroundColors = ["#FFFFFF", "#DFB28B"];
             result.tails = [];
+            result.shadowOffset = 5;
+        }
+        if (style === "caption-withTail") {
+            result.backgroundColors = ["#FFFFFF", "#DFB28B"];
+            tailSpec.style = "line";
+            result.tails = [tailSpec];
             result.shadowOffset = 5;
         }
         if (style === "pointedArcs") {
@@ -393,7 +400,8 @@ export class Bubble {
                 return makeThoughtBubble(this);
             case "speech":
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
-            case "caption":
+            case "caption": // purposeful fall-through; these two types should have the same shape
+            case "caption-withTail":
                 return makeCaptionBox(this);
             default:
                 return undefined; // not a computed shape, may be svg...caller has real default

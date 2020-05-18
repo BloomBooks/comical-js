@@ -41,7 +41,7 @@
         "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
         "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js && shx cp package-publish.json dist/package.json && shx cp *.md dist",
         "build": "shx rm -rf dist/ && webpack && shx cp package-publish.json dist/package.json && shx cp *.md dist",
-        "Notice that we do 'publish dist', because we want to publish is just the contents of the dist directory": "//",
+        "Notice that we do 'publish dist', because what we want to publish is just the contents of the dist directory": "//",
         "So we want `yarn publish dist`": "//"
     },
     "husky": {
