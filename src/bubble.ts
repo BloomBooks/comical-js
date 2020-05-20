@@ -4,7 +4,6 @@ import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
 import { ThoughtTail } from "./thoughtTail";
-import { StraightTail } from "./straightTail";
 import { LineTail } from "./lineTail";
 import { makeSpeechBubble, makeSpeechBubbleParts } from "./speechBubble";
 import { makeThoughtBubble } from "./thoughtBubble";
@@ -110,12 +109,6 @@ export class Bubble {
         if (style === "caption") {
             result.backgroundColors = ["#FFFFFF", "#DFB28B"];
             result.tails = [];
-            result.shadowOffset = 5;
-        }
-        if (style === "caption-withTail") {
-            result.backgroundColors = ["#FFFFFF", "#DFB28B"];
-            tailSpec.style = "line";
-            result.tails = [tailSpec];
             result.shadowOffset = 5;
         }
         if (style === "pointedArcs") {
@@ -351,9 +344,12 @@ export class Bubble {
         // to make the main shape first, since making the tail shapes depends
         // on having it. Currently this can only be guaranteed with computational
         // shapes (that don't depend on loading an svg).
-        this.spec.tails.forEach(tail => {
-            this.makeTail(tail);
-        });
+        if (this.spec.tails) {
+            // mostly paranoia, but I ran into a problem here in one version of the code
+            this.spec.tails.forEach(tail => {
+                this.makeTail(tail);
+            });
+        }
 
         // Need to do this again, mainly to adjust the tail positions.
         // Note that in some cases, this might possibly happen before
@@ -813,7 +809,8 @@ export class Bubble {
     // A callback for after the shape is loaded/place.
     // Figures out the information for the tail, then draws the shape and tail
     private makeTail(desiredTail: TailSpec) {
-        if (this.spec.style === "none") {
+        const currentBubbleStyle = this.spec.style;
+        if (currentBubbleStyle === "none" || this.spec.tails.length === 0) {
             return;
         }
 
@@ -822,50 +819,18 @@ export class Bubble {
         let startPoint = this.calculateTailStartPoint();
 
         activateLayer(this.upperLayer);
+
+        // This code was initially written to have a system of different tails based on
+        // a tail style parameter, but actually the type of tail used turns out to be more
+        // based on which style of bubble is used.
         let tail: Tail;
-        switch (desiredTail.style) {
-            case "straight":
-                tail = new StraightTail(
-                    startPoint,
-                    tipPoint,
-                    this.lowerLayer,
-                    this.upperLayer,
-                    this.handleLayer,
-                    desiredTail,
-                    this
-                );
-                break;
-            case "line":
-                tail = new LineTail(
-                    startPoint,
-                    tipPoint,
-                    this.lowerLayer,
-                    this.upperLayer,
-                    this.handleLayer,
-                    desiredTail,
-                    this
-                );
-                break;
-            case "arc":
-            default:
-                // Currently thought tails are specific to thought bubbles.
-                // So these tails don't have their own style; instead,
-                // failing to match a known tail style, we fall through here
-                // and make one based on the bubble style.
-                if (this.spec.style === "thought") {
-                    tail = new ThoughtTail(
-                        startPoint,
-                        tipPoint,
-                        midPoint,
-                        this.lowerLayer,
-                        this.upperLayer,
-                        this.handleLayer,
-                        desiredTail,
-                        this
-                    );
-                    break;
-                }
-                tail = new ArcTail(
+        switch (currentBubbleStyle) {
+            // Currently thought tails are specific to thought bubbles.
+            // So these tails don't have their own style; instead,
+            // failing to match a known tail style, we fall through here
+            // and make one based on the bubble style.
+            case "thought":
+                tail = new ThoughtTail(
                     startPoint,
                     tipPoint,
                     midPoint,
@@ -876,6 +841,31 @@ export class Bubble {
                     this
                 );
                 break;
+            // Currently captions have optional tails. If they have a tail,
+            // it will be a straight line.
+            case "caption":
+                tail = new LineTail(
+                    startPoint,
+                    tipPoint,
+                    this.lowerLayer,
+                    this.upperLayer,
+                    this.handleLayer,
+                    desiredTail,
+                    this
+                );
+                break;
+            // Currently every other bubble type uses an arc tail.
+            default:
+                tail = new ArcTail(
+                    startPoint,
+                    tipPoint,
+                    midPoint,
+                    this.lowerLayer,
+                    this.upperLayer,
+                    this.handleLayer,
+                    desiredTail,
+                    this
+                );
         }
 
         tail.makeShapes();
