@@ -100,7 +100,7 @@ export class Bubble {
                 level: Comical.getMaxLevel(element) + 1
             };
         }
-        const tailSpec = Bubble.makeDefaultTail(element);
+        const tailSpec = Bubble.getDefaultTailSpec(element);
         const result: BubbleSpec = {
             version: Comical.bubbleVersion,
             style: style,
@@ -112,16 +112,16 @@ export class Bubble {
             result.tails = [];
             result.shadowOffset = 5;
         }
-        if (style === "caption-withTail") {
-            result.backgroundColors = ["#FFFFFF", "#DFB28B"];
-            tailSpec.style = "line";
-            result.tails = [tailSpec];
-            result.shadowOffset = 5;
-        }
         if (style === "pointedArcs") {
             result.tails = [];
         }
         return result;
+    }
+
+    // The comic tool needs to be able to propose one of these for styles that don't by
+    // default have a tail.
+    public static getDefaultTailSpec(element: HTMLElement) {
+        return Bubble.makeDefaultTail(element);
     }
 
     //
@@ -351,9 +351,12 @@ export class Bubble {
         // to make the main shape first, since making the tail shapes depends
         // on having it. Currently this can only be guaranteed with computational
         // shapes (that don't depend on loading an svg).
-        this.spec.tails.forEach(tail => {
-            this.makeTail(tail);
-        });
+        if (this.spec.tails) {
+            // mostly paranoia, but I ran into a problem here in one version of the code
+            this.spec.tails.forEach(tail => {
+                this.makeTail(tail);
+            });
+        }
 
         // Need to do this again, mainly to adjust the tail positions.
         // Note that in some cases, this might possibly happen before
@@ -835,17 +838,6 @@ export class Bubble {
                     this
                 );
                 break;
-            case "line":
-                tail = new LineTail(
-                    startPoint,
-                    tipPoint,
-                    this.lowerLayer,
-                    this.upperLayer,
-                    this.handleLayer,
-                    desiredTail,
-                    this
-                );
-                break;
             case "arc":
             default:
                 // Currently thought tails are specific to thought bubbles.
@@ -857,6 +849,20 @@ export class Bubble {
                         startPoint,
                         tipPoint,
                         midPoint,
+                        this.lowerLayer,
+                        this.upperLayer,
+                        this.handleLayer,
+                        desiredTail,
+                        this
+                    );
+                    break;
+                }
+                // Currently captions have optional tails. If they have a tail,
+                // it will be a straight line.
+                if (this.spec.style === "caption" && this.spec.tails.length > 0) {
+                    tail = new LineTail(
+                        startPoint,
+                        tipPoint,
                         this.lowerLayer,
                         this.upperLayer,
                         this.handleLayer,
