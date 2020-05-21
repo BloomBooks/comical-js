@@ -445,10 +445,19 @@ storiesOf("comical", module)
             });
 
             const bubble2 = new Bubble(div2);
+            const tail2 = Bubble.makeDefaultTail(div2);
+            // These settings actually make a somewhat ugly tail with one of our less
+            // successful 'pucker' curves...we may try to improve it one day. But the main
+            // reason for them is that they once produced a nasty drawing problem where the
+            // tip of the tail was drawn well beyond the intended tip point.
+            tail2.tipX = 250;
+            tail2.tipY = 238;
+            tail2.midpointX = 227.6;
+            tail2.midpointY = 228.4;
             bubble2.setBubbleSpec({
                 version: "1.0",
                 style: "speech",
-                tails: [Bubble.makeDefaultTail(div2)],
+                tails: [tail2],
                 level: 1
             });
 

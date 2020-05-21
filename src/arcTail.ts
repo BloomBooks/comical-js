@@ -133,10 +133,17 @@ export class ArcTail extends CurveTail {
         deltaMid.length = midPointWidth * midWidthRatio;
         const mid1 = this.mid.add(deltaMid);
         const mid2 = this.mid.subtract(deltaMid);
+        // In theory, we'd like the two beziers to come together at a perfectly sharp point.
+        // But in practice, some browsers (at least, Chrome and things using that engine)
+        // sometimes draw the narrowing border out well beyond where the tip point is supposed
+        // to be. If we 'square off' the tip by even a very tiny amount, this behavior is
+        // prevented. So the two beziers have 'tips' just slightly different.
+        // See BL-8331, BL-8332.
+        const deltaTip = deltaMid.divide(1000);
 
         // Now we can make the actual path, initially in two pieces.
-        this.pathstroke = this.makeBezier(begin, mid1, this.tip);
-        const bezier2 = this.makeBezier(this.tip, mid2, end);
+        this.pathstroke = this.makeBezier(begin, mid1, this.tip.add(deltaTip));
+        const bezier2 = this.makeBezier(this.tip.subtract(deltaTip), mid2, end);
 
         // For now we decided to always do the pucker...the current algorithm seems
         // to have cleared up the sharp angle problem. Keeping the option to turn
