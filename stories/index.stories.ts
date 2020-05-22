@@ -682,6 +682,39 @@ storiesOf("comical", module)
             "520px"
         );
 
+        addButtonBelow(
+            wrapDiv,
+            "Thought",
+            () => {
+                bubble.mergeWithNewBubbleProps({ style: "thought" });
+                Comical.update(wrapDiv);
+            },
+            "550px"
+        );
+
+        addButtonBelow(
+            wrapDiv,
+            "Caption",
+            () => {
+                bubble.mergeWithNewBubbleProps({ style: "caption" });
+                Comical.update(wrapDiv);
+            },
+            "580px"
+        );
+
+        addButtonBelow(
+            wrapDiv,
+            "Caption w/line",
+            () => {
+                bubble.mergeWithNewBubbleProps({
+                    style: "caption",
+                    tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }]
+                });
+                Comical.update(wrapDiv);
+            },
+            "610px"
+        );
+
         const button = addFinishButton(wrapDiv);
         // Force it below the wrapDiv.
         button.style.position = "absolute";
