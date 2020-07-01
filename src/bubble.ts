@@ -205,7 +205,8 @@ export class Bubble {
         const oldData: BubbleSpec = this.spec;
         const oldDataOverrides: BubbleSpecPattern = {};
 
-        if (oldData.style !== newBubbleProps.style) {
+        // If newBubbleProps doesn't have style defined, we aren't changing style!
+        if (newBubbleProps.style && oldData.style !== newBubbleProps.style) {
             // We will do some extra work to possibly switch other props
             // to their default values for the new style.
 
@@ -215,7 +216,9 @@ export class Bubble {
             // (that is, the property in the current bubble is unchanged from
             // the default for the old style), we will update that property to the
             // default for the new style.
-            if (oldData.tails.length === oldDefaultData.tails.length) {
+            // When bubble styles that normally have tails have the tail turned off, at least oldData.tails
+            // could be undefined here.
+            if (oldData.tails && oldDefaultData.tails && oldData.tails.length === oldDefaultData.tails.length) {
                 // nothing has changed the number of tails, so we want the new spec to
                 // have the default number for its style. First, we keep as many tails
                 // as are wanted and present (currently always zero or one)
