@@ -1339,6 +1339,52 @@ storiesOf("comical", module)
         addFinishButton(wrapDiv, 400, 600);
 
         return wrapDiv;
+    })
+    .add("Change background color on caption w/tail", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.height = "300px";
+        wrapDiv.style.width = "500px";
+
+        const textDiv2 = document.createElement("div");
+        textDiv2.innerText = "Change the bubble background color and make sure the tail doesn't disappear";
+        textDiv2.style.width = "250px";
+        textDiv2.style.textAlign = "center";
+        textDiv2.style.position = "absolute";
+        textDiv2.style.top = "50px";
+        textDiv2.style.left = "120px";
+        wrapDiv.appendChild(textDiv2);
+
+        let bubble = new Bubble(textDiv2);
+        bubble.setBubbleSpec({
+            version: "1.0",
+            style: "caption",
+            tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }],
+            backgroundColors: ["#fff", "#839496"],
+            level: 1
+        });
+
+        setTimeout(() => {
+            Comical.startEditing([wrapDiv]);
+        }, 200);
+
+        addButtonBelow(
+            wrapDiv,
+            "Bloom Blue background",
+            () => {
+                bubble.mergeWithNewBubbleProps({ backgroundColors: ["#1d94a4"] });
+                Comical.update(wrapDiv);
+            },
+            "430px"
+        );
+
+        const button = addFinishButton(wrapDiv);
+        // Force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "400px";
+        button.style.left = "0";
+
+        return wrapDiv;
     });
 
 function makeTextBlock(
