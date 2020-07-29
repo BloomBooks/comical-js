@@ -1,4 +1,5 @@
 import { Layer, Point, Path } from "paper";
+import { BubbleSpec } from "./bubbleSpec";
 
 // a place for useful functions that don't seem to belong in any particular class.
 
@@ -26,4 +27,31 @@ export function makeArc(start: Point, mid: Point, end: Point): Path {
         return new Path.Line(start, end);
     }
     return new Path.Arc(start, mid, end);
+}
+
+export function bubbleSpecImpliesInvisibleSvg(bubbleSpec: BubbleSpec): boolean {
+    if (bubbleSpec.style !== "caption" && bubbleSpec.style !== "none") {
+        return false;
+    }
+    if (bubbleSpec.tails.length > 0) {
+        return false;
+    }
+    const outerBorderColor = bubbleSpec.outerBorderColor;
+    if (outerBorderColor && !(outerBorderColor === "" || outerBorderColor === "none")) {
+        return false;
+    }
+    const shadow = bubbleSpec.shadowOffset;
+    if (shadow) {
+        return false;
+    }
+    const backColors = bubbleSpec.backgroundColors;
+    if (backColors) {
+        if (backColors.length > 1) {
+            return false;
+        }
+        if (backColors.length === 1 && backColors[0] !== "transparent") {
+            return false;
+        }
+    }
+    return true;
 }

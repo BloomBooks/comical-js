@@ -689,7 +689,8 @@ storiesOf("comical", module)
                 bubble.mergeWithNewBubbleProps({ style: "thought" });
                 Comical.update(wrapDiv);
             },
-            "550px"
+            "430px",
+            "200px"
         );
 
         addButtonBelow(
@@ -699,7 +700,8 @@ storiesOf("comical", module)
                 bubble.mergeWithNewBubbleProps({ style: "caption" });
                 Comical.update(wrapDiv);
             },
-            "580px"
+            "460px",
+            "200px"
         );
 
         addButtonBelow(
@@ -712,7 +714,22 @@ storiesOf("comical", module)
                 });
                 Comical.update(wrapDiv);
             },
-            "610px"
+            "490px",
+            "200px"
+        );
+
+        addButtonBelow(
+            wrapDiv,
+            "None w/bkg color", // doesn't work yet. style "none" takes precedence over backgroundColors.
+            () => {
+                bubble.mergeWithNewBubbleProps({
+                    style: "none",
+                    backgroundColors: ["#fedcba"]
+                });
+                Comical.update(wrapDiv);
+            },
+            "520px",
+            "200px"
         );
 
         const button = addFinishButton(wrapDiv);
@@ -721,6 +738,18 @@ storiesOf("comical", module)
         button.style.top = "400px";
         button.style.left = "0";
 
+        // Add a "transparency detector" that should fill with aqua color if the svg is transparent.
+        const detector = document.createElement("div");
+        detector.id = "transparency-detector";
+        detector.style.position = "absolute";
+        detector.style.top = "400px"; // put below canvas
+        detector.style.left = "400px";
+        detector.style.width = "175px";
+        detector.style.border = "1px solid teal";
+        detector.style.borderRadius = "12px";
+        detector.style.textAlign = "center";
+        detector.textContent = "Blue if svg is transparent";
+        wrapDiv.appendChild(detector);
         return wrapDiv;
     })
     .add("Multiple tails", () => {
@@ -1461,9 +1490,22 @@ function addButton(wrapDiv: HTMLElement, buttonText: string, clickHandler: () =>
     return button;
 }
 
-function addButtonBelow(wrapDiv: HTMLElement, buttonText: string, clickHandler: () => void, position: string) {
+function addButtonBelow(
+    wrapDiv: HTMLElement,
+    buttonText: string,
+    clickHandler: () => void,
+    position: string,
+    left?: string
+) {
     var result = addButton(wrapDiv, buttonText, clickHandler);
     result.style.position = "absolute";
     result.style.top = position;
-    result.style.left = "0";
+    result.style.left = left ? left : "0";
 }
+
+// Call after 'Finish' editing.
+// function updateTransparencyDetector(wrapDiv: HTMLElement) {
+//     const detector = document.getElementById("transparency-detector");
+//     const isTransparent = wrapDiv.querySelector("svg[contains(@class, 'comical-generated')]") === null;
+//     detector!.style.backgroundColor = isTransparent ? "aqua" : "";
+// }
