@@ -5,7 +5,7 @@ import { uniqueIds } from "./uniqueId";
 import { BubbleSpec } from "bubbleSpec";
 import { ContainerData } from "./containerData";
 
-// Manages a collection of comic bubbles warpped around HTML elements that share a common parent.
+// Manages a collection of comic bubbles wrapped around HTML elements that share a common parent.
 // Each element that has a comic bubble has a data-bubble attribute specifying the appearance
 // of the bubble. Comical can help with initializing this to add a bubble to an element.
 // The data-bubble attributes contain a modified JSON representation of a BubbleSpec
@@ -70,7 +70,8 @@ export class Comical {
             console.error("attempting convertCanvasToSvgImg on non-active element");
             return;
         }
-        if (containerData.bubbleList.length !== 0) {
+        const bubbles = containerData.bubbleList;
+        if (bubbles.length !== 0 && Comical.isAnyBubbleVisible(bubbles)) {
             // It's quite plausible for there to be no bubbles;
             // we may have turned on bubble editing just in case one
             // got added. But if none did, we have no handles to clean up,
@@ -93,6 +94,15 @@ export class Comical {
         canvas.remove();
         Comical.stopMonitoring(parent);
         this.activeContainers.delete(parent);
+    }
+
+    private static isAnyBubbleVisible(bubbles: Bubble[]): boolean {
+        for (let i = 0; i < bubbles.length; i++) {
+            if (!bubbles[i].isTransparent()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // This logic is designed to prevent accumulating mutation observers.

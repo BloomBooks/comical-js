@@ -96,7 +96,10 @@ export class Bubble {
                 version: Comical.bubbleVersion,
                 style: "none",
                 tails: [],
-                level: Comical.getMaxLevel(element) + 1
+                level: Comical.getMaxLevel(element) + 1,
+                backgroundColors: ["transparent"],
+                shadowOffset: 0,
+                outerBorderColor: undefined
             };
         }
         const tailSpec = Bubble.makeDefaultTail(element);
@@ -249,7 +252,7 @@ export class Bubble {
 
         // We get the default bubble for this style and parent to provide
         // any properties that have never before occurred for this bubble,
-        // particularly a default tail placement if it was previously 'none'.
+        // particularly a default tail placement if it was previously "none".
         // Any values already in oldData override these; for example, if
         // this bubble has ever had a tail, we'll keep its last known position.
         // If we put any values in oldDataOverrides (typically cases where we
@@ -333,6 +336,13 @@ export class Bubble {
         // Make the bubble part of the bubble+tail
         this.loadShapeAsync((newlyLoadedShape: Item) => {
             this.makeShapes(newlyLoadedShape);
+            if (this.isTransparent()) {
+                this.outline.strokeWidth = 0;
+                if (this.shadowShape) {
+                    this.shadowShape.strokeWidth = 0;
+                    this.shadowShape.fillColor = new Color(0, 0, 0, 0);
+                }
+            }
 
             // If we're making the main shape first (especially, thoughtBubble),
             // we need to adjust its size and position before making the tail,
@@ -363,6 +373,28 @@ export class Bubble {
         this.monitorContent();
     }
 
+    // Returns true if nothing in the bubble spec makes the bubble visible.
+    public isTransparent() {
+        if (this.spec.style !== "caption" && this.spec.style !== "none") {
+            return false;
+        }
+        if (this.spec.tails.length > 0) {
+            return false;
+        }
+        const outerBorderColor = this.spec.outerBorderColor;
+        if (outerBorderColor && outerBorderColor !== "none") {
+            return false;
+        }
+        if (this.spec.shadowOffset) {
+            return false;
+        }
+        const backColors = this.spec.backgroundColors;
+        if (backColors && backColors.length === 1 && backColors[0] === "transparent") {
+            return true;
+        }
+        return false;
+    }
+
     // Returns the SVG contents string corresponding to the specified input bubble style
     public static getShapeSvgString(bubbleStyle: string): string {
         let svg: string = "";
@@ -373,8 +405,7 @@ export class Bubble {
             case "shout":
                 svg = Bubble.shoutBubble();
                 break;
-            case "none":
-                break;
+            // "none" is now a "computed" shape.
             default:
                 console.log("unknown bubble type; using default");
                 svg = Bubble.ellipseBubble();
@@ -400,8 +431,9 @@ export class Bubble {
                 return makeThoughtBubble(this);
             case "speech":
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
-            case "caption": // purposeful fall-through; these two types should have the same shape
+            case "caption": // purposeful fall-through; these three types should have the same shape
             case "caption-withTail":
+            case "none":
                 return makeCaptionBox(this);
             default:
                 return undefined; // not a computed shape, may be svg...caller has real default
@@ -471,7 +503,8 @@ export class Bubble {
             this.outline.insertBelow(oldOutline);
             oldOutline.remove();
         }
-        this.outline.strokeWidth = Bubble.defaultBorderWidth;
+        const style = this.getStyle();
+        this.outline.strokeWidth = style === "none" ? 0 : Bubble.defaultBorderWidth;
         this.hScale = this.vScale = 1; // haven't scaled it at all yet.
         // recursive: true is required to see any but the root "g" element
         // (apparently contrary to documentation).
@@ -619,12 +652,6 @@ export class Bubble {
 
     // Adjusts the size and position of the shapes/tails to match the content element
     adjustSizeAndPosition() {
-        if (this.spec.style === "none") {
-            // No need to adjust the bubble or anything because there isn't one.
-            // (Also, if the style is none, then lots of subsequent variables could be undefined/missing/invalid)
-            return;
-        }
-
         var contentWidth = -1;
         var contentHeight = -1;
 
@@ -814,7 +841,7 @@ export class Bubble {
     // Figures out the information for the tail, then draws the shape and tail
     private makeTail(desiredTail: TailSpec) {
         const currentBubbleStyle = this.spec.style;
-        if (currentBubbleStyle === "none" || this.spec.tails.length === 0) {
+        if (this.spec.tails.length === 0) {
             return;
         }
 
@@ -846,8 +873,9 @@ export class Bubble {
                 );
                 break;
             // Currently captions have optional tails. If they have a tail,
-            // it will be a straight line.
+            // it will be a straight line. The 'none' style may soon be able to have tails too.
             case "caption":
+            case "none": // Purposeful fall-through.
                 tail = new LineTail(
                     startPoint,
                     tipPoint,
