@@ -615,6 +615,7 @@ storiesOf("comical", module)
         wrapDiv.style.position = "relative";
         wrapDiv.style.height = "300px";
         wrapDiv.style.width = "500px";
+        wrapDiv.className = "wrapperDiv"; // just for debugging
 
         const textDiv2 = document.createElement("div");
         textDiv2.innerText = "Change the bubble style to None and make sure the tail goes away";
@@ -650,6 +651,7 @@ storiesOf("comical", module)
             () => {
                 bubble.mergeWithNewBubbleProps({ style: "none" });
                 Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
             },
             "430px"
         );
@@ -659,6 +661,7 @@ storiesOf("comical", module)
             () => {
                 bubble.mergeWithNewBubbleProps({ style: "speech" });
                 Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
             },
             "460px"
         );
@@ -668,6 +671,7 @@ storiesOf("comical", module)
             () => {
                 bubble.mergeWithNewBubbleProps({ style: "shout" });
                 Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
             },
             "490px"
         );
@@ -678,6 +682,7 @@ storiesOf("comical", module)
             () => {
                 bubble.mergeWithNewBubbleProps({ style: "pointedArcs" });
                 Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
             },
             "520px"
         );
@@ -688,8 +693,10 @@ storiesOf("comical", module)
             () => {
                 bubble.mergeWithNewBubbleProps({ style: "thought" });
                 Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
             },
-            "550px"
+            "430px",
+            "200px"
         );
 
         addButtonBelow(
@@ -698,8 +705,10 @@ storiesOf("comical", module)
             () => {
                 bubble.mergeWithNewBubbleProps({ style: "caption" });
                 Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
             },
-            "580px"
+            "460px",
+            "200px"
         );
 
         addButtonBelow(
@@ -711,8 +720,27 @@ storiesOf("comical", module)
                     tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }]
                 });
                 Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
             },
-            "610px"
+            "490px",
+            "200px"
+        );
+
+        // This now adds a background color, but I haven't put a way in the test to remove the color.
+        // Refreshing the Storybook webpage is a workaround for now.
+        addButtonBelow(
+            wrapDiv,
+            "None w/bkg color",
+            () => {
+                bubble.mergeWithNewBubbleProps({
+                    style: "none",
+                    backgroundColors: ["#fedcba"]
+                });
+                Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
+            },
+            "520px",
+            "200px"
         );
 
         const button = addFinishButton(wrapDiv);
@@ -720,7 +748,29 @@ storiesOf("comical", module)
         button.style.position = "absolute";
         button.style.top = "400px";
         button.style.left = "0";
+        button.addEventListener("click", () => {
+            // give the other events attached to 'click' a chance to process first.
+            setTimeout(() => {
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
+            }, 500);
+        });
 
+        const inEditMode = () => {
+            return button.innerText === "Finish";
+        };
+
+        // Add a "transparency detector" that should fill with aqua color if the svg is transparent.
+        const detector = document.createElement("div");
+        detector.id = "transparency-detector";
+        detector.style.position = "absolute";
+        detector.style.top = "400px"; // put below canvas
+        detector.style.left = "75px";
+        detector.style.width = "240px";
+        detector.style.border = "1px solid teal";
+        detector.style.borderRadius = "12px";
+        detector.style.textAlign = "center";
+        detector.textContent = "Blue if bubbleSpec is transparent";
+        wrapDiv.appendChild(detector);
         return wrapDiv;
     })
     .add("Multiple tails", () => {
@@ -1435,6 +1485,7 @@ function addFinishButton(wrapDiv: HTMLElement, left?: number, top?: number, root
             }
             editable = false;
             button.innerText = "Edit";
+            button.title = "Edit";
         } else {
             if (roots) {
                 Comical.startEditing(roots);
@@ -1443,6 +1494,7 @@ function addFinishButton(wrapDiv: HTMLElement, left?: number, top?: number, root
             }
             editable = true;
             button.innerText = "Finish";
+            button.title = "Finish";
         }
     });
     return button;
@@ -1461,9 +1513,30 @@ function addButton(wrapDiv: HTMLElement, buttonText: string, clickHandler: () =>
     return button;
 }
 
-function addButtonBelow(wrapDiv: HTMLElement, buttonText: string, clickHandler: () => void, position: string) {
+function addButtonBelow(
+    wrapDiv: HTMLElement,
+    buttonText: string,
+    clickHandler: () => void,
+    position: string,
+    left?: string
+) {
     var result = addButton(wrapDiv, buttonText, clickHandler);
     result.style.position = "absolute";
     result.style.top = position;
-    result.style.left = "0";
+    result.style.left = left ? left : "0";
+}
+
+function updateTransparencyDetector(wrapDiv: HTMLElement, bubble: Bubble, inEditMode: boolean) {
+    const detector = document.getElementById("transparency-detector");
+    let isTransparent = false;
+    if (inEditMode) {
+        detector!.innerText = "Blue if bubbleSpec is transparent";
+        detector!.style.width = "240px";
+        isTransparent = bubble.isTransparent();
+    } else {
+        detector!.innerText = "Blue if no SVG";
+        detector!.style.width = "125px";
+        isTransparent = wrapDiv.querySelector("svg.comical-generated") === null;
+    }
+    detector!.style.backgroundColor = isTransparent ? "aqua" : "";
 }
