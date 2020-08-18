@@ -613,6 +613,11 @@ export class Bubble {
         // enhance: we want to do gradients if the spec calls for it by having more than one color.
         // Issue: sharing the gradation process with any tails (and maybe
         // other bubbles in family??)
+        if (!spec.backgroundColors && spec.style === "none") {
+            // default background Color for style 'none' is now transparent
+            spec.backgroundColors = ["transparent"];
+            this.setBubbleSpec(spec);
+        }
         if (spec.backgroundColors && spec.backgroundColors.length) {
             if (spec.backgroundColors.length === 1) {
                 return new Color(spec.backgroundColors[0]);
