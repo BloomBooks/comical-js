@@ -15,6 +15,13 @@ export interface BubbleSpecPattern {
     tails?: TailSpec[];
     level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
     borderStyle?: string; // not implemented or fully designed yet
+
+    // Optional: Support rounded corners. Currently only applicable if style=caption.
+    // For square corners, leave undefined or set to 0.
+    // For round corners, both must be defined and non-zero.
+    cornerRadiusX?: number;
+    cornerRadiusY?: number;
+
     // Just 1 color for solid, multiple for gradient (top to bottom). Omit for white.
     // Individual strings can be things that can be passed to paper.js to define colors.
     // Typical CSS color names are supported, and also #RRGGBB. Possibly others, but lets not

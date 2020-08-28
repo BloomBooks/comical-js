@@ -113,8 +113,7 @@ export class Bubble {
             result.backgroundColors = ["#FFFFFF", "#DFB28B"];
             result.tails = [];
             result.shadowOffset = 5;
-        }
-        if (style === "pointedArcs") {
+        } else if (style === "pointedArcs") {
             result.tails = [];
         }
         return result;
@@ -434,7 +433,12 @@ export class Bubble {
             case "caption": // purposeful fall-through; these three types should have the same shape
             case "caption-withTail":
             case "none":
-                return makeCaptionBox(this);
+                const spec = this.getFullSpec();
+                const rounderCornerRadii =
+                    spec.cornerRadiusX && spec.cornerRadiusY
+                        ? new Size(spec.cornerRadiusX, spec.cornerRadiusY)
+                        : undefined;
+                return makeCaptionBox(this, rounderCornerRadii);
             default:
                 return undefined; // not a computed shape, may be svg...caller has real default
         }
