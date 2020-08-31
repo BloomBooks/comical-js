@@ -1396,13 +1396,13 @@ storiesOf("comical", module)
         wrapDiv.style.height = "300px";
         wrapDiv.style.width = "500px";
 
-        const textDiv2 = document.createElement("div");
-        textDiv2.innerText = "Change the bubble background color and make sure the tail doesn't disappear";
-        textDiv2.style.width = "250px";
-        textDiv2.style.textAlign = "center";
-        textDiv2.style.position = "absolute";
-        textDiv2.style.top = "50px";
-        textDiv2.style.left = "120px";
+        const textDiv2 = makeTextBlock(
+            wrapDiv,
+            "Change the bubble background color and make sure the tail doesn't disappear",
+            120,
+            50,
+            250
+        );
         wrapDiv.appendChild(textDiv2);
 
         let bubble = new Bubble(textDiv2);
@@ -1433,6 +1433,36 @@ storiesOf("comical", module)
         button.style.position = "absolute";
         button.style.top = "400px";
         button.style.left = "0";
+
+        return wrapDiv;
+    })
+    .add("Rounded corner caption", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.height = "300px";
+        wrapDiv.style.width = "500px";
+
+        const textDiv = makeTextBlock(
+            wrapDiv,
+            "Check that this caption has rounded corners, not square corners",
+            120,
+            50,
+            250
+        );
+
+        const bubble = new Bubble(textDiv);
+        bubble.setBubbleSpec({
+            version: "1.0",
+            style: "caption",
+            cornerRadiusX: 5,
+            cornerRadiusY: 5,
+            tails: [],
+            level: 1
+        });
+
+        setTimeout(() => {
+            Comical.startEditing([wrapDiv]);
+        }, 1);
 
         return wrapDiv;
     });
