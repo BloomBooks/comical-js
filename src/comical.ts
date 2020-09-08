@@ -750,7 +750,7 @@ export class Comical {
             .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
     }
 
-    public static findRelatives(bubble: Bubble): Bubble[] {
+    public static findRelatives(bubble: Bubble, includeThis = false): Bubble[] {
         const familyLevel = bubble.getSpecLevel();
         const orderWithinFamily = bubble.getBubbleSpec().order;
         if (!orderWithinFamily) {
@@ -761,7 +761,7 @@ export class Comical {
                 x =>
                     x.getBubbleSpec().level === familyLevel &&
                     x.getBubbleSpec().order &&
-                    x.getBubbleSpec().order !== orderWithinFamily
+                    (includeThis || x.getBubbleSpec().order !== orderWithinFamily)
             )
             .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
     }

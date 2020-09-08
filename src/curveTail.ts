@@ -64,6 +64,7 @@ export class CurveTail extends Tail {
             this.spec.midpointX = where.x!;
             this.spec.midpointY = where.y!;
             this.persistSpecChanges();
+            this.uniteBubbleShapes();
         };
 
         this.midHandle.onDoubleClick = () => {
@@ -72,6 +73,7 @@ export class CurveTail extends Tail {
             this.makeShapes();
             this.persistSpecChanges();
             this.midHandle.setAutoMode(true);
+            this.uniteBubbleShapes();
         };
     }
 

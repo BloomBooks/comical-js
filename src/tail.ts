@@ -83,7 +83,7 @@ export class Tail {
 
     public onClick(action: () => void): void {
         this.clickAction = action;
-        this.fillPaths().forEach(p => {
+        this.allPaths().forEach(p => {
             Comical.setItemOnClick(p, action);
         });
     }
@@ -114,6 +114,17 @@ export class Tail {
         // persistSpecChanges() AFTER calling this.
     }
 
+    // override for subclasses that can't.
+    public canUnite() {
+        return true;
+    }
+
+    public uniteBubbleShapes() {
+        if (this.bubble) {
+            this.bubble.uniteShapes();
+        }
+    }
+
     adjustTip(newTip: Point): void {
         const delta = newTip.subtract(this.tip!);
         if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
@@ -130,6 +141,7 @@ export class Tail {
             this.spec.tipY = this.tip.y!;
         }
         this.persistSpecChanges();
+        this.uniteBubbleShapes();
     }
 
     // Erases the tail from the canvas
@@ -185,6 +197,7 @@ export class Tail {
                 this.spec.tipX = this.tip.x!;
                 this.spec.tipY = this.tip.y!;
                 this.persistSpecChanges();
+                this.uniteBubbleShapes();
             };
         }
     }

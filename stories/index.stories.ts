@@ -20,6 +20,7 @@ import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
 import { LineTail } from "../src/lineTail";
 import { TailSpec } from "../src/bubbleSpec";
+import { startDragging } from "./bubbleDrag";
 storiesOf("paper", module)
     // Please keep this test case, it is being used to document a Paper.js problem.
     .add("playing with scale", () => {
@@ -467,9 +468,11 @@ storiesOf("comical", module)
                 version: "1.0",
                 style: "thought",
                 tails: [tail3],
-                level: 1
+                level: 1,
+                backgroundColors: ["rgba(255,200,255,0.5)"]
             });
             Comical.convertBubbleJsonToCanvas(wrapDiv);
+            startDragging(wrapDiv);
         }, 200);
 
         const button = addFinishButton(wrapDiv);
@@ -600,6 +603,7 @@ storiesOf("comical", module)
             });
 
             Comical.convertBubbleJsonToCanvas(wrapDiv);
+            startDragging(wrapDiv);
         }, 200);
 
         const button = addFinishButton(wrapDiv);
@@ -835,7 +839,8 @@ storiesOf("comical", module)
                 version: "1.0",
                 style: "speech",
                 tails: [Bubble.makeDefaultTail(div4)],
-                level: 2
+                level: 2,
+                backgroundColors: ["rgba(200,255,255,0.5)"]
             });
             // To get the right behaviour from initializeChild,
             // convertCanvasToSvgImg must have been called with
@@ -851,6 +856,7 @@ storiesOf("comical", module)
             Comical.initializeChild(div1, div4);
             Comical.stopEditing();
             Comical.startEditing([wrapDiv]);
+            startDragging(wrapDiv);
         }, 200);
 
         const button = addFinishButton(wrapDiv);
@@ -892,7 +898,6 @@ storiesOf("comical", module)
         return wrapDiv;
     })
     .add("child bubbles overlap with parent", () => {
-        // A generic picture
         // Four bubbles in the same layer, two overlapping
         const wrapDiv = document.createElement("div");
         wrapDiv.style.position = "relative";
@@ -921,8 +926,8 @@ storiesOf("comical", module)
         parentDivs.push(makeTextBlock(wrapDiv, "Parent 2", 250, 130, 100, 80));
         childDivs.push(makeTextBlock(wrapDiv, "Child 2", 260, 160, 80));
 
-        parentDivs.push(makeTextBlock(wrapDiv, "Parent", 385, 160, 100, 40)); // Parent is PROBABLY loaded before child. Tests opposite scenario as Case #1
-        const childWithTailToSide = makeTextBlock(wrapDiv, "Child", 380, 120, 100, 40);
+        parentDivs.push(makeTextBlock(wrapDiv, "Parent 3", 385, 160, 100, 40)); // Parent is PROBABLY loaded before child. Tests opposite scenario as Case #1
+        const childWithTailToSide = makeTextBlock(wrapDiv, "Child 3", 380, 120, 100, 40);
         childDivs.push(childWithTailToSide);
 
         // MakeDefaultTail() needs to see the divs laid out in their eventual positions,
@@ -993,8 +998,7 @@ storiesOf("comical", module)
         return wrapDiv;
     })
     .add("child bubbles no overlap with parent", () => {
-        // A generic picture
-        // Four bubbles in the same layer, two overlapping
+        // Two bubbles in the same layer, not overlapping
         const wrapDiv = document.createElement("div");
         wrapDiv.style.position = "relative";
         wrapDiv.style.height = "440px";
@@ -1031,7 +1035,11 @@ storiesOf("comical", module)
             // all the previous bubbles in the family defined.
             // So we turn it off and on again between each call.
             Comical.startEditing([wrapDiv]);
+            Comical.stopEditing();
+            Comical.startEditing([wrapDiv]);
             Comical.initializeChild(childDiv, parentDiv);
+            Comical.stopEditing();
+            Comical.startEditing([wrapDiv]);
             Comical.update(wrapDiv);
             Comical.activateElement(childDiv);
         }, 200);
@@ -1381,10 +1389,11 @@ storiesOf("comical", module)
                 style: "caption",
                 tails: [tail],
                 level: 1,
-                backgroundColors: ["#fff", "#839496"],
-                shadowOffset: 1
+                backgroundColors: ["rgba(255,255,255,0.5)", "rgba(150,150,150,0.5)"]
+                //shadowOffset: 1
             });
             Comical.convertBubbleJsonToCanvas(wrapDiv);
+            startDragging(wrapDiv);
         }, 200);
         addFinishButton(wrapDiv, 400, 600);
 

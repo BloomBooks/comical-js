@@ -201,21 +201,35 @@ export class ArcTail extends CurveTail {
         }
 
         this.pathstroke!.strokeWidth = borderWidth;
-        activateLayer(this.upperLayer);
-        this.pathFill = this.pathstroke.clone() as Path;
-        this.pathFill.remove();
-        if (oldFill) {
-            this.pathFill.insertBelow(oldFill);
-            oldFill.remove();
+
+        if (this.bubble && this.bubble.usingOverlay()) {
+            this.pathstroke.strokeColor = new Color("black");
+            activateLayer(this.upperLayer);
+            this.pathFill = this.pathstroke.clone() as Path;
+            this.pathFill.remove();
+            if (oldFill) {
+                this.pathFill.insertBelow(oldFill);
+                oldFill.remove();
+            } else {
+                this.upperLayer.addChild(this.pathFill);
+            }
+            this.pathFill.fillColor = this.getFillColor();
+            this.pathFill.strokeColor = new Color("white");
+            this.pathFill.strokeColor.alpha = 0.01;
+            if (this.clickAction) {
+                Comical.setItemOnClick(this.pathFill, this.clickAction);
+            }
         } else {
-            this.upperLayer.addChild(this.pathFill);
-        }
-        this.pathstroke.strokeColor = new Color("black");
-        this.pathFill.fillColor = this.getFillColor();
-        this.pathFill.strokeColor = new Color("white");
-        this.pathFill.strokeColor.alpha = 0.01;
-        if (this.clickAction) {
-            Comical.setItemOnClick(this.pathFill, this.clickAction);
+            // new approach, the tail is almost invisible, and its shape gets
+            // "united" with the bubble so only that shape is seen.
+            // This one would ideally be transparent, but we use a color that
+            // is only almost transparent so Paper.js will recognize clicks on
+            // the objects.
+            this.pathstroke.fillColor = Bubble.almostInvisibleColor;
+            this.pathstroke.strokeColor = Bubble.almostInvisibleColor;
+            if (this.clickAction) {
+                Comical.setItemOnClick(this.pathstroke, this.clickAction);
+            }
         }
     }
 
