@@ -780,9 +780,10 @@ export class Bubble {
 
     // Returns true if the point is contained within the bubble itself (not including the tail).
     public isHitByPoint(point: Point): boolean {
-        if (!this.fillArea) {
-            // If style = none, then fillArea can be undefined
-            // Do a hit test against the underlying content element directly (rather than the bubble fillArea, which doesn't exist)
+        if (!this.fillArea || !this.fillArea.fillColor || this.fillArea.fillColor.alpha === 0) {
+            // If style = none, then fillArea can be undefined, or transparent, in which case
+            // Paper.js will not consider it ever to be hit.
+            // Do a hit test against the underlying content element directly.
             return this.isContentHitByPoint(point);
         }
 
