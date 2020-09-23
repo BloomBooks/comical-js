@@ -8,9 +8,13 @@ Similarly, Comical-JS does not provide any features related to the text inside t
 
 Comical-JS comes from the [Bloom](https://github.com/BloomBooks) project which is an HTML-based literacy material production app. So it is a bit unusual in that it is designed to work with HTML-based editors like Bloom which make changes to the DOM and then save that DOM. For example, when active, Comical draws all the bubbles above an image using the HTML canvas. But when deactivated, Comical-JS inserts an SVG into the DOM, so that you can display the page without having to fire up Comical. Since you might want to later edit the bubbles, it also stores the JSON that defines each bubble in an attribute named _data-comical_. Using this, it can recreate the interactive bubble as needed.
 
+[Demo of use inside of Bloom](https://i.imgur.com/cOLB8iQ.gif)
+
+![Example from Bloom](https://i.imgur.com/oO9SOfK.png)
+
 ## Project Status
 
-Comical has the main pieces in place and is in use within Bloom. Progress and goals are available on the [Kanban board](https://github.com/BloomBooks/comical-js/projects/1).
+Comical has the main pieces in place and is in use within Bloom. We are gradually adding new bubble types and ways to style bubbles.
 
 ## Using Comical-JS
 
