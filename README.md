@@ -1,4 +1,6 @@
-## About Comical-JS
+## Comical-JS
+
+![Typed with TypeScript](https://flat.badgen.net/badge/icon/Typed?icon=typescript&label&labelColor=blue&color=555555)
 
 Comical-JS is a JavaScript library for displaying and editing comic balloons (speech bubbles), captions, callouts, and related text that floats above one or more images. Lacking a better term, we call all of these things _bubbles_.
 
