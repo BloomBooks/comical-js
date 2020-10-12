@@ -142,13 +142,22 @@ export class ArcTail extends CurveTail {
         const deltaTip = deltaMid.divide(1000);
 
         // Now we can make the actual path, initially in two pieces.
-        this.pathstroke = this.makeBezier(begin, mid1, this.tip.add(deltaTip));
-        const bezier2 = this.makeBezier(this.tip.subtract(deltaTip), mid2, end);
+        let bezier2: Path;
+        if (this.spec.joiner === true) {
+            // No tapering
+            // At both the root an dtip, it maintains width same as width at the mid.
+            this.pathstroke = this.makeBezier(this.root.add(deltaMid), mid1, this.tip.add(deltaMid));
+            bezier2 = this.makeBezier(this.tip.subtract(deltaMid), mid2, this.root.subtract(deltaMid));
+        } else {
+            // Normal tapering
+            this.pathstroke = this.makeBezier(begin, mid1, this.tip.add(deltaTip));
+            bezier2 = this.makeBezier(this.tip.subtract(deltaTip), mid2, end);
+        }
 
-        // For now we decided to always do the pucker...the current algorithm seems
+        // For now we decided to always do the pucker (except for child connectors))...the current algorithm seems
         // to have cleared up the sharp angle problem. Keeping the option to turn
         // it off in case we change our minds.
-        if (true /* puckerShortLeg */) {
+        if (this.spec.joiner !== true /* puckerShortLeg */) {
             // round the corner where it leaves the main bubble.
             let puckerHandleLength = baseAlongPathLength * 0.8; // experimentally determined
 
