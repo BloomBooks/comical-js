@@ -69,8 +69,12 @@ export class ThoughtTail extends CurveTail {
         activateLayer(this.upperLayer);
 
         while (bubbleRim < length) {
-            // bubble Radius grows from tipWidth to rootWidth along the path.
-            const bubbleRadius = ((rootWidth - tipWidth) * bubbleRim) / length + tipWidth;
+            // Normal tails: bubble Radius grows from tipWidth to rootWidth along the path.
+            // Joiner tails: Use a steady width along the entire path (See BL-9082).
+            const bubbleRadius =
+                this.spec.joiner !== true
+                    ? ((rootWidth - tipWidth) * bubbleRim) / length + tipWidth
+                    : (rootWidth + tipWidth) / 2;
             const bubbleCenter = bubbleRim + bubbleRadius;
             if (bubbleCenter >= length) {
                 break; // We can't compute center!

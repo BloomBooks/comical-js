@@ -1,12 +1,12 @@
 {
-  "name": "comicaljs",
-  "version": "0.1.0",
-  "description": "Edit cartoon bubble frames around an HTML element",
-  "main": "index.js",
-  "keywords": ["comic", "balloon", "speech bubbles"],
-  "types": "index.d.ts",
-  "repository": "https://github.com/BloomBooks/comical-js.git",
-  "author": "SIL Bloom Team & Contributors",
-  "license": "MIT",
-  "private": false
+    "name": "comicaljs",
+    "version": "0.2.0",
+    "description": "Edit cartoon bubble frames around an HTML element",
+    "main": "index.js",
+    "keywords": ["comic", "balloon", "speech bubbles"],
+    "types": "index.d.ts",
+    "repository": "https://github.com/BloomBooks/comical-js.git",
+    "author": "SIL Bloom Team & Contributors",
+    "license": "MIT",
+    "private": false
 }
