@@ -142,13 +142,24 @@ export class ArcTail extends CurveTail {
         const deltaTip = deltaMid.divide(1000);
 
         // Now we can make the actual path, initially in two pieces.
-        this.pathstroke = this.makeBezier(begin, mid1, this.tip.add(deltaTip));
-        const bezier2 = this.makeBezier(this.tip.subtract(deltaTip), mid2, end);
+        // Non-joiner tails (e.g. bubbles w/o a child) use a tapering algorithm where the root is wider and it narrows down to a tip.
+        // Joiners (i.e. connectors between parent and child bubbles) use a different algo with a steady width.
+        let bezier2: Path;
+        if (this.spec.joiner !== true) {
+            // Normal tapering
+            this.pathstroke = this.makeBezier(begin, mid1, this.tip.add(deltaTip));
+            bezier2 = this.makeBezier(this.tip.subtract(deltaTip), mid2, end);
+        } else {
+            // No tapering for child connectors (See BL-9082)
+            // At both the root and tip, it maintains width same as width at the mid.
+            this.pathstroke = this.makeBezier(this.root.add(deltaMid), mid1, this.tip.add(deltaMid));
+            bezier2 = this.makeBezier(this.tip.subtract(deltaMid), mid2, this.root.subtract(deltaMid));
+        }
 
-        // For now we decided to always do the pucker...the current algorithm seems
+        // For now we decided to always do the pucker (except for child connectors)...the current algorithm seems
         // to have cleared up the sharp angle problem. Keeping the option to turn
         // it off in case we change our minds.
-        if (true /* puckerShortLeg */) {
+        if (this.spec.joiner !== true /* puckerShortLeg */) {
             // round the corner where it leaves the main bubble.
             let puckerHandleLength = baseAlongPathLength * 0.8; // experimentally determined
 
