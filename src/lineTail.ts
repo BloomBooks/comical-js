@@ -1,5 +1,5 @@
 import { Tail } from "./tail";
-import { Point, Layer, Path, Color } from "paper";
+import paper = require("paper");
 import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { Comical } from "./comical";
@@ -8,11 +8,11 @@ export class LineTail extends Tail {
     private tailWidth: number = 1;
 
     public constructor(
-        root: Point,
-        tip: Point,
-        lowerLayer: Layer,
-        upperLayer: Layer,
-        handleLayer: Layer,
+        root: paper.Point,
+        tip: paper.Point,
+        lowerLayer: paper.Layer,
+        upperLayer: paper.Layer,
+        handleLayer: paper.Layer,
         spec: TailSpec,
         bubble: Bubble | undefined
     ) {
@@ -23,14 +23,14 @@ export class LineTail extends Tail {
         const oldStroke = this.pathstroke;
         this.lowerLayer.activate();
 
-        this.pathstroke = new Path.Line(this.root, this.tip);
+        this.pathstroke = new paper.Path.Line(this.root, this.tip);
 
         if (oldStroke) {
             this.pathstroke.insertBelow(oldStroke);
             oldStroke.remove();
         }
 
-        this.pathstroke.strokeColor = new Color("black");
+        this.pathstroke.strokeColor = new paper.Color("black");
         this.pathstroke.strokeWidth = this.tailWidth;
     }
 

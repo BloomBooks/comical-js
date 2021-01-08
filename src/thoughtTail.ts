@@ -1,4 +1,4 @@
-import { Point, Layer, Path, Color, Size } from "paper";
+import paper = require("paper");
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer, makeArc } from "./utilities";
@@ -10,19 +10,19 @@ import { Comical } from "./comical";
 // Enhance: all the handle-related code could usefully be refactored into a
 // common base class shared by ArcTail, perhaps MidHandleTail
 export class ThoughtTail extends CurveTail {
-    mark1: Path.Circle | undefined;
-    mark2: Path.Circle | undefined;
+    mark1: paper.Path.Circle | undefined;
+    mark2: paper.Path.Circle | undefined;
 
-    miniBubbleStrokePaths: Path[];
-    miniBubbleFillPaths: Path[];
+    miniBubbleStrokePaths: paper.Path[];
+    miniBubbleFillPaths: paper.Path[];
 
     public constructor(
-        root: Point,
-        tip: Point,
-        mid: Point,
-        lowerLayer: Layer,
-        upperLayer: Layer,
-        handleLayer: Layer,
+        root: paper.Point,
+        tip: paper.Point,
+        mid: paper.Point,
+        lowerLayer: paper.Layer,
+        upperLayer: paper.Layer,
+        handleLayer: paper.Layer,
         spec: TailSpec,
         bubble: Bubble | undefined
     ) {
@@ -90,17 +90,20 @@ export class ThoughtTail extends CurveTail {
             if (this.bubble!.isHitByPoint(testPoint)) {
                 break;
             }
-            const newStroke = new Path.Ellipse({ center: center, size: new Size(bubbleRadius + 5, bubbleRadius) });
+            const newStroke = new paper.Path.Ellipse({
+                center: center,
+                size: new paper.Size(bubbleRadius + 5, bubbleRadius)
+            });
             newStroke.strokeWidth = this.bubble!.getBorderWidth();
-            newStroke.strokeColor = new Color("black");
+            newStroke.strokeColor = new paper.Color("black");
             //newStroke.rotation = center.subtract(lastPoint).angle!;
             this.miniBubbleStrokePaths.push(newStroke);
-            const newFill = newStroke.clone() as Path;
+            const newFill = newStroke.clone() as paper.Path;
             newFill.fillColor = this.getFillColor();
             // The idea here is to let the full width of pathStroke's border
             // show through. It doesn't quite work but gives a result consistent
             // with other similar fill paths.
-            newFill.strokeColor = new Color("white");
+            newFill.strokeColor = new paper.Color("white");
             newFill.strokeColor.alpha = 0;
 
             if (this.clickAction) {
@@ -116,11 +119,11 @@ export class ThoughtTail extends CurveTail {
         }
     }
 
-    public fillPaths(): Path[] {
+    public fillPaths(): paper.Path[] {
         return this.miniBubbleFillPaths || [];
     }
 
-    public allPaths(): Path[] {
+    public allPaths(): paper.Path[] {
         let result = this.fillPaths();
         if (this.miniBubbleStrokePaths) {
             result = [...result, ...this.miniBubbleStrokePaths];

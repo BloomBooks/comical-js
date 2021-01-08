@@ -1,4 +1,4 @@
-import { Path, Point, Color, Layer } from "paper";
+import paper = require("paper");
 import { Comical } from "./comical";
 import { TailSpec } from "bubbleSpec";
 import { Bubble } from "./bubble";
@@ -12,29 +12,29 @@ import { Handle } from "./handle";
 // it should override fillPaths() and allPaths().
 export class Tail {
     // the path representing the line around the tail
-    pathstroke: Path;
+    pathstroke: paper.Path;
     // the path representing the space within the tail
-    pathFill: Path;
+    pathFill: paper.Path;
 
     public debugMode: boolean;
 
-    lowerLayer: Layer;
-    upperLayer: Layer;
-    handleLayer: Layer;
+    lowerLayer: paper.Layer;
+    upperLayer: paper.Layer;
+    handleLayer: paper.Layer;
 
-    root: Point;
-    tip: Point;
+    root: paper.Point;
+    tip: paper.Point;
     spec: TailSpec;
     bubble: Bubble | undefined;
     clickAction: () => void;
     state: string; // various values used during handle drag
 
     public constructor(
-        root: Point,
-        tip: Point,
-        lowerLayer: Layer,
-        upperLayer: Layer,
-        handleLayer: Layer,
+        root: paper.Point,
+        tip: paper.Point,
+        lowerLayer: paper.Layer,
+        upperLayer: paper.Layer,
+        handleLayer: paper.Layer,
         spec: TailSpec,
         bubble: Bubble | undefined
     ) {
@@ -48,9 +48,9 @@ export class Tail {
         this.bubble = bubble;
     }
 
-    getFillColor(): Color {
+    getFillColor(): paper.Color {
         if (this.debugMode) {
-            return new Color("yellow");
+            return new paper.Color("yellow");
         }
         if (this.bubble) {
             return this.bubble.getBackgroundColor();
@@ -65,7 +65,7 @@ export class Tail {
         throw new Error("Each subclass must implement makeShapes");
     }
 
-    public fillPaths(): Path[] {
+    public fillPaths(): paper.Path[] {
         if (this.pathFill) {
             return [this.pathFill];
         } else {
@@ -73,7 +73,7 @@ export class Tail {
         }
     }
 
-    public allPaths(): Path[] {
+    public allPaths(): paper.Path[] {
         const result = this.fillPaths();
         if (this.pathstroke) {
             result.push(this.pathstroke);
@@ -88,13 +88,13 @@ export class Tail {
         });
     }
 
-    adjustForChangedRoot(delta: Point) {
+    adjustForChangedRoot(delta: paper.Point) {
         // a hook for subclasses to adjust anything AFTER the root has moved distance delta.
         // Called from inside adjustRoot, which takes care of calling makeShapes() and
         // persistSpecChanges() AFTER calling this.
     }
 
-    adjustRoot(newRoot: Point): void {
+    adjustRoot(newRoot: paper.Point): void {
         const delta = newRoot.subtract(this.root!);
         if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
             // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
@@ -108,13 +108,13 @@ export class Tail {
         this.persistSpecChanges();
     }
 
-    adjustForChangedTip(delta: Point) {
+    adjustForChangedTip(delta: paper.Point) {
         // a hook for subclasses to adjust anything AFTER the tip has moved distance delta.
         // Called from inside adjustTip, which takes care of calling makeShapes() and
         // persistSpecChanges() AFTER calling this.
     }
 
-    adjustTip(newTip: Point): void {
+    adjustTip(newTip: paper.Point): void {
         const delta = newTip.subtract(this.tip!);
         if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
             // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
@@ -137,7 +137,7 @@ export class Tail {
         this.allPaths().forEach(p => p.remove());
     }
 
-    currentStartPoint(): Point {
+    currentStartPoint(): paper.Point {
         if (this.bubble) {
             return this.bubble.calculateTailStartPoint();
         }
@@ -152,7 +152,7 @@ export class Tail {
         }
     }
 
-    okToMoveHandleTo(p: Point): boolean {
+    okToMoveHandleTo(p: paper.Point): boolean {
         if (!this.bubble) {
             return true; // pathological, or maybe in testing...can't really test
         }
@@ -170,7 +170,7 @@ export class Tail {
         if (!this.spec.joiner) {
             tipHandle = new Handle(this.handleLayer, this.tip, true /* auto mode*/);
 
-            tipHandle.onDrag = (where: Point) => {
+            tipHandle.onDrag = (where: paper.Point) => {
                 if (!this.okToMoveHandleTo(where)) {
                     return; // refuse to drag tip to a point inside a bubble
                 }
@@ -219,5 +219,5 @@ export class Tail {
     // you can see where the tip actually ends up. But if it's perfectly transparent,
     // paper.js doesn't register hit tests on the transparent part. So go for a very
     // small alpha.
-    public static transparentColor: Color = new Color("#FFFFFF11");
+    public static transparentColor: paper.Color = new paper.Color("#FFFFFF11");
 }

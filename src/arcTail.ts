@@ -1,4 +1,4 @@
-import { Point, Layer, Path, Color, Segment, Group } from "paper";
+import paper = require("paper");
 import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
@@ -9,12 +9,12 @@ import { Comical } from "./comical";
 // control point, mid, which can also be dragged.
 export class ArcTail extends CurveTail {
     public constructor(
-        root: Point,
-        tip: Point,
-        mid: Point,
-        lowerLayer: Layer,
-        upperLayer: Layer,
-        handleLayer: Layer,
+        root: paper.Point,
+        tip: paper.Point,
+        mid: paper.Point,
+        lowerLayer: paper.Layer,
+        upperLayer: paper.Layer,
+        handleLayer: paper.Layer,
         spec: TailSpec,
         bubble: Bubble | undefined
     ) {
@@ -54,7 +54,7 @@ export class ArcTail extends CurveTail {
             const rootTipCurve = this.makeBezier(this.root, this.mid, this.tip);
             rootTipCurve.remove(); // don't want to see this, it's just for calculations.
             const bubblePath = this.getBubblePath();
-            if (bubblePath instanceof Path) {
+            if (bubblePath instanceof paper.Path) {
                 const intersections = rootTipCurve.getIntersections(bubblePath);
                 if (intersections.length === 0) {
                     // This is very pathological and could only happen if the tip and mid are
@@ -83,8 +83,8 @@ export class ArcTail extends CurveTail {
         let puckerShortLeg = false;
 
         // Figure out where the tail starts and ends...the 'base' of the 'triangle'.
-        let begin: Point; // where the tail path starts
-        let end: Point; // where it ends
+        let begin: paper.Point; // where the tail path starts
+        let end: paper.Point; // where it ends
         if (doingSpeechBubble) {
             // we want to move along the bubble curve a specified distance
             const bubblePath = this.getBubblePath();
@@ -111,7 +111,7 @@ export class ArcTail extends CurveTail {
             // For most bubble shapes, we want to make the base of the tail a line of length tailWidth
             // at right angles to the line from root to mid centered at root.
             const angleBase = this.mid.subtract(this.root).angle!;
-            const deltaBase = new Point(0, 0);
+            const deltaBase = new paper.Point(0, 0);
             deltaBase.angle = angleBase + 90;
             deltaBase.length = tailWidth / 2;
             begin = this.root.add(deltaBase);
@@ -128,7 +128,7 @@ export class ArcTail extends CurveTail {
         const midPath = this.makeBezier(baseOfTail, this.mid, this.tip);
         midPath.remove(); // don't want to see this, it's just for calculations.
         const midWidthRatio = midPath.curves[1].length / midPath.length;
-        const deltaMid = new Point(0, 0);
+        const deltaMid = new paper.Point(0, 0);
         deltaMid.angle = angleBaseTip + 90;
         deltaMid.length = midPointWidth * midWidthRatio;
         const mid1 = this.mid.add(deltaMid);
@@ -144,7 +144,7 @@ export class ArcTail extends CurveTail {
         // Now we can make the actual path, initially in two pieces.
         // Non-joiner tails (e.g. bubbles w/o a child) use a tapering algorithm where the root is wider and it narrows down to a tip.
         // Joiners (i.e. connectors between parent and child bubbles) use a different algo with a steady width.
-        let bezier2: Path;
+        let bezier2: paper.Path;
         if (this.spec.joiner !== true) {
             // Normal tapering
             this.pathstroke = this.makeBezier(begin, mid1, this.tip.add(deltaTip));
@@ -213,7 +213,7 @@ export class ArcTail extends CurveTail {
 
         this.pathstroke!.strokeWidth = borderWidth;
         activateLayer(this.upperLayer);
-        this.pathFill = this.pathstroke.clone() as Path;
+        this.pathFill = this.pathstroke.clone() as paper.Path;
         this.pathFill.remove();
         if (oldFill) {
             this.pathFill.insertBelow(oldFill);
@@ -221,27 +221,27 @@ export class ArcTail extends CurveTail {
         } else {
             this.upperLayer.addChild(this.pathFill);
         }
-        this.pathstroke.strokeColor = new Color("black");
+        this.pathstroke.strokeColor = new paper.Color("black");
         this.pathFill.fillColor = this.getFillColor();
-        this.pathFill.strokeColor = new Color("white");
+        this.pathFill.strokeColor = new paper.Color("white");
         this.pathFill.strokeColor.alpha = 0.01;
         if (this.clickAction) {
             Comical.setItemOnClick(this.pathFill, this.clickAction);
         }
     }
 
-    getBubblePath(): Path {
-        let bubblePath = this.bubble!.outline as Path;
-        if (!(bubblePath instanceof Path)) {
+    getBubblePath(): paper.Path {
+        let bubblePath = this.bubble!.outline as paper.Path;
+        if (!(bubblePath instanceof paper.Path)) {
             // We make a group when drawing the outer outline.
-            let group = this.bubble!.outline as Group;
-            bubblePath = group.children![1] as Path;
+            let group = this.bubble!.outline as paper.Group;
+            bubblePath = group.children![1] as paper.Path;
         }
         return bubblePath;
     }
 
     // Move the start point a single pixel towards the target point.
-    nudgeTowards(start: Point, target: Point): Point {
+    nudgeTowards(start: paper.Point, target: paper.Point): paper.Point {
         const delta = target.subtract(start);
         delta.length = 1;
         return start.add(delta);
@@ -253,9 +253,9 @@ export class ArcTail extends CurveTail {
     // middle control point and ending at the tip; the other side goes in
     // the opposite direction, so it's imporant for the algorithm to
     // be symmetrical.
-    makeBezier(start: Point, mid: Point, end: Point): Path {
-        const result = new Path();
-        result.add(new Segment(start));
+    makeBezier(start: paper.Point, mid: paper.Point, end: paper.Point): paper.Path {
+        const result = new paper.Path();
+        result.add(new paper.Segment(start));
         const baseToTip = end.subtract(start);
         // This makes the handles parallel to the line from start to end.
         // This seems to be a good default for a wide range of positions,
@@ -264,8 +264,8 @@ export class ArcTail extends CurveTail {
         const handleDeltaOut = baseToTip.multiply(0.3);
         handleDeltaIn.length = Math.min(handleDeltaIn.length!, mid.subtract(start).length! / 2);
         handleDeltaOut.length = Math.min(handleDeltaOut.length!, end.subtract(mid).length! / 2);
-        result.add(new Segment(mid, new Point(0, 0).subtract(handleDeltaIn), handleDeltaOut));
-        result.add(new Segment(end));
+        result.add(new paper.Segment(mid, new paper.Point(0, 0).subtract(handleDeltaIn), handleDeltaOut));
+        result.add(new paper.Segment(end));
         // Uncomment to see all the handles. Very useful for debugging.
         //result.fullySelected = true;
         return result;

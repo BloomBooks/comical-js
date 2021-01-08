@@ -1,4 +1,4 @@
-import { Point, Color, Item, Shape, Layer, Gradient, GradientStop, Path, Group, HitResult, Size } from "paper";
+import paper = require("paper");
 import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
 import { Comical } from "./comical";
 import { Tail } from "./tail";
@@ -34,14 +34,14 @@ export class Bubble {
     // When it's simply obtained from an svg, it's usually some kind of group.
     // When we extract a single outline from the svg (or eventually make one algorithmically),
     // it will most likely be a Path.
-    public outline: Item;
+    public outline: paper.Item;
     // If the item has a shadow, this makes it.
     // We would prefer to do this with the paper.js shadow properties applied to shape,
     // but experiment indicates that such shadows do not convert to SVG.
-    private shadowShape: Item;
+    private shadowShape: paper.Item;
     // a clone of this.outline with no border and an appropriate fill; drawn after all outlines
     // to fill them in and erase any overlapping borders.
-    public fillArea: Item;
+    public fillArea: paper.Item;
     // contentHolder is a shape which is a required part of an SVG object used as
     // a bubble. It should be a rectangle in the SVG; it currently comes out as a Shape
     // when the SVG is converted to a paper.js object.
@@ -53,7 +53,7 @@ export class Bubble {
     // It is identified by having id="contentHolder". The bubble shape gets stretched
     // and positioned so this rectangle corresponds to the element that the
     // bubble is wrapping.
-    private contentHolder: Item | undefined;
+    private contentHolder: paper.Item | undefined;
     // The tail objects (which include things like its PaperJs underlying objects and how to draw them).
     // Contains more details than the "tips" array in the spec object
     // The elements in each array should correspond, though.
@@ -63,9 +63,9 @@ export class Bubble {
     private vScale: number = 1; // Vertical scaling
 
     // The PaperJS layers in which to draw various pieces of the bubble into.
-    private lowerLayer: Layer;
-    private upperLayer: Layer;
-    private handleLayer: Layer;
+    private lowerLayer: paper.Layer;
+    private upperLayer: paper.Layer;
+    private handleLayer: paper.Layer;
 
     // true if we computed a shape for the bubble (in such a way that more than just
     // its size depends on the shape and size of the content element).
@@ -276,45 +276,45 @@ export class Bubble {
         this.persistBubbleSpec();
     }
 
-    public setLayers(newLowerLayer: Layer, newUpperLayer: Layer, newHandleLayer: Layer): void {
+    public setLayers(newLowerLayer: paper.Layer, newUpperLayer: paper.Layer, newHandleLayer: paper.Layer): void {
         this.setLowerLayer(newLowerLayer);
         this.setUpperLayer(newUpperLayer);
         this.setHandleLayer(newHandleLayer);
     }
 
-    public getLowerLayer(): Layer {
+    public getLowerLayer(): paper.Layer {
         return this.lowerLayer;
     }
 
     // Sets the value of lowerLayer. The "outline" shapes are drawn in the lower layer.
-    public setLowerLayer(layer: Layer): void {
+    public setLowerLayer(layer: paper.Layer): void {
         this.lowerLayer = layer;
     }
 
-    public getUpperLayer(): Layer {
+    public getUpperLayer(): paper.Layer {
         return this.upperLayer;
     }
 
     // Sets the value of upperLayer. The "fill" shapes are drawn in the upper layer.
-    public setUpperLayer(layer: Layer): void {
+    public setUpperLayer(layer: paper.Layer): void {
         this.upperLayer = layer;
     }
 
     // The layer containing the tip and midpoint curve handles
-    public setHandleLayer(layer: Layer): void {
+    public setHandleLayer(layer: paper.Layer): void {
         this.handleLayer = layer;
     }
 
     // Ensures that this bubble has all the required layers and creates them, if necessary
     private initializeLayers(): void {
         if (!this.lowerLayer) {
-            this.lowerLayer = new Layer(); // Note that the constructor automatically adds the newly-created layer to the project
+            this.lowerLayer = new paper.Layer(); // Note that the constructor automatically adds the newly-created layer to the project
         }
         if (!this.upperLayer) {
-            this.upperLayer = new Layer();
+            this.upperLayer = new paper.Layer();
         }
         if (!this.handleLayer) {
-            this.handleLayer = new Layer();
+            this.handleLayer = new paper.Layer();
         }
     }
 
@@ -333,13 +333,13 @@ export class Bubble {
         this.tails = [];
 
         // Make the bubble part of the bubble+tail
-        this.loadShapeAsync((newlyLoadedShape: Item) => {
+        this.loadShapeAsync((newlyLoadedShape: paper.Item) => {
             this.makeShapes(newlyLoadedShape);
             if (this.isTransparent()) {
                 this.outline.strokeWidth = 0;
                 if (this.shadowShape) {
                     this.shadowShape.strokeWidth = 0;
-                    this.shadowShape.fillColor = new Color(0, 0, 0, 0);
+                    this.shadowShape.fillColor = new paper.Color(0, 0, 0, 0);
                 }
             }
 
@@ -415,7 +415,7 @@ export class Bubble {
 
     // Get the main shape immediately if computed.
     // return undefined if the current bubble style is not a computed shape.
-    private getComputedShape(): Item | undefined {
+    private getComputedShape(): paper.Item | undefined {
         if (this.content) {
             // remember the shape of the content from the most recent call.
             this.oldContentHeight = this.content.offsetHeight;
@@ -436,7 +436,7 @@ export class Bubble {
                 const spec = this.getFullSpec();
                 const rounderCornerRadii =
                     spec.cornerRadiusX && spec.cornerRadiusY
-                        ? new Size(spec.cornerRadiusX, spec.cornerRadiusY)
+                        ? new paper.Size(spec.cornerRadiusX, spec.cornerRadiusY)
                         : undefined;
                 return makeCaptionBox(this, rounderCornerRadii);
             default:
@@ -447,7 +447,7 @@ export class Bubble {
     // Loads the shape (technically Item) corresponding to the specified bubbleStyle,
     // and calls the onShapeLoadeed() callback once the shape is finished loading
     // (passing it in as the shape parameter)
-    private loadShapeAsync(onShapeLoaded: (shape: Item) => void) {
+    private loadShapeAsync(onShapeLoaded: (shape: paper.Item) => void) {
         const bubbleStyle = this.getStyle();
         this.shapeIsComputed = false;
         var shape = this.getComputedShape();
@@ -463,14 +463,14 @@ export class Bubble {
         // ImportSVG may return asynchronously if the input string is a URL.
         // Even though the string we pass contains the svg contents directly (not a URL), when I ran it in Bloom I still got a null shape out as the return value, so best to treat it as async.
         this.lowerLayer.project.importSVG(svg, {
-            onLoad: (item: Item) => {
+            onLoad: (item: paper.Item) => {
                 onShapeLoaded(item);
             }
         });
     }
 
     // Attaches the specified shape to this object's content element
-    private makeShapes(shape: Item) {
+    private makeShapes(shape: paper.Item) {
         var oldOutline = this.outline;
         var oldFillArea = this.fillArea;
         activateLayer(this.lowerLayer);
@@ -500,7 +500,7 @@ export class Bubble {
         });
         if (outlineShape) {
             shape.remove();
-            this.outline = (outlineShape as Shape).toPath();
+            this.outline = (outlineShape as paper.Shape).toPath();
             this.lowerLayer.addChild(this.outline);
         }
         if (oldOutline) {
@@ -542,7 +542,7 @@ export class Bubble {
         // doesn't hide the outline. And if the outline border is thicker, we
         // have to shrink it more. Better to leave the border properties,
         // but make that part of the fill area transparent.
-        this.fillArea.strokeColor = new Color("white");
+        this.fillArea.strokeColor = new paper.Color("white");
         this.fillArea.strokeColor.alpha = 0;
 
         this.fillArea.fillColor = this.getBackgroundColor();
@@ -566,7 +566,7 @@ export class Bubble {
             // its FILL color to the outerBorderColor...and then put it behind the
             // main shape so only the part outside it shows. And we can use its stroke for
             // the second outer border.
-            outerBorder.fillColor = new Color(this.getFullSpec().outerBorderColor!);
+            outerBorder.fillColor = new paper.Color(this.getFullSpec().outerBorderColor!);
             outerBorder.insertBelow(this.outline);
             // Now we have to get it the right size, which is also tricky.
             // We want about 8 px of red. The overall shape will eventually be scaled
@@ -590,20 +590,20 @@ export class Bubble {
             outerBorder.strokeWidth = 1;
             // We don't have to insert this group, just make it and set it as this.outline,
             // so that when we adjustShapes() both shapes get adjusted.
-            const newOutline = new Group([outerBorder, this.outline]);
+            const newOutline = new paper.Group([outerBorder, this.outline]);
             this.outline = newOutline;
         }
     }
 
-    public getDefaultContentHolder(): Shape {
-        const contentTopLeft = new Point(this.content.offsetLeft, this.content.offsetTop);
-        const contentSize = new Size(this.content.offsetWidth, this.content.offsetHeight);
-        const contentHolder = new Shape.Rectangle(contentTopLeft, contentSize);
+    public getDefaultContentHolder(): paper.Shape {
+        const contentTopLeft = new paper.Point(this.content.offsetLeft, this.content.offsetTop);
+        const contentSize = new paper.Size(this.content.offsetWidth, this.content.offsetHeight);
+        const contentHolder = new paper.Shape.Rectangle(contentTopLeft, contentSize);
         contentHolder.name = "content-holder";
 
         // the contentHolder is normally removed, but this might be useful in debugging.
-        contentHolder.strokeColor = new Color("red");
-        contentHolder.fillColor = new Color("transparent");
+        contentHolder.strokeColor = new paper.Color("red");
+        contentHolder.fillColor = new paper.Color("transparent");
 
         return contentHolder;
     }
@@ -612,7 +612,7 @@ export class Bubble {
         return Bubble.defaultBorderWidth;
     }
 
-    public getBackgroundColor(): Color {
+    public getBackgroundColor(): paper.Color {
         const spec = this.getFullSpec();
         // enhance: we want to do gradients if the spec calls for it by having more than one color.
         // Issue: sharing the gradation process with any tails (and maybe
@@ -624,14 +624,16 @@ export class Bubble {
         }
         if (spec.backgroundColors && spec.backgroundColors.length) {
             if (spec.backgroundColors.length === 1) {
-                return new Color(spec.backgroundColors[0]);
+                return new paper.Color(spec.backgroundColors[0]);
             }
 
-            const gradient = new Gradient();
-            const stops: GradientStop[] = [];
+            const gradient = new paper.Gradient();
+            const stops: paper.GradientStop[] = [];
             // We want the gradient offsets evenly spaced from 0 to 1.
             spec.backgroundColors!.forEach((x, index) =>
-                stops.push(new GradientStop(new Color(x), (1 / (spec.backgroundColors!.length - 1)) * index))
+                stops.push(
+                    new paper.GradientStop(new paper.Color(x), (1 / (spec.backgroundColors!.length - 1)) * index)
+                )
             );
             gradient.stops = stops;
 
@@ -646,14 +648,17 @@ export class Bubble {
             // Previously, captions seemed to need using 0 to height instead.
             //
             // enhance 2: If the tail is above the bubble, might make more sense to do gradient bottom -> top instead of top -> bottom
-            const gradientOrigin = new Point(xCenter, this.outline.bounds!.top!);
-            const gradientDestination = new Point(xCenter, this.outline.bounds!.top! + this.outline.bounds!.height!);
+            const gradientOrigin = new paper.Point(xCenter, this.outline.bounds!.top!);
+            const gradientDestination = new paper.Point(
+                xCenter,
+                this.outline.bounds!.top! + this.outline.bounds!.height!
+            );
 
             // Old code which used 0 to height (seemed necessary for SVG captions)
-            // const gradientOrigin = new Point(xCenter, 0);
-            // const gradientDestination = new Point(xCenter, this.outline ? this.outline.bounds!.height! : 50);
+            // const gradientOrigin = new paper.Point(xCenter, 0);
+            // const gradientDestination = new paper.Point(xCenter, this.outline ? this.outline.bounds!.height! : 50);
 
-            const result: Color = new Color(gradient, gradientOrigin, gradientDestination);
+            const result: paper.Color = new paper.Color(gradient, gradientOrigin, gradientDestination);
             return result;
         }
         return Comical.backColor;
@@ -697,7 +702,7 @@ export class Bubble {
         }
         const contentLeft = this.content.offsetLeft;
         const contentTop = this.content.offsetTop;
-        const contentCenter = new Point(contentLeft + contentWidth / 2, contentTop + contentHeight / 2);
+        const contentCenter = new paper.Point(contentLeft + contentWidth / 2, contentTop + contentHeight / 2);
         if (this.outline) {
             // it's just possible if shape is created asynchronously from
             // an SVG that this method is called to adjust tails before the main shape
@@ -779,7 +784,7 @@ export class Bubble {
     }
 
     // Returns true if the point is contained within the bubble itself (not including the tail).
-    public isHitByPoint(point: Point): boolean {
+    public isHitByPoint(point: paper.Point): boolean {
         if (!this.fillArea || !this.fillArea.fillColor || this.fillArea.fillColor.alpha === 0) {
             // If style = none, then fillArea can be undefined, or transparent, in which case
             // Paper.js will not consider it ever to be hit.
@@ -787,12 +792,12 @@ export class Bubble {
             return this.isContentHitByPoint(point);
         }
 
-        const hitResult: HitResult | null = this.fillArea.hitTest(point);
+        const hitResult: paper.HitResult | null = this.fillArea.hitTest(point);
         return !!hitResult;
     }
 
     // Returns true if the point is contained within the content element's borders.
-    public isContentHitByPoint(point: Point): boolean {
+    public isContentHitByPoint(point: paper.Point): boolean {
         // The point is relative to the canvas... so you need to make sure to get the position of the content relative to the canvas too.
         // OffsetLeft/Top works perfectly. It is relative to the offsetParent (which is the imageContainer).
         // It goes from the inside edge of the parent's border (which coincides with where the canvas element is placed)
@@ -806,10 +811,10 @@ export class Bubble {
         const top = this.content.offsetTop;
         const bottom = top + this.content.offsetHeight;
 
-        return left <= point.x! && point.x! <= right && (top <= point.y! && point.y! <= bottom);
+        return left <= point.x! && point.x! <= right && top <= point.y! && point.y! <= bottom;
     }
 
-    private adjustJoiners(newTip: Point): void {
+    private adjustJoiners(newTip: paper.Point): void {
         this.tails.forEach((tail: Tail) => {
             if (tail.spec.joiner && tail.adjustTip(newTip)) {
                 this.persistBubbleSpecWithoutMonitoring();
@@ -855,8 +860,8 @@ export class Bubble {
             return;
         }
 
-        const tipPoint = new Point(desiredTail.tipX, desiredTail.tipY);
-        const midPoint = new Point(desiredTail.midpointX, desiredTail.midpointY);
+        const tipPoint = new paper.Point(desiredTail.tipX, desiredTail.tipY);
+        const midPoint = new paper.Point(desiredTail.midpointX, desiredTail.midpointY);
         let startPoint = this.calculateTailStartPoint();
 
         activateLayer(this.upperLayer);
@@ -925,8 +930,8 @@ export class Bubble {
         });
     }
 
-    public calculateTailStartPoint(): Point {
-        return new Point(
+    public calculateTailStartPoint(): paper.Point {
+        return new paper.Point(
             this.content.offsetLeft + this.content.offsetWidth / 2,
             this.content.offsetTop + this.content.offsetHeight / 2
         );
@@ -951,7 +956,7 @@ export class Bubble {
         const parentTop = 0;
         const parentHeight = parent.offsetHeight;
         // center of targetbox relative to parent.
-        const rootCenter = new Point(
+        const rootCenter = new paper.Point(
             targetLeft - parentLeft + targetWidth / 2,
             targetTop - parentTop + targetHeight / 2
         );
@@ -984,11 +989,11 @@ export class Bubble {
         if (targetY > parentHeight) {
             targetY = parentHeight;
         }
-        const target = new Point(targetX, targetY);
-        const mid: Point = Bubble.defaultMid(
+        const target = new paper.Point(targetX, targetY);
+        const mid: paper.Point = Bubble.defaultMid(
             rootCenter,
             target,
-            new Size(targetDiv.offsetWidth, targetDiv.offsetHeight)
+            new paper.Size(targetDiv.offsetWidth, targetDiv.offsetHeight)
         );
         const result: TailSpec = {
             tipX: targetX,
@@ -1000,7 +1005,7 @@ export class Bubble {
         return result;
     }
 
-    static adjustTowards(origin: Point, target: Point, originSize: Size): Point {
+    static adjustTowards(origin: paper.Point, target: paper.Point, originSize: paper.Size): paper.Point {
         // Return the origin point adjusted along a line towards target far enough to fall on
         // the border of a retangle of size originSize centered at origin.
         let delta = target.subtract(origin);
@@ -1018,7 +1023,12 @@ export class Bubble {
     // Then we bump it a little to one side so that the curve bends slightly towards
     // the y axis, by an amount that decreases to zero as the line approaches
     // horizontal or vertical.
-    static defaultMid(start: Point, target: Point, startSize: Size, targetSize?: Size): Point {
+    static defaultMid(
+        start: paper.Point,
+        target: paper.Point,
+        startSize: paper.Size,
+        targetSize?: paper.Size
+    ): paper.Point {
         const startBorderPoint = Bubble.adjustTowards(start, target, startSize);
         const targetBorderPoint = targetSize ? Bubble.adjustTowards(target, start, targetSize) : target;
 
@@ -1059,7 +1069,10 @@ export class Bubble {
     // introduced to make things look more natural.
     // Enhance: could provide some parameter to control the ratio between
     // the border length and the number of points.
-    makeBubbleItem(padWidth: number, pathMaker: (points: Point[], center: Point) => Path): Item {
+    makeBubbleItem(
+        padWidth: number,
+        pathMaker: (points: paper.Point[], center: paper.Point) => paper.Path
+    ): paper.Item {
         const width = this.content.clientWidth;
         const height = this.content.clientHeight;
         const [outlineShape, contentHolder] = makeSpeechBubbleParts(
@@ -1102,13 +1115,13 @@ export class Bubble {
         const yRatio = contentHolder.size!.height! / (height + padWidth * 2);
         contentHolder.set({
             center: contentHolder.position,
-            size: new Size(width * xRatio, height * yRatio)
+            size: new paper.Size(width * xRatio, height * yRatio)
         });
 
         // aiming for arcs ~30px long, but fewer than 5 would look weird.
         const computedArcCount = Math.round(((width + height) * 2) / 30);
         const arcCount = Math.max(computedArcCount, 5);
-        const points: Point[] = [];
+        const points: paper.Point[] = [];
 
         // We need a 'random' number generator that is predictable so
         // the points don't move every time we open the page.
@@ -1132,28 +1145,28 @@ export class Bubble {
         }
 
         const outline = pathMaker(points, contentHolder.position!);
-        return new Group([outline, contentHolder]);
+        return new paper.Group([outline, contentHolder]);
     }
 
     // Make a computed bubble shape by drawing an inward arc between each pair of points
     // in the array produced by makeBubbleItem.
-    makePointedArcBubble(): Item {
+    makePointedArcBubble(): paper.Item {
         const arcDepth = 7;
         return this.makeBubbleItem(arcDepth, (points, center) => {
-            const outline = new Path();
+            const outline = new paper.Path();
             for (let i = 0; i < points.length; i++) {
                 const start = points[i];
                 const end = i < points.length - 1 ? points[i + 1] : points[0];
-                const mid = new Point((start.x! + end.x!) / 2, (start.y! + end.y!) / 2);
+                const mid = new paper.Point((start.x! + end.x!) / 2, (start.y! + end.y!) / 2);
                 const deltaCenter = mid.subtract(center);
                 deltaCenter.length = arcDepth;
                 const arcPoint = mid.subtract(deltaCenter);
-                const arc = new Path.Arc(start, arcPoint, end);
+                const arc = new paper.Path.Arc(start, arcPoint, end);
                 arc.remove();
                 outline.addSegments(arc.segments!);
             }
             outline.strokeWidth = 1;
-            outline.strokeColor = new Color("black");
+            outline.strokeColor = new paper.Color("black");
             outline.closed = true; // It should already be, but may help paper.js to treat it so.
             return outline;
         });

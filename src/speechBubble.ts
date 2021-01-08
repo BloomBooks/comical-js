@@ -1,4 +1,4 @@
-import { Segment, Point, Path, Color, Group, Shape, Item } from "paper";
+import paper = require("paper");
 
 // This file contains the definition for how a speech bubble is made.
 // It is roughly an oval, but actually made as a sequence of four bezier curves,
@@ -13,7 +13,7 @@ export function makeSpeechBubbleParts(
     height: number,
     xHandleFraction: number,
     yHandleFraction: number
-): [Path, Shape.Rectangle] {
+): [paper.Path, paper.Shape.Rectangle] {
     if (width <= 0) {
         console.assert(false, `Invalid width. Received: ${width}. Expected: width > 0`);
         width = 1;
@@ -36,29 +36,29 @@ export function makeSpeechBubbleParts(
     const bottom = top + height;
     const xHandleOffset = (width / 2) * xHandleFraction;
     const yHandleOffset = (height / 2) * yHandleFraction;
-    var firstSegment = new Segment({
-        point: new Point(xCenter, top),
-        handleOut: new Point(xHandleOffset, 0),
-        handleIn: new Point(-xHandleOffset, 0)
+    var firstSegment = new paper.Segment({
+        point: new paper.Point(xCenter, top),
+        handleOut: new paper.Point(xHandleOffset, 0),
+        handleIn: new paper.Point(-xHandleOffset, 0)
     });
-    var secondSegment = new Segment({
-        point: new Point(right, yCenter),
-        handleIn: new Point(0, -yHandleOffset),
-        handleOut: new Point(0, yHandleOffset)
+    var secondSegment = new paper.Segment({
+        point: new paper.Point(right, yCenter),
+        handleIn: new paper.Point(0, -yHandleOffset),
+        handleOut: new paper.Point(0, yHandleOffset)
     });
-    var thirdSegment = new Segment({
-        point: new Point(xCenter, bottom),
-        handleIn: new Point(xHandleOffset, 0),
-        handleOut: new Point(-xHandleOffset, 0)
+    var thirdSegment = new paper.Segment({
+        point: new paper.Point(xCenter, bottom),
+        handleIn: new paper.Point(xHandleOffset, 0),
+        handleOut: new paper.Point(-xHandleOffset, 0)
     });
-    var fourthSegment = new Segment({
-        point: new Point(left, yCenter),
-        handleIn: new Point(0, yHandleOffset),
-        handleOut: new Point(0, -yHandleOffset)
+    var fourthSegment = new paper.Segment({
+        point: new paper.Point(left, yCenter),
+        handleIn: new paper.Point(0, yHandleOffset),
+        handleOut: new paper.Point(0, -yHandleOffset)
     });
-    const path = new Path({
+    const path = new paper.Path({
         segments: [firstSegment, secondSegment, thirdSegment, fourthSegment],
-        strokeColor: new Color("black")
+        strokeColor: new paper.Color("black")
     });
     path.name = "outlineShape";
     // This calculation was a bit of inspired guess-work, but it seems to
@@ -68,12 +68,12 @@ export function makeSpeechBubbleParts(
     const topRight = topRightCurve.getLocationAt((topRightCurve.length * width) / (width + height)).point;
     const bottomLeftCurve = path.curves[2];
     const bottomLeft = bottomLeftCurve.getLocationAt((bottomLeftCurve.length * width) / (width + height)).point;
-    const contentHolder = new Shape.Rectangle(topRight, bottomLeft);
+    const contentHolder = new paper.Shape.Rectangle(topRight, bottomLeft);
     contentHolder.name = "content-holder";
 
     // the contentHolder is normally removed, but this might be useful in debugging.
-    contentHolder.strokeColor = new Color("red");
-    contentHolder.fillColor = new Color("transparent");
+    contentHolder.strokeColor = new paper.Color("red");
+    contentHolder.fillColor = new paper.Color("transparent");
     path.closed = true; // causes it to fill in the curve back to the start
     return [path, contentHolder];
 }
@@ -83,8 +83,8 @@ export function makeSpeechBubble(
     height: number,
     xHandleFraction: number,
     yHandleFraction: number
-): Item {
+): paper.Item {
     const [path, contentHolder] = makeSpeechBubbleParts(width, height, xHandleFraction, yHandleFraction);
-    const result = new Group([path, contentHolder]);
+    const result = new paper.Group([path, contentHolder]);
     return result;
 }

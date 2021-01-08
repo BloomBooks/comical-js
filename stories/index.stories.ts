@@ -1,20 +1,6 @@
 //import { document, console } from 'global';
 import { storiesOf } from "@storybook/html";
-import {
-    setup,
-    Point,
-    project,
-    Layer,
-    //Path,
-    Color,
-    //Rectangle,
-    Item,
-    Shape,
-    Segment,
-    Path,
-    ToolEvent,
-    Size
-} from "paper";
+import paper = require("paper"); // Note!!! Because paper.d.ts uses "export = ..." syntax, we must use "import ... = require(...);" syntax. Otherwise, paper will be null and you'll get exceptions or silent unexpected behavior
 import { Comical } from "../src/comical";
 import { Bubble } from "../src/bubble";
 import { ArcTail } from "../src/arcTail";
@@ -25,44 +11,44 @@ storiesOf("paper", module)
     .add("playing with scale", () => {
         const wrapDiv = document.createElement("div");
         // Make a demo canvas
-        const makeCanvas = (color: Color, parent: HTMLElement) => {
+        const makeCanvas = (color: paper.Color, parent: HTMLElement) => {
             const canvas1 = document.createElement("canvas");
             canvas1.height = canvas1.width = 300;
             parent.appendChild(canvas1);
-            setup(canvas1);
-            const project1 = project!;
+            paper.setup(canvas1);
+            const project1 = paper.project!;
             //Give it a colored background so mouseDown works on the layer.
-            var background = new Path.Rectangle(new Point(0, 0), new Point(300, 300));
+            var background = new paper.Path.Rectangle(new paper.Point(0, 0), new paper.Point(300, 300));
             background.fillColor = color;
             // mouse down on the canvas adds a dot to show where you clicked.
-            project1.activeLayer.onMouseDown = (event: ToolEvent) => {
+            project1.activeLayer.onMouseDown = (event: paper.ToolEvent) => {
                 project1.activate();
-                var path = new Path.Circle({
+                var path = new paper.Path.Circle({
                     center: event.point,
                     radius: 3,
-                    fillColor: new Color("red")
+                    fillColor: new paper.Color("red")
                 });
                 // if you click on the dot it should draw another circle around it
                 path.onMouseDown = () => {
-                    project;
-                    const path2 = new Path.Circle({
+                    paper.project;
+                    const path2 = new paper.Path.Circle({
                         center: path.position,
                         radius: 6,
-                        strokeColor: new Color("blue")
+                        strokeColor: new paper.Color("blue")
                     });
                     path2.strokeWidth = 2;
                 };
             };
         };
         // at normal scale all is well.
-        makeCanvas(new Color("yellow"), wrapDiv);
+        makeCanvas(new paper.Color("yellow"), wrapDiv);
 
         // now make another canvas that is transformed.
         const wrap2 = document.createElement("div");
         wrapDiv.appendChild(wrap2);
         wrap2.style.transform = "scale(1.3)";
         wrap2.style.transformOrigin = "left top";
-        makeCanvas(new Color("pink"), wrap2);
+        makeCanvas(new paper.Color("pink"), wrap2);
 
         return wrapDiv;
     })
@@ -73,7 +59,7 @@ storiesOf("paper", module)
         canvas.width = 600;
         var xhandleFraction = 0.6;
         var yHandleFraction = 0.8;
-        setup(canvas);
+        paper.setup(canvas);
         wrapDiv.appendChild(canvas);
         const makePath = () => {
             const top = 50;
@@ -86,36 +72,36 @@ storiesOf("paper", module)
             const bottom = top + height;
             const xHandleOffset = (width / 2) * xhandleFraction;
             const yHandleOffset = (height / 2) * yHandleFraction;
-            var firstSegment = new Segment({
-                point: new Point(xCenter, top),
-                handleOut: new Point(xHandleOffset, 0),
-                handleIn: new Point(-xHandleOffset, 0)
+            var firstSegment = new paper.Segment({
+                point: new paper.Point(xCenter, top),
+                handleOut: new paper.Point(xHandleOffset, 0),
+                handleIn: new paper.Point(-xHandleOffset, 0)
             });
-            var secondSegment = new Segment({
-                point: new Point(right, yCenter),
-                handleIn: new Point(0, -yHandleOffset),
-                handleOut: new Point(0, yHandleOffset)
+            var secondSegment = new paper.Segment({
+                point: new paper.Point(right, yCenter),
+                handleIn: new paper.Point(0, -yHandleOffset),
+                handleOut: new paper.Point(0, yHandleOffset)
             });
-            var thirdSegment = new Segment({
-                point: new Point(xCenter, bottom),
-                handleIn: new Point(xHandleOffset, 0),
-                handleOut: new Point(-xHandleOffset, 0)
+            var thirdSegment = new paper.Segment({
+                point: new paper.Point(xCenter, bottom),
+                handleIn: new paper.Point(xHandleOffset, 0),
+                handleOut: new paper.Point(-xHandleOffset, 0)
             });
-            var fourthSegment = new Segment({
-                point: new Point(left, yCenter),
-                handleIn: new Point(0, yHandleOffset),
-                handleOut: new Point(0, -yHandleOffset)
+            var fourthSegment = new paper.Segment({
+                point: new paper.Point(left, yCenter),
+                handleIn: new paper.Point(0, yHandleOffset),
+                handleOut: new paper.Point(0, -yHandleOffset)
             });
-            const path = new Path({
+            const path = new paper.Path({
                 segments: [firstSegment, secondSegment, thirdSegment, fourthSegment],
-                strokeColor: new Color("black")
+                strokeColor: new paper.Color("black")
             });
             const topRightCurve = path.curves[0];
             const topRight = topRightCurve.getLocationAt((topRightCurve.length * width) / (width + height)).point;
             const bottomLeftCurve = path.curves[2];
             const bottomLeft = bottomLeftCurve.getLocationAt((bottomLeftCurve.length * width) / (width + height)).point;
-            const contentHolder = new Path.Rectangle(topRight, bottomLeft);
-            contentHolder.strokeColor = new Color("red");
+            const contentHolder = new paper.Path.Rectangle(topRight, bottomLeft);
+            contentHolder.strokeColor = new paper.Color("red");
 
             path.fullySelected = true;
             path.closed = true;
@@ -130,7 +116,7 @@ storiesOf("paper", module)
         wrapDiv.appendChild(button);
         button.addEventListener("click", () => {
             xhandleFraction += 0.03;
-            project!.activeLayer.removeChildren();
+            paper.project!.activeLayer.removeChildren();
             makePath();
         });
 
@@ -141,7 +127,7 @@ storiesOf("paper", module)
         wrapDiv.appendChild(looser);
         looser.addEventListener("click", () => {
             xhandleFraction -= 0.03;
-            project!.activeLayer.removeChildren();
+            paper.project!.activeLayer.removeChildren();
             makePath();
         });
 
@@ -152,43 +138,43 @@ storiesOf("paper", module)
         // const canvas = document.createElement("canvas");
         // canvas.height = 200;
         // canvas.width = 200;
-        // setup(canvas);
+        // paper.setup(canvas);
         // wrapDiv.appendChild(canvas);
-        // const circle = new Path.Rectangle(new Rectangle(40, 40, 120, 120));
+        // const circle = new paper.Path.Rectangle(new Rectangle(40, 40, 120, 120));
         // const color = {
         //   gradient: {
         //     stops: ["white", "yellow", "cyan"]
         //   },
-        //   origin: new Point(100, 50),
-        //   destination: new Point(100, 160)
+        //   origin: new paper.Point(100, 50),
+        //   destination: new paper.Point(100, 160)
         // };
-        // circle.fillColor = (color as any) as Color;
+        // circle.fillColor = (color as any) as paper.Color;
         // circle.scale(0.8, 0.5);
-        // const svg = project!.exportSVG() as SVGElement;
+        // const svg = paper.project!.exportSVG() as SVGElement;
         // wrapDiv.appendChild(svg);
         // return wrapDiv;
         const wrapDiv = document.createElement("div");
         const canvas = document.createElement("canvas");
         canvas.height = 200;
         canvas.width = 200;
-        setup(canvas);
+        paper.setup(canvas);
         wrapDiv.appendChild(canvas);
         const svgIn = Bubble.getShapeSvgString("caption");
-        project!.importSVG(svgIn, {
-            onLoad: (item: Item) => {
+        paper.project!.importSVG(svgIn, {
+            onLoad: (item: paper.Item) => {
                 const color = {
                     gradient: {
                         stops: ["white", "yellow", "cyan"]
                     },
-                    origin: new Point(100, 0),
-                    destination: new Point(100, 60)
+                    origin: new paper.Point(100, 0),
+                    destination: new paper.Point(100, 60)
                 };
-                item.fillColor = (color as any) as Color;
+                item.fillColor = (color as any) as paper.Color;
                 item.scale(0.8, 0.5);
             }
         });
 
-        const svg = project!.exportSVG() as SVGElement;
+        const svg = paper.project!.exportSVG() as SVGElement;
         wrapDiv.appendChild(svg);
         return wrapDiv;
     })
@@ -197,31 +183,31 @@ storiesOf("paper", module)
         const canvas = document.createElement("canvas");
         canvas.height = 200;
         canvas.width = 200;
-        setup(canvas);
+        paper.setup(canvas);
         wrapDiv.appendChild(canvas);
         const svgIn = Bubble.getShapeSvgString("caption");
-        project!.importSVG(svgIn, {
-            onLoad: (item: Item) => {
+        paper.project!.importSVG(svgIn, {
+            onLoad: (item: paper.Item) => {
                 const color = {
                     gradient: {
                         stops: ["white", "yellow", "cyan"]
                     },
-                    origin: new Point(100, 0),
-                    destination: new Point(100, 60)
+                    origin: new paper.Point(100, 0),
+                    destination: new paper.Point(100, 60)
                 };
                 const outlineShape = item.getItem({
                     recursive: true,
                     match: (x: any) => x.name === "outlineShape"
                 });
                 item.remove();
-                const outlinePath = (outlineShape as Shape).toPath();
-                project!.activeLayer.addChild(outlinePath);
-                outlinePath.fillColor = (color as any) as Color;
+                const outlinePath = (outlineShape as paper.Shape).toPath();
+                paper.project!.activeLayer.addChild(outlinePath);
+                outlinePath.fillColor = (color as any) as paper.Color;
                 outlinePath.scale(0.8, 0.5);
             }
         });
 
-        const svg = project!.exportSVG() as SVGElement;
+        const svg = paper.project!.exportSVG() as SVGElement;
         wrapDiv.appendChild(svg);
         return wrapDiv;
     });
@@ -232,15 +218,15 @@ storiesOf("comical", module)
         const canvas = document.createElement("canvas");
         canvas.height = 500;
         canvas.width = 500;
-        setup(canvas);
-        const start = new Point(100, 100);
-        const tip = start.add(new Point(200, 150));
-        const layer1 = project!.activeLayer;
-        const layer2 = new Layer();
-        const handleLayer = new Layer();
-        project!.addLayer(layer2);
-        project!.addLayer(handleLayer);
-        const mid = Bubble.defaultMid(start, tip, new Size(0, 0));
+        paper.setup(canvas);
+        const start = new paper.Point(100, 100);
+        const tip = start.add(new paper.Point(200, 150));
+        const layer1 = paper.project!.activeLayer;
+        const layer2 = new paper.Layer();
+        const handleLayer = new paper.Layer();
+        paper.project!.addLayer(layer2);
+        paper.project!.addLayer(handleLayer);
+        const mid = Bubble.defaultMid(start, tip, new paper.Size(0, 0));
         const tail = new ArcTail(
             start,
             tip,
@@ -267,14 +253,14 @@ storiesOf("comical", module)
     //   const canvas = document.createElement("canvas");
     //   canvas.height = 500;
     //   canvas.width = 500;
-    //   setup(canvas);
-    //   const start = new Point(200, 100);
-    //   const tip = start.add(new Point(200, 50));
-    //   const oval1 = new Path.Ellipse(
-    //     new Rectangle(new Point(80, 10), new Point(180, 70))
+    //   paper.setup(canvas);
+    //   const start = new paper.Point(200, 100);
+    //   const tip = start.add(new paper.Point(200, 50));
+    //   const oval1 = new paper.Path.Ellipse(
+    //     new Rectangle(new paper.Point(80, 10), new paper.Point(180, 70))
     //   );
-    //   const oval2 = new Path.Ellipse(
-    //     new Rectangle(new Point(100, 50), new Point(300, 150))
+    //   const oval2 = new paper.Path.Ellipse(
+    //     new Rectangle(new paper.Point(100, 50), new paper.Point(300, 150))
     //   );
     //   Bubble.drawTailOnShapes(start, Bubble.defaultMid(start, tip), tip, [
     //     oval1,
@@ -289,7 +275,7 @@ storiesOf("comical", module)
         canvas.height = 500;
         canvas.width = 500;
         wrapDiv.appendChild(canvas);
-        setup(canvas);
+        paper.setup(canvas);
 
         const textDiv = document.createElement("div");
         textDiv.innerText = "This is a block of text to wrap around. It is 150px wide.";
@@ -344,7 +330,7 @@ storiesOf("comical", module)
         canvas.height = 500;
         canvas.width = 500;
         wrapDiv.appendChild(canvas);
-        setup(canvas);
+        paper.setup(canvas);
 
         const textDiv2 = document.createElement("div");
         textDiv2.innerText =
@@ -378,7 +364,7 @@ storiesOf("comical", module)
         canvas.height = 300;
         canvas.width = 500;
         wrapDiv.appendChild(canvas);
-        setup(canvas);
+        paper.setup(canvas);
 
         const textDiv2 = document.createElement("div");
         textDiv2.innerText =
@@ -1325,16 +1311,16 @@ storiesOf("comical", module)
         const canvas = document.createElement("canvas");
         canvas.height = 600;
         canvas.width = 600;
-        setup(canvas);
+        paper.setup(canvas);
 
-        const start = new Point(100, 100);
-        const tip = start.add(new Point(200, 150));
-        const layer1 = project!.activeLayer;
-        const layer2 = new Layer();
-        const handleLayer = new Layer();
-        project!.addLayer(layer2);
-        project!.addLayer(handleLayer);
-        const mid = Bubble.defaultMid(start, tip, new Size(0, 0));
+        const start = new paper.Point(100, 100);
+        const tip = start.add(new paper.Point(200, 150));
+        const layer1 = paper.project!.activeLayer;
+        const layer2 = new paper.Layer();
+        const handleLayer = new paper.Layer();
+        paper.project!.addLayer(layer2);
+        paper.project!.addLayer(handleLayer);
+        const mid = Bubble.defaultMid(start, tip, new paper.Size(0, 0));
 
         const tail = new LineTail(
             start,
@@ -1366,7 +1352,7 @@ storiesOf("comical", module)
         const canvas = document.createElement("canvas");
         canvas.width = wrapDiv.clientWidth;
         canvas.height = wrapDiv.clientHeight;
-        setup(canvas);
+        paper.setup(canvas);
 
         wrapDiv.appendChild(canvas);
 
