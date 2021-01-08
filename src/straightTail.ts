@@ -1,5 +1,5 @@
 import { Tail } from "./tail";
-import { Point, Layer, Path, Color } from "paper";
+import paper = require("paper");
 import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
@@ -8,11 +8,11 @@ import { Comical } from "./comical";
 //  straight tail is a simple triangle, with only the tip handle
 export class StraightTail extends Tail {
     public constructor(
-        root: Point,
-        tip: Point,
-        lowerLayer: Layer,
-        upperLayer: Layer,
-        handleLayer: Layer,
+        root: paper.Point,
+        tip: paper.Point,
+        lowerLayer: paper.Layer,
+        upperLayer: paper.Layer,
+        handleLayer: paper.Layer,
         spec: TailSpec,
         bubble: Bubble | undefined
     ) {
@@ -36,16 +36,16 @@ export class StraightTail extends Tail {
         // we want to make the base of the tail a line of length tailWidth
         // at right angles to the line from root to tip
         // centered at root.
-        const angleBase = new Point(this.tip.x! - this.root.x!, this.tip.y! - this.root.y!).angle!;
-        const deltaBase = new Point(0, 0);
+        const angleBase = new paper.Point(this.tip.x - this.root.x, this.tip.y - this.root.y).angle;
+        const deltaBase = new paper.Point(0, 0);
         deltaBase.angle = angleBase + 90;
         deltaBase.length = tailWidth / 2;
         const begin = this.root.add(deltaBase);
         const end = this.root.subtract(deltaBase);
 
-        this.pathstroke = new Path.Line(begin, this.tip);
-        const pathLine2 = new Path.Line(this.tip, end);
-        this.pathstroke.addSegments(pathLine2.segments!);
+        this.pathstroke = new paper.Path.Line(begin, this.tip);
+        const pathLine2 = new paper.Path.Line(this.tip, end);
+        this.pathstroke.addSegments(pathLine2.segments);
         pathLine2.remove();
         if (oldStroke) {
             this.pathstroke.insertBelow(oldStroke);
@@ -53,14 +53,14 @@ export class StraightTail extends Tail {
         }
         this.pathstroke!.strokeWidth = this.bubble!.getBorderWidth();
         activateLayer(this.upperLayer);
-        this.pathFill = this.pathstroke.clone({ insert: false }) as Path;
+        this.pathFill = this.pathstroke.clone({ insert: false }) as paper.Path;
         if (oldFill) {
             this.pathFill.insertAbove(oldFill);
             oldFill.remove();
         } else {
             this.upperLayer.addChild(this.pathFill);
         }
-        this.pathstroke.strokeColor = new Color("black");
+        this.pathstroke.strokeColor = new paper.Color("black");
         this.pathFill.fillColor = this.getFillColor();
         if (this.clickAction) {
             Comical.setItemOnClick(this.pathFill, this.clickAction);

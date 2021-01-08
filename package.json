@@ -33,7 +33,7 @@
         "webpack-merge": "^4.2.2"
     },
     "dependencies": {
-        "paper": "^0.12.3"
+        "paper": "^0.12.8"
     },
     "scripts": {
         "storybook": "start-storybook -s ./storyStatic -p 6006",

@@ -1,4 +1,4 @@
-import { Color, project, setup, Layer, Point, Item, Size } from "paper";
+import paper = require("paper");
 
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
@@ -27,10 +27,10 @@ interface IUserInterfaceProperties {
 }
 
 export class Comical {
-    static backColor = new Color("white");
+    static backColor = new paper.Color("white");
 
     //client can change this using setUserInterfaceProperties
-    public static tailHandleColor = new Color("orange");
+    public static tailHandleColor = new paper.Color("orange");
 
     static activeContainers = new Map<Element, ContainerData>();
 
@@ -41,7 +41,7 @@ export class Comical {
     // This is something the client calls only once when setting up comical. After that,
     // there is no attempt to update anything already showing on screen.
     public static setUserInterfaceProperties(props: IUserInterfaceProperties) {
-        Comical.tailHandleColor = new Color(props.tailHandleColor);
+        Comical.tailHandleColor = new paper.Color(props.tailHandleColor);
     }
 
     public static startEditing(parents: HTMLElement[]): void {
@@ -202,12 +202,12 @@ export class Comical {
             // Check if different than previous. (Ignore duplicate z-indices)
             if (i == 0 || zLevelList[i - 1] != zLevelList[i]) {
                 const zLevel = zLevelList[i];
-                var lowerLayer = new Layer();
-                var upperLayer = new Layer();
+                var lowerLayer = new paper.Layer();
+                var upperLayer = new paper.Layer();
                 levelToLayer[zLevel] = [lowerLayer, upperLayer];
             }
         }
-        containerData.handleLayer = new Layer();
+        containerData.handleLayer = new paper.Layer();
 
         // Now that the layers are created, we can go back and place objects into the correct layers and ask them to draw themselves.
         for (let i = 0; i < bubbles.length; ++i) {
@@ -263,7 +263,7 @@ export class Comical {
     // we invoke it. Item.data is not used by Paper.js; it's just an 'any' we
     // can use for anything we want. In Comical, we use it for some mouse
     // event handlers.
-    static setItemOnClick(item: Item, clickAction: () => void): void {
+    static setItemOnClick(item: paper.Item, clickAction: () => void): void {
         if (!item.data) {
             item.data = {};
         }
@@ -292,10 +292,10 @@ export class Comical {
         // To get around this, we prematurely divided by the scaling factor, so that later on the width/height attributes
         // will return their unscaled values.
         const scaling = this.getScaling(parent);
-        canvas.width = parent.clientWidth / scaling.x!;
-        canvas.height = parent.clientHeight / scaling.y!;
+        canvas.width = parent.clientWidth / scaling.x;
+        canvas.height = parent.clientHeight / scaling.y;
 
-        setup(canvas); // updates the global project variable to a new project associated with this canvas
+        paper.setup(canvas); // updates the global project variable to a new project associated with this canvas
 
         // Now we set up some mouse event handlers. It would be much nicer to use the paper.js
         // handlers, like the mousedown and mousedrag properties of each paper.js Item,
@@ -307,15 +307,15 @@ export class Comical {
 
         // We have to keep track of the most recent mouse-down item, because if it has a drag handler,
         // we want to keep invoking it even if the mouse gets out of the item, as long as it is down.
-        let dragging: Item | null = null; // null instead of undefined to match HitResult.item.
-        const myProject = project!; // event handlers must use the one that is now active, not what is current when they run
+        let dragging: paper.Item | null = null; // null instead of undefined to match HitResult.item.
+        const myProject = paper.project!; // event handlers must use the one that is now active, not what is current when they run
         canvas.addEventListener("mousedown", (event: MouseEvent) => {
-            const where = new Point(event.offsetX, event.offsetY);
+            const where = new paper.Point(event.offsetX, event.offsetY);
             const hit = myProject.hitTest(where);
             dragging = hit ? hit.item : null;
         });
         canvas.addEventListener("mousemove", (event: MouseEvent) => {
-            const where = new Point(event.offsetX, event.offsetY);
+            const where = new paper.Point(event.offsetX, event.offsetY);
             if (dragging && event.buttons === 1 && dragging.data && dragging.data.hasOwnProperty("onDrag")) {
                 dragging.data.onDrag(where);
             }
@@ -324,28 +324,28 @@ export class Comical {
             dragging = null;
         });
         canvas.addEventListener("click", (event: MouseEvent) => {
-            const where = new Point(event.offsetX, event.offsetY);
+            const where = new paper.Point(event.offsetX, event.offsetY);
             const hit = myProject.hitTest(where);
             if (hit && hit.item && hit.item.data && hit.item.data.hasOwnProperty("onClick")) {
                 hit.item.data.onClick();
             }
         });
         canvas.addEventListener("dblclick", (event: MouseEvent) => {
-            const where = new Point(event.offsetX, event.offsetY);
+            const where = new paper.Point(event.offsetX, event.offsetY);
             const hit = myProject.hitTest(where);
             if (hit && hit.item && hit.item.data && hit.item.data.hasOwnProperty("onDoubleClick")) {
                 hit.item.data.onDoubleClick();
             }
         });
         var containerData: ContainerData = {
-            project: project!,
+            project: paper.project!,
             bubbleList: []
         };
         this.activeContainers.set(parent, containerData);
         Comical.update(parent);
     }
 
-    private static getScaling(element: HTMLElement): Point {
+    private static getScaling(element: HTMLElement): paper.Point {
         // getBoundingClientRect() returns the rendering size (aka scaled)
         //  of the border box (i.e., what is needed to include everything inside and including the border)
         const scaledBounds = element.getBoundingClientRect();
@@ -366,7 +366,7 @@ export class Comical {
         const scaleX = scaledWidth / unscaledWidth;
         const scaleY = scaledHeight / unscaledHeight;
 
-        return new Point(scaleX, scaleY);
+        return new paper.Point(scaleX, scaleY);
     }
 
     public static setActiveBubbleListener(listener: ((selected: HTMLElement | undefined) => void) | undefined) {
@@ -408,8 +408,8 @@ export class Comical {
         const mid = Bubble.defaultMid(
             root,
             tip,
-            new Size(childElement.offsetWidth, childElement.offsetHeight),
-            new Size(lastInFamily.content.offsetWidth, lastInFamily.content.offsetHeight)
+            new paper.Size(childElement.offsetWidth, childElement.offsetHeight),
+            new paper.Size(lastInFamily.content.offsetWidth, lastInFamily.content.offsetHeight)
         );
         // We deliberately do NOT keep any properties the child bubble already has.
         // Apart from the necessary properties for being a child, it will take
@@ -421,10 +421,10 @@ export class Comical {
             style: parentSpec.style,
             tails: [
                 {
-                    tipX: tip.x!,
-                    tipY: tip.y!,
-                    midpointX: mid.x!,
-                    midpointY: mid.y!,
+                    tipX: tip.x,
+                    tipY: tip.y,
+                    midpointX: mid.x,
+                    midpointY: mid.y,
                     joiner: true,
                     autoCurve: true
                 }
@@ -453,7 +453,7 @@ export class Comical {
         if (!containerData) {
             return false;
         }
-        const hitResult = containerData.project.hitTest(new Point(x, y));
+        const hitResult = containerData.project.hitTest(new paper.Point(x, y));
         return !!hitResult;
     }
 
@@ -498,7 +498,7 @@ export class Comical {
         Comical.sortBubbleListTopLevelFirst(bubbleList);
 
         // Now find the first bubble hit, highest precedence first
-        return bubbleList.find(bubble => bubble.isHitByPoint(new Point(x, y)));
+        return bubbleList.find(bubble => bubble.isHitByPoint(new paper.Point(x, y)));
     }
 
     // Return the comical container that the element is part of (or undefined if it is
@@ -564,14 +564,14 @@ export class Comical {
     // points are in bubbles, returns undefined.
     static getPointOutsideBubblesAlong(
         parentContainer: HTMLElement,
-        start: Point,
-        end: Point,
+        start: paper.Point,
+        end: paper.Point,
         tries: number
-    ): Point | undefined {
+    ): paper.Point | undefined {
         const delta = end.subtract(start).divide(tries);
         for (var i = 1; i <= tries; i++) {
             const tryPoint = start.add(delta.multiply(i));
-            if (!this.getBubbleHit(parentContainer, tryPoint.x!, tryPoint.y!)) {
+            if (!this.getBubbleHit(parentContainer, tryPoint.x, tryPoint.y)) {
                 return tryPoint;
             }
         }
@@ -588,12 +588,17 @@ export class Comical {
     // It is assumed that 'towards' itself isn't in a bubble.
     // If it is, we may return 'towards' itself even though it's not
     // outside a bubble.
-    static movePointOutsideBubble(element: HTMLElement, position: Point, towards: Point, from: Point): Point {
+    static movePointOutsideBubble(
+        element: HTMLElement,
+        position: paper.Point,
+        towards: paper.Point,
+        from: paper.Point
+    ): paper.Point {
         const [parentContainer] = Comical.comicalParentOf(element);
         if (!parentContainer) {
             return position;
         }
-        let bubble = this.getBubbleHit(parentContainer, position.x!, position.y!);
+        let bubble = this.getBubbleHit(parentContainer, position.x, position.y);
         if (!bubble) {
             return position;
         }
@@ -601,8 +606,8 @@ export class Comical {
         // get a starting point, somewhere along the path from 'from' to 'towards' via 'position'
         // that is not in a bubble, as close to position as we can easily manage, preferring on the
         // side from position to 'towards'.
-        let farPoint: Point | undefined = undefined;
-        let maxDivisions = Math.max(position.subtract(towards).length!, position.subtract(from).length!);
+        let farPoint: paper.Point | undefined = undefined;
+        let maxDivisions = Math.max(position.subtract(towards).length, position.subtract(from).length);
         let divisions = Math.max(Math.min(maxDivisions - 0.1, 5), 2); // at least one iteration, try at least both ends.
         while (!farPoint && divisions < maxDivisions) {
             farPoint = Comical.getPointOutsideBubblesAlong(parentContainer, position, towards, divisions);
@@ -610,9 +615,7 @@ export class Comical {
             const altFarPoint = Comical.getPointOutsideBubblesAlong(parentContainer, position, from, divisions);
             if (
                 (altFarPoint && !farPoint) ||
-                (altFarPoint &&
-                    farPoint &&
-                    altFarPoint.subtract(position).length! < farPoint.subtract(position).length!)
+                (altFarPoint && farPoint && altFarPoint.subtract(position).length < farPoint.subtract(position).length)
             ) {
                 farPoint = altFarPoint;
             }
@@ -632,12 +635,12 @@ export class Comical {
         // far; but it should still be a plausible
         // (and definitely valid, outside any bubble) place to put it.
         while (true) {
-            const delta: Point = farPoint.subtract(nearPoint).divide(2);
-            if (delta.length! < 1) {
+            const delta: paper.Point = farPoint.subtract(nearPoint).divide(2);
+            if (delta.length < 1) {
                 return farPoint;
             }
             const newPoint = nearPoint.add(delta);
-            const newBubble = this.getBubbleHit(parentContainer, newPoint.x!, newPoint.y!);
+            const newBubble = this.getBubbleHit(parentContainer, newPoint.x, newPoint.y);
             // Basic idea here is a binary search for a point that's not in a bubble. If newPoint
             // is in the original bubble, we need to move further, so we move badPoint. If it's not
             // in a bubble, we can try closer to the bubble, so we move goodPoint.
@@ -656,20 +659,20 @@ export class Comical {
         }
     }
 
-    static okToMoveTo(element: HTMLElement, dest: Point): boolean {
+    static okToMoveTo(element: HTMLElement, dest: paper.Point): boolean {
         const [parentContainer] = Comical.comicalParentOf(element);
         if (!parentContainer) {
             return true; // shouldn't happen, I think.
         }
-        if (this.getBubbleHit(parentContainer, dest.x!, dest.y!)) {
+        if (this.getBubbleHit(parentContainer, dest.x, dest.y)) {
             return false;
         }
 
         if (
-            dest.x! < 0 ||
-            dest.y! < 0 ||
-            dest.x! >= parentContainer.clientWidth ||
-            dest.y! >= parentContainer.clientHeight
+            dest.x < 0 ||
+            dest.y < 0 ||
+            dest.x >= parentContainer.clientWidth ||
+            dest.y >= parentContainer.clientHeight
         ) {
             return false;
         }
