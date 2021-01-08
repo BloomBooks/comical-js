@@ -96,7 +96,7 @@ export class Tail {
 
     adjustRoot(newRoot: paper.Point): void {
         const delta = newRoot.subtract(this.root!);
-        if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
+        if (Math.abs(delta.x) + Math.abs(delta.y) < 0.0001) {
             // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
             // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
             // freezes the whole page.
@@ -115,8 +115,8 @@ export class Tail {
     }
 
     adjustTip(newTip: paper.Point): void {
-        const delta = newTip.subtract(this.tip!);
-        if (Math.abs(delta.x!) + Math.abs(delta.y!) < 0.0001) {
+        const delta = newTip.subtract(this.tip);
+        if (Math.abs(delta.x) + Math.abs(delta.y) < 0.0001) {
             // hasn't moved; very likely adjustSize triggered by an irrelevant change to object;
             // We MUST NOT trigger the mutation observer again, or we get an infinte loop that
             // freezes the whole page.
@@ -126,8 +126,8 @@ export class Tail {
         this.adjustForChangedTip(delta);
         this.makeShapes();
         if (this.spec) {
-            this.spec.tipX = this.tip.x!;
-            this.spec.tipY = this.tip.y!;
+            this.spec.tipX = this.tip.x;
+            this.spec.tipY = this.tip.y;
         }
         this.persistSpecChanges();
     }
@@ -182,8 +182,8 @@ export class Tail {
                 this.makeShapes();
 
                 // Update this.spec.tips to reflect the new handle positions
-                this.spec.tipX = this.tip.x!;
-                this.spec.tipY = this.tip.y!;
+                this.spec.tipX = this.tip.x;
+                this.spec.tipY = this.tip.y;
                 this.persistSpecChanges();
             };
         }

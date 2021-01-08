@@ -34,8 +34,8 @@ export class CurveTail extends Tail {
             this.midHandle.setPosition(newPosition);
         }
         if (this.spec) {
-            this.spec.midpointX = newPosition.x!;
-            this.spec.midpointY = newPosition.y!;
+            this.spec.midpointX = newPosition.x;
+            this.spec.midpointY = newPosition.y;
         }
     }
 
@@ -50,7 +50,7 @@ export class CurveTail extends Tail {
         this.midHandle.onDrag = (where: paper.Point) => {
             if (this.bubble) {
                 const [parentElement] = Comical.comicalParentOf(this.bubble.content);
-                if (parentElement && Comical.getBubbleHit(parentElement, where.x!, where.y!)) {
+                if (parentElement && Comical.getBubbleHit(parentElement, where.x, where.y)) {
                     return; // refuse to drag mid to a point inside a bubble
                 }
             }
@@ -61,8 +61,8 @@ export class CurveTail extends Tail {
             this.makeShapes();
 
             // Update this.spec.tips to reflect the new handle positions
-            this.spec.midpointX = where.x!;
-            this.spec.midpointY = where.y!;
+            this.spec.midpointX = where.x;
+            this.spec.midpointY = where.y;
             this.persistSpecChanges();
         };
 

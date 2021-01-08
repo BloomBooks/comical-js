@@ -235,10 +235,10 @@ storiesOf("comical", module)
             layer2,
             handleLayer,
             {
-                tipX: tip.x!,
-                tipY: tip.y!,
-                midpointX: mid.x!,
-                midpointY: mid.y!
+                tipX: tip.x,
+                tipY: tip.y,
+                midpointX: mid.x,
+                midpointY: mid.y
             },
             undefined
         );
@@ -1329,10 +1329,10 @@ storiesOf("comical", module)
             layer2,
             handleLayer,
             {
-                tipX: tip.x!,
-                tipY: tip.y!,
-                midpointX: mid.x!,
-                midpointY: mid.y!
+                tipX: tip.x,
+                tipY: tip.y,
+                midpointX: mid.x,
+                midpointY: mid.y
             },
             undefined
         );

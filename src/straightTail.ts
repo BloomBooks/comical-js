@@ -36,7 +36,7 @@ export class StraightTail extends Tail {
         // we want to make the base of the tail a line of length tailWidth
         // at right angles to the line from root to tip
         // centered at root.
-        const angleBase = new paper.Point(this.tip.x! - this.root.x!, this.tip.y! - this.root.y!).angle!;
+        const angleBase = new paper.Point(this.tip.x - this.root.x, this.tip.y - this.root.y).angle;
         const deltaBase = new paper.Point(0, 0);
         deltaBase.angle = angleBase + 90;
         deltaBase.length = tailWidth / 2;
@@ -45,7 +45,7 @@ export class StraightTail extends Tail {
 
         this.pathstroke = new paper.Path.Line(begin, this.tip);
         const pathLine2 = new paper.Path.Line(this.tip, end);
-        this.pathstroke.addSegments(pathLine2.segments!);
+        this.pathstroke.addSegments(pathLine2.segments);
         pathLine2.remove();
         if (oldStroke) {
             this.pathstroke.insertBelow(oldStroke);

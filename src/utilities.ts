@@ -21,7 +21,7 @@ export function makeArc(start: paper.Point, mid: paper.Point, end: paper.Point):
     // but not between them. In that case, it's not possible to draw an arc
     // that includes the three points, so we'll still go with a line from
     // start to end.
-    const angleDiff = Math.abs(mid.subtract(start).angle! - end.subtract(start).angle!);
+    const angleDiff = Math.abs(mid.subtract(start).angle - end.subtract(start).angle);
     if (angleDiff < 0.0001 || Math.abs(angleDiff - 180) < 0.0001) {
         return new paper.Path.Line(start, end);
     }

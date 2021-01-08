@@ -96,7 +96,7 @@ export class ThoughtTail extends CurveTail {
             });
             newStroke.strokeWidth = this.bubble!.getBorderWidth();
             newStroke.strokeColor = new paper.Color("black");
-            //newStroke.rotation = center.subtract(lastPoint).angle!;
+            //newStroke.rotation = center.subtract(lastPoint).angle;
             this.miniBubbleStrokePaths.push(newStroke);
             const newFill = newStroke.clone() as paper.Path;
             newFill.fillColor = this.getFillColor();

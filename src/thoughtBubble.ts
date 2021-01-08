@@ -24,7 +24,7 @@ export function makeThoughtBubble(bubble: Bubble): paper.Item {
         for (let i = 0; i < points.length; i++) {
             const start = points[i];
             const end = i < points.length - 1 ? points[i + 1] : points[0];
-            const mid = new paper.Point((start.x! + end.x!) / 2, (start.y! + end.y!) / 2);
+            const mid = new paper.Point((start.x + end.x) / 2, (start.y + end.y) / 2);
             const deltaCenter = mid.subtract(center);
             // The rng here gives the bubbles a slightly 'random' depth of curve
             const jitter = maxJitter * rng.nextDouble();
@@ -32,7 +32,7 @@ export function makeThoughtBubble(bubble: Bubble): paper.Item {
             const arcPoint = mid.add(deltaCenter);
             const arc = new paper.Path.Arc(start, arcPoint, end);
             arc.remove();
-            outline.addSegments(arc.segments!);
+            outline.addSegments(arc.segments);
         }
         outline.strokeWidth = bubble.getBorderWidth();
         outline.strokeColor = new paper.Color("black");

@@ -292,8 +292,8 @@ export class Comical {
         // To get around this, we prematurely divided by the scaling factor, so that later on the width/height attributes
         // will return their unscaled values.
         const scaling = this.getScaling(parent);
-        canvas.width = parent.clientWidth / scaling.x!;
-        canvas.height = parent.clientHeight / scaling.y!;
+        canvas.width = parent.clientWidth / scaling.x;
+        canvas.height = parent.clientHeight / scaling.y;
 
         paper.setup(canvas); // updates the global project variable to a new project associated with this canvas
 
@@ -421,10 +421,10 @@ export class Comical {
             style: parentSpec.style,
             tails: [
                 {
-                    tipX: tip.x!,
-                    tipY: tip.y!,
-                    midpointX: mid.x!,
-                    midpointY: mid.y!,
+                    tipX: tip.x,
+                    tipY: tip.y,
+                    midpointX: mid.x,
+                    midpointY: mid.y,
                     joiner: true,
                     autoCurve: true
                 }
@@ -571,7 +571,7 @@ export class Comical {
         const delta = end.subtract(start).divide(tries);
         for (var i = 1; i <= tries; i++) {
             const tryPoint = start.add(delta.multiply(i));
-            if (!this.getBubbleHit(parentContainer, tryPoint.x!, tryPoint.y!)) {
+            if (!this.getBubbleHit(parentContainer, tryPoint.x, tryPoint.y)) {
                 return tryPoint;
             }
         }
@@ -598,7 +598,7 @@ export class Comical {
         if (!parentContainer) {
             return position;
         }
-        let bubble = this.getBubbleHit(parentContainer, position.x!, position.y!);
+        let bubble = this.getBubbleHit(parentContainer, position.x, position.y);
         if (!bubble) {
             return position;
         }
@@ -607,7 +607,7 @@ export class Comical {
         // that is not in a bubble, as close to position as we can easily manage, preferring on the
         // side from position to 'towards'.
         let farPoint: paper.Point | undefined = undefined;
-        let maxDivisions = Math.max(position.subtract(towards).length!, position.subtract(from).length!);
+        let maxDivisions = Math.max(position.subtract(towards).length, position.subtract(from).length);
         let divisions = Math.max(Math.min(maxDivisions - 0.1, 5), 2); // at least one iteration, try at least both ends.
         while (!farPoint && divisions < maxDivisions) {
             farPoint = Comical.getPointOutsideBubblesAlong(parentContainer, position, towards, divisions);
@@ -615,9 +615,7 @@ export class Comical {
             const altFarPoint = Comical.getPointOutsideBubblesAlong(parentContainer, position, from, divisions);
             if (
                 (altFarPoint && !farPoint) ||
-                (altFarPoint &&
-                    farPoint &&
-                    altFarPoint.subtract(position).length! < farPoint.subtract(position).length!)
+                (altFarPoint && farPoint && altFarPoint.subtract(position).length < farPoint.subtract(position).length)
             ) {
                 farPoint = altFarPoint;
             }
@@ -638,11 +636,11 @@ export class Comical {
         // (and definitely valid, outside any bubble) place to put it.
         while (true) {
             const delta: paper.Point = farPoint.subtract(nearPoint).divide(2);
-            if (delta.length! < 1) {
+            if (delta.length < 1) {
                 return farPoint;
             }
             const newPoint = nearPoint.add(delta);
-            const newBubble = this.getBubbleHit(parentContainer, newPoint.x!, newPoint.y!);
+            const newBubble = this.getBubbleHit(parentContainer, newPoint.x, newPoint.y);
             // Basic idea here is a binary search for a point that's not in a bubble. If newPoint
             // is in the original bubble, we need to move further, so we move badPoint. If it's not
             // in a bubble, we can try closer to the bubble, so we move goodPoint.
@@ -666,15 +664,15 @@ export class Comical {
         if (!parentContainer) {
             return true; // shouldn't happen, I think.
         }
-        if (this.getBubbleHit(parentContainer, dest.x!, dest.y!)) {
+        if (this.getBubbleHit(parentContainer, dest.x, dest.y)) {
             return false;
         }
 
         if (
-            dest.x! < 0 ||
-            dest.y! < 0 ||
-            dest.x! >= parentContainer.clientWidth ||
-            dest.y! >= parentContainer.clientHeight
+            dest.x < 0 ||
+            dest.y < 0 ||
+            dest.x >= parentContainer.clientWidth ||
+            dest.y >= parentContainer.clientHeight
         ) {
             return false;
         }

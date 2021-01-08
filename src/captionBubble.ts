@@ -5,7 +5,7 @@ import { Bubble } from "./bubble";
 // cornerRadii - Omit or pass undefined for square corners. For rounded corners, pass in the two radius amounts as a Size object.
 export function makeCaptionBox(bubble: Bubble, cornerRadii?: paper.Size): paper.Item {
     const contentHolder = bubble.getDefaultContentHolder();
-    const contentBounds = contentHolder.bounds!;
+    const contentBounds = contentHolder.bounds;
 
     const outline = makeOutline(contentBounds, cornerRadii);
 
@@ -15,8 +15,8 @@ export function makeCaptionBox(bubble: Bubble, cornerRadii?: paper.Size): paper.
 
 function makeOutline(bounds: paper.Rectangle, cornerRadii?: paper.Size): paper.Path.Rectangle {
     const delta = 1;
-    const outlineTopLeft = bounds.topLeft!.subtract(delta);
-    const outlineSize = new paper.Size(bounds.size!.add(delta * 2));
+    const outlineTopLeft = bounds.topLeft.subtract(delta);
+    const outlineSize = new paper.Size(bounds.size.add(delta * 2));
 
     const outlineRect = new paper.Rectangle(outlineTopLeft, outlineSize);
     const outline = new paper.Path.Rectangle(outlineRect, cornerRadii);

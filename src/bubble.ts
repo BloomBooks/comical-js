@@ -580,8 +580,8 @@ export class Bubble {
             const hScale = this.content.offsetWidth / chWidth;
             const chHeight = (this.contentHolder as any).size.height;
             const vScale = this.content.offsetHeight / chHeight;
-            const obWidth = outerBorder.bounds!.width!;
-            const obHeight = outerBorder.bounds!.height!;
+            const obWidth = outerBorder.bounds.width;
+            const obHeight = outerBorder.bounds.height;
             outerBorder.scale((obWidth + 16 / hScale) / obWidth, (obHeight + 16 / vScale) / obHeight);
 
             // Visually this seems to give the right effect. I have not yet
@@ -648,15 +648,12 @@ export class Bubble {
             // Previously, captions seemed to need using 0 to height instead.
             //
             // enhance 2: If the tail is above the bubble, might make more sense to do gradient bottom -> top instead of top -> bottom
-            const gradientOrigin = new paper.Point(xCenter, this.outline.bounds!.top!);
-            const gradientDestination = new paper.Point(
-                xCenter,
-                this.outline.bounds!.top! + this.outline.bounds!.height!
-            );
+            const gradientOrigin = new paper.Point(xCenter, this.outline.bounds.top);
+            const gradientDestination = new paper.Point(xCenter, this.outline.bounds.top + this.outline.bounds.height);
 
             // Old code which used 0 to height (seemed necessary for SVG captions)
             // const gradientOrigin = new paper.Point(xCenter, 0);
-            // const gradientDestination = new paper.Point(xCenter, this.outline ? this.outline.bounds!.height! : 50);
+            // const gradientDestination = new paper.Point(xCenter, this.outline ? this.outline.bounds.height : 50);
 
             const result: paper.Color = new paper.Color(gradient, gradientOrigin, gradientDestination);
             return result;
@@ -811,7 +808,7 @@ export class Bubble {
         const top = this.content.offsetTop;
         const bottom = top + this.content.offsetHeight;
 
-        return left <= point.x! && point.x! <= right && top <= point.y! && point.y! <= bottom;
+        return left <= point.x && point.x <= right && top <= point.y && point.y <= bottom;
     }
 
     private adjustJoiners(newTip: paper.Point): void {
@@ -998,8 +995,8 @@ export class Bubble {
         const result: TailSpec = {
             tipX: targetX,
             tipY: targetY,
-            midpointX: mid.x!,
-            midpointY: mid.y!,
+            midpointX: mid.x,
+            midpointY: mid.y,
             autoCurve: true
         };
         return result;
@@ -1009,8 +1006,8 @@ export class Bubble {
         // Return the origin point adjusted along a line towards target far enough to fall on
         // the border of a retangle of size originSize centered at origin.
         let delta = target.subtract(origin);
-        const xRatio = delta.x == 0 ? Number.MAX_VALUE : originSize.width! / 2 / Math.abs(delta.x!);
-        const yRatio = delta.y == 0 ? Number.MAX_VALUE : originSize.height! / 2 / Math.abs(delta.y!);
+        const xRatio = delta.x == 0 ? Number.MAX_VALUE : originSize.width / 2 / Math.abs(delta.x);
+        const yRatio = delta.y == 0 ? Number.MAX_VALUE : originSize.height / 2 / Math.abs(delta.y);
         const borderRatio = Math.min(xRatio, yRatio); // use whichever is closer
         return origin.add(delta.multiply(borderRatio));
     }
@@ -1036,7 +1033,7 @@ export class Bubble {
         const mid = startBorderPoint.add(delta.divide(2));
 
         delta = delta.divide(5);
-        delta.angle! -= 90;
+        delta.angle -= 90;
         // At this point, delta is 10% of the distance from start to target,
         // at right angles to that line, and on the side of it toward
         // the y axis. We prefer the line to curve in that direction,
@@ -1048,10 +1045,10 @@ export class Bubble {
         // quadrant to another, the transition is smooth, as the curve
         // reduces to a line and then starts to bend the other way rather
         // than suddenly jumping from one quadrant's rule to the other.
-        if (Math.abs(delta.x!) > Math.abs(delta.y!)) {
-            delta.length! *= delta.y! / delta.x!;
+        if (Math.abs(delta.x) > Math.abs(delta.y)) {
+            delta.length *= delta.y / delta.x;
         } else {
-            delta.length! *= delta.x! / delta.y!;
+            delta.length *= delta.x / delta.y;
         }
         return mid.add(delta);
     }
@@ -1111,8 +1108,8 @@ export class Bubble {
         // Of these, xRatio, shrunkPadWidth, and newContentHolderWidth are variables.
         // (padWidth, width, and contentHolderWidth are already known)
         // From here, you can do algebra to get this:
-        const xRatio = contentHolder.size!.width! / (width + padWidth * 2);
-        const yRatio = contentHolder.size!.height! / (height + padWidth * 2);
+        const xRatio = contentHolder.size.width / (width + padWidth * 2);
+        const yRatio = contentHolder.size.height / (height + padWidth * 2);
         contentHolder.set({
             center: contentHolder.position,
             size: new paper.Size(width * xRatio, height * yRatio)
@@ -1157,13 +1154,13 @@ export class Bubble {
             for (let i = 0; i < points.length; i++) {
                 const start = points[i];
                 const end = i < points.length - 1 ? points[i + 1] : points[0];
-                const mid = new paper.Point((start.x! + end.x!) / 2, (start.y! + end.y!) / 2);
+                const mid = new paper.Point((start.x + end.x) / 2, (start.y + end.y) / 2);
                 const deltaCenter = mid.subtract(center);
                 deltaCenter.length = arcDepth;
                 const arcPoint = mid.subtract(deltaCenter);
                 const arc = new paper.Path.Arc(start, arcPoint, end);
                 arc.remove();
-                outline.addSegments(arc.segments!);
+                outline.addSegments(arc.segments);
             }
             outline.strokeWidth = 1;
             outline.strokeColor = new paper.Color("black");

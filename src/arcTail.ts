@@ -74,7 +74,7 @@ export class ArcTail extends CurveTail {
             }
         }
 
-        const angleBaseTip = this.tip.subtract(baseOfTail).angle!;
+        const angleBaseTip = this.tip.subtract(baseOfTail).angle;
         // This is a starting point for figuring out how wide the tail should be
         // at its midpoint. Various things adjust it.
         let midPointWidth = tailWidth / 2; // default for non-speech
@@ -105,12 +105,12 @@ export class ArcTail extends CurveTail {
             // a bit narrower so it doesn't bulge out again after the pucker curve.
             // If we're not doing a pucker curve, the 0.3 seems to look good.
             const baseToMid = this.mid.subtract(baseOfTail);
-            puckerShortLeg = baseToMid.length! > baseAlongPathLength * 0.5;
+            puckerShortLeg = baseToMid.length > baseAlongPathLength * 0.5;
             midPointWidth = baseAlongPathLength * (puckerShortLeg ? 0.25 : 0.3);
         } else {
             // For most bubble shapes, we want to make the base of the tail a line of length tailWidth
             // at right angles to the line from root to mid centered at root.
-            const angleBase = this.mid.subtract(this.root).angle!;
+            const angleBase = this.mid.subtract(this.root).angle;
             const deltaBase = new paper.Point(0, 0);
             deltaBase.angle = angleBase + 90;
             deltaBase.length = tailWidth / 2;
@@ -165,8 +165,8 @@ export class ArcTail extends CurveTail {
 
             const baseToMid = this.mid.subtract(baseOfTail);
             const midToTip = this.tip.subtract(this.mid);
-            const midAngle = baseToMid.angle!;
-            const tipAngle = midToTip.angle!;
+            const midAngle = baseToMid.angle;
+            const tipAngle = midToTip.angle;
             let deltaAngle = midAngle - tipAngle;
             // which way the tip bends from the midpoint.
             let clockwise = Math.sin((deltaAngle * Math.PI) / 180) < 0;
@@ -185,20 +185,20 @@ export class ArcTail extends CurveTail {
             // angle that is straight towards the other point. Haven't had time to actually try this.
             if (clockwise) {
                 const beginHandle = mid1.subtract(begin);
-                beginHandle.angle! -= 70;
+                beginHandle.angle -= 70;
                 beginHandle.length = puckerHandleLength;
-                this.pathstroke.segments![0].handleOut = beginHandle;
+                this.pathstroke.segments[0].handleOut = beginHandle;
             } else {
                 const endHandle = mid2.subtract(end);
-                endHandle.angle! += 70;
+                endHandle.angle += 70;
                 endHandle.length = puckerHandleLength;
-                bezier2.segments![2].handleIn = endHandle;
+                bezier2.segments[2].handleIn = endHandle;
             }
         }
         // Merge the two parts into a single path (so we only have one to
         // keep track of, but more importantly, so we can clone a filled shape
         // from it).
-        this.pathstroke.addSegments(bezier2.segments!);
+        this.pathstroke.addSegments(bezier2.segments);
         bezier2.remove();
 
         if (oldStroke) {
@@ -262,8 +262,8 @@ export class ArcTail extends CurveTail {
         // though eventually we may want to allow the user to drag them.
         const handleDeltaIn = baseToTip.multiply(0.3);
         const handleDeltaOut = baseToTip.multiply(0.3);
-        handleDeltaIn.length = Math.min(handleDeltaIn.length!, mid.subtract(start).length! / 2);
-        handleDeltaOut.length = Math.min(handleDeltaOut.length!, end.subtract(mid).length! / 2);
+        handleDeltaIn.length = Math.min(handleDeltaIn.length, mid.subtract(start).length / 2);
+        handleDeltaOut.length = Math.min(handleDeltaOut.length, end.subtract(mid).length / 2);
         result.add(new paper.Segment(mid, new paper.Point(0, 0).subtract(handleDeltaIn), handleDeltaOut));
         result.add(new paper.Segment(end));
         // Uncomment to see all the handles. Very useful for debugging.
