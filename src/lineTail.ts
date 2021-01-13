@@ -19,19 +19,27 @@ export class LineTail extends Tail {
         super(root, tip, lowerLayer, upperLayer, handleLayer, spec, bubble);
     }
 
+    public canUnite() {
+        return false;
+    }
+
     public makeShapes() {
         const oldStroke = this.pathstroke;
         this.lowerLayer.activate();
 
-        this.pathstroke = new paper.Path.Line(this.root, this.tip);
+        this.pathstroke = this.makeShape(this.root);
 
         if (oldStroke) {
             this.pathstroke.insertBelow(oldStroke);
             oldStroke.remove();
         }
+    }
 
-        this.pathstroke.strokeColor = new paper.Color("black");
-        this.pathstroke.strokeWidth = this.tailWidth;
+    public makeShape(from: paper.Point): paper.Path {
+        const result = new paper.Path.Line(from, this.tip);
+        result.strokeColor = new paper.Color("black");
+        result.strokeWidth = this.tailWidth;
+        return result;
     }
 
     public onClick(action: () => void) {
