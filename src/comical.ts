@@ -753,18 +753,21 @@ export class Comical {
             .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
     }
 
-    public static findRelatives(bubble: Bubble): Bubble[] {
+    // Get the bubbles that are in the same canvas at the same level as the one passed, that is,
+    // the ones that are displayed linked to it. They will be sorted by their "orderWithinFamily".
+    // The bubble passed as an argument will be included in the list only if "includeSelf" is true.
+    public static findRelatives(bubble: Bubble, includeSelf = false): Bubble[] {
         const familyLevel = bubble.getSpecLevel();
         const orderWithinFamily = bubble.getBubbleSpec().order;
         if (!orderWithinFamily) {
-            return [];
+            return includeSelf ? [bubble] : [];
         }
         return Comical.getBubblesInSameCanvas(bubble.content)
             .filter(
                 x =>
                     x.getBubbleSpec().level === familyLevel &&
                     x.getBubbleSpec().order &&
-                    x.getBubbleSpec().order !== orderWithinFamily
+                    (includeSelf || x.getBubbleSpec().order !== orderWithinFamily)
             )
             .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
     }

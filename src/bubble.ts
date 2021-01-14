@@ -35,13 +35,21 @@ export class Bubble {
     // When we extract a single outline from the svg (or eventually make one algorithmically),
     // it will most likely be a Path.
     public outline: paper.Item;
+    // The original stroke color of the outline. In some modes, the actual outline color is changed.
+    private oulineStrokeColor: paper.Color | null = null;
+    // When possible, the shapes of all bubbles and their tails at the same level are combined
+    // into this one shape, allowing a partly transparent background color without
+    // extra strokes showing through. The combinedShape is stored on the parent of the
+    // bubble family.
+    public combinedShapes: paper.Item | undefined = undefined;
     // If the item has a shadow, this makes it.
     // We would prefer to do this with the paper.js shadow properties applied to shape,
     // but experiment indicates that such shadows do not convert to SVG.
     private shadowShape: paper.Item;
-    // a clone of this.outline with no border and an appropriate fill; drawn after all outlines
+    // a clone of this.outline with no border and an appropriate fill; drawn on top of all outlines
     // to fill them in and erase any overlapping borders.
-    public fillArea: paper.Item;
+    // When possible, this is left undefined and combinedShapes is set up instead.
+    public fillArea: paper.Item | undefined;
     // contentHolder is a shape which is a required part of an SVG object used as
     // a bubble. It should be a rectangle in the SVG; it currently comes out as a Shape
     // when the SVG is converted to a paper.js object.
@@ -78,6 +86,12 @@ export class Bubble {
         this.content = element;
 
         this.spec = Bubble.getBubbleSpec(this.content);
+    }
+
+    // True if this bubble uses the old approach, hiding outline strokes behind a fillArea.
+    // False if the outline shape is one we can combine using uniteShapes into a combinedShapes.
+    public usingOverlay(): boolean {
+        return !!this.fillArea;
     }
 
     // Retrieves the bubble associated with the element
@@ -469,12 +483,16 @@ export class Bubble {
         });
     }
 
+    private hasOuterBorder(): boolean {
+        return !!this.getFullSpec().outerBorderColor && this.spec.outerBorderColor !== "none";
+    }
+
     // Attaches the specified shape to this object's content element
     private makeShapes(shape: paper.Item) {
         var oldOutline = this.outline;
         var oldFillArea = this.fillArea;
         activateLayer(this.lowerLayer);
-        this.outline = shape;
+        this.setOutline(shape);
 
         // if the SVG contains a single shape (marked with an ID) that is all
         // we need to draw, we can replace the whole-svg item with a path derived
@@ -500,7 +518,7 @@ export class Bubble {
         });
         if (outlineShape) {
             shape.remove();
-            this.outline = (outlineShape as paper.Shape).toPath();
+            this.setOutline((outlineShape as paper.Shape).toPath());
             this.lowerLayer.addChild(this.outline);
         }
         if (oldOutline) {
@@ -532,28 +550,36 @@ export class Bubble {
         // on top of the outline if it dips inside the rectangle
         this.contentHolder.remove();
 
-        this.fillArea = this.outline.clone({ insert: false });
-        Comical.setItemOnClick(this.fillArea, () => {
-            Comical.activateBubble(this);
-        });
-
-        // If we get rid of the stroke of the fill area, then it hides the outline
-        // completely. Then we have to try to guess how much to shrink it so it
-        // doesn't hide the outline. And if the outline border is thicker, we
-        // have to shrink it more. Better to leave the border properties,
-        // but make that part of the fill area transparent.
-        this.fillArea.strokeColor = new paper.Color("white");
-        this.fillArea.strokeColor.alpha = 0;
-
-        this.fillArea.fillColor = this.getBackgroundColor();
-
-        if (oldFillArea) {
-            this.fillArea.insertBelow(oldFillArea);
-            oldFillArea.remove();
+        if (outlineShape && !this.hasOuterBorder()) {
+            // We can use the new strategy that supports partly transparent background colors
+            this.outline.fillColor = this.getBackgroundColor();
+            Comical.setItemOnClick(this.outline, () => {
+                Comical.activateBubble(this);
+            });
         } else {
-            this.upperLayer.addChild(this.fillArea);
+            this.fillArea = this.outline.clone({ insert: false });
+            Comical.setItemOnClick(this.fillArea, () => {
+                Comical.activateBubble(this);
+            });
+
+            // If we get rid of the stroke of the fill area, then it hides the outline
+            // completely. Then we have to try to guess how much to shrink it so it
+            // doesn't hide the outline. And if the outline border is thicker, we
+            // have to shrink it more. Better to leave the border properties,
+            // but make that part of the fill area transparent.
+            this.fillArea.strokeColor = new paper.Color("white");
+            this.fillArea.strokeColor.alpha = 0;
+
+            this.fillArea.fillColor = this.getBackgroundColor();
+
+            if (oldFillArea) {
+                this.fillArea.insertBelow(oldFillArea);
+                oldFillArea.remove();
+            } else {
+                this.upperLayer.addChild(this.fillArea);
+            }
         }
-        if (this.getFullSpec().outerBorderColor && this.spec.outerBorderColor !== "none") {
+        if (this.hasOuterBorder()) {
             var outerBorder = this.outline.clone();
             // We want two more borders, a thick one in the outerBorderColor,
             // and a thin black one (or perhaps eventually the color of the main
@@ -693,7 +719,9 @@ export class Bubble {
             if (this.shadowShape) {
                 this.shadowShape.scale(scaleXBy, scaleYBy);
             }
-            this.fillArea.scale(scaleXBy, scaleYBy);
+            if (this.fillArea) {
+                this.fillArea.scale(scaleXBy, scaleYBy);
+            }
             this.hScale = desiredHScale;
             this.vScale = desiredVScale;
         }
@@ -705,7 +733,9 @@ export class Bubble {
             // an SVG that this method is called to adjust tails before the main shape
             // exists. If so, it will be called again when it does.
             this.outline.position = contentCenter;
-            this.fillArea.position = contentCenter;
+            if (this.fillArea) {
+                this.fillArea.position = contentCenter;
+            }
             if (this.shadowShape) {
                 // We shouldn't have a shadowShape at all unless we have a shadowOffset.
                 // In case somehow we do, hide the shadow completely when that offset is
@@ -739,7 +769,8 @@ export class Bubble {
 
         const parent = Comical.findParent(this);
         if (parent) {
-            // Need to check both child and parent, because even if we loaded the bubbles in a certain order, due to async nature, we can't be sure which one will be loaded first.
+            // Need to check both child and parent, because even if we loaded the bubbles in a certain order,
+            // due to async nature, we can't be sure which one will be loaded first.
             // (This should only applicable to determining whether the tail is visible or not.
             // Don't think we need to adjust the joiners, they should all be loaded at that time.)
             const shouldTailsBeVisible = !this.isOverlapping(parent);
@@ -749,6 +780,120 @@ export class Bubble {
                 tail.setTailAndHandleVisibility(shouldTailsBeVisible);
             });
         }
+        this.uniteShapes();
+    }
+
+    private setOutline(outline: paper.Item): void {
+        this.outline = outline;
+        this.oulineStrokeColor = outline.strokeColor;
+    }
+
+    public uniteShapes() {
+        // Since we have set the includeSelf flag, we are guaranteed that selfAndRelatives will contain
+        // at least this (self) bubble.
+        const selfAndRelatives = Comical.findRelatives(this, true);
+        // Get rid of any old combinedShapes. This is especially important to do first when
+        // switching to 'none' as no new one will be created.
+        selfAndRelatives.forEach(r => {
+            if (r.combinedShapes) {
+                r.combinedShapes.remove();
+                r.combinedShapes = undefined;
+            }
+        });
+        const parent = selfAndRelatives[0];
+        if (selfAndRelatives.some(r => !r.outline || !(r.outline as paper.PathItem).unite)) {
+            // We can't do this before the outlines have been created, or if the
+            // outline is some complex object, like a Group or an SVG import,
+            // that doesn't implement the unite() function.
+            return;
+        }
+        // Accumulates tails that can't be "united" with their bubbles.
+        // Currently these are LineTails.
+        const tailsToClip: Tail[] = [];
+        let combinedPath: paper.PathItem = parent.outline.clone({ insert: false }) as paper.PathItem;
+        combinedPath = parent.uniteTails(combinedPath, tailsToClip);
+        // Now merge any remaining family members (note the first one, the parent, is skipped).
+        for (var i = 1; i < selfAndRelatives.length; i++) {
+            if (!selfAndRelatives[i].isOverlapping(selfAndRelatives[i - 1])) {
+                // Child tails should overlap the shape we already have.
+                // Joining the tail first may help to keep the shape simple, or at least contiguous.
+                // Not sure this is necessary, unite() seems to handle discontiguous shapes.
+                combinedPath = selfAndRelatives[i].uniteTails(combinedPath, tailsToClip);
+            } else {
+                // If the bubbles overlap we don't need the joining tail; just hide it.
+                selfAndRelatives[i].tails.forEach(t => this.hideShape(t.pathstroke));
+            }
+            // We can be confident the outline is a PathItem because we checked
+            // above that it has the unite() function.
+            combinedPath = combinedPath.unite(selfAndRelatives[i].outline as paper.PathItem);
+            this.hideShape(selfAndRelatives[i].outline);
+        }
+        const style = this.getStyle();
+        combinedPath.strokeWidth = style === "none" ? 0 : Bubble.defaultBorderWidth;
+        combinedPath.strokeColor = this.oulineStrokeColor;
+        combinedPath.fillColor = this.getBackgroundColor();
+        parent.combinedShapes = combinedPath;
+        if (tailsToClip.length) {
+            const groupItems: paper.PathItem[] = [combinedPath];
+            tailsToClip.forEach(t => {
+                let clippedTail = t.pathstroke.clone({ insert: false }) as paper.PathItem;
+                this.hideShape(t.pathstroke);
+                selfAndRelatives.forEach(r => {
+                    // The following didn't work, not sure why not.
+                    //    clippedTail = clippedTail.subtract(r.outline as PathItem, { insert: false });
+                    // For now the only tails we need to clip are lines.
+                    // This simple algorithm is enough. If the line crosses other
+                    // boxes besides the one it belongs to, it will simply be drawn.
+                    if (r.tails.includes(t)) {
+                        const outlinePath = r.outline as paper.PathItem;
+                        const intersections = outlinePath.getIntersections(clippedTail);
+                        if (intersections.length > 0) {
+                            clippedTail = (t as LineTail).makeShape(intersections[0].point);
+                            clippedTail.remove();
+                        }
+                    }
+                });
+                groupItems.push(clippedTail);
+            });
+
+            parent.combinedShapes = new paper.Group(groupItems);
+        }
+        parent.combinedShapes.insertBelow(parent.outline);
+        parent.combinedShapes.sendToBack(); // maybe redundant?
+        this.hideShape(parent.outline);
+        selfAndRelatives.forEach(r => {
+            if (r.shadowShape) {
+                // Shadow needs to be behind the combinedShape.
+                r.shadowShape.sendToBack();
+            }
+        });
+    }
+
+    uniteTails(combinedPath: paper.PathItem, tailsToClip: Tail[]): paper.PathItem {
+        let result = combinedPath;
+        this.tails.forEach(t => {
+            if (t.canUnite()) {
+                result = result.unite(t.pathstroke, { insert: false });
+                this.hideShape(t.pathstroke);
+            } else {
+                tailsToClip.push(t);
+            }
+        });
+        return result;
+    }
+
+    public static almostInvisibleColor = new paper.Color(1, 1, 1, 0.001);
+
+    // The original shapes that we merge into the combinedShapes path still have click
+    // actions and so forth attached, and are the things we move and reshape and then
+    // use again to make new combinedShapes. So they need to stay around. But we don't
+    // want to actually see them...that would defeat the purpose of combining them
+    // into a single shape that omits interior lines. OTOH, they can't be completely
+    // transparent, or paper.js wouldn't recognize clicks on them. So make them very,
+    // very nearly transparent.
+    hideShape(shape: paper.Item): void {
+        shape.strokeColor = Bubble.almostInvisibleColor;
+        shape.fillColor = Bubble.almostInvisibleColor;
     }
 
     getScaleFactors(): [number, number] {
@@ -765,12 +910,12 @@ export class Bubble {
 
     // Returns true if the bubbles overlap. Otherwise, returns false
     public isOverlapping(otherBubble: Bubble): boolean {
-        if (!this.fillArea || !otherBubble.fillArea) {
+        if (!this.outline || !otherBubble.outline) {
             // If at least one of the bubbles doesn't have its shape (yet), we define this as being not overlapping
             return false;
         }
 
-        const isIntersecting = this.fillArea.intersects(otherBubble.fillArea);
+        const isIntersecting = this.outline.intersects(otherBubble.outline);
         if (isIntersecting) {
             // This is the standard case (at least if an overlap does exist) where this bubble's outline intersects the other's outline
             return true;
@@ -782,10 +927,12 @@ export class Bubble {
 
     // Returns true if the point is contained within the bubble itself (not including the tail).
     public isHitByPoint(point: paper.Point): boolean {
-        if (!this.fillArea || !this.fillArea.fillColor || this.fillArea.fillColor.alpha === 0) {
-            // If style = none, then fillArea can be undefined, or transparent, in which case
-            // Paper.js will not consider it ever to be hit.
-            // Do a hit test against the underlying content element directly.
+        if (!this.fillArea) {
+            if (this.outline.fillColor && this.outline.fillColor.alpha > 0) {
+                return !!this.outline.hitTest(point);
+            }
+            // If style = none, then fillArea and outline can both be undefined
+            // Do a hit test against the underlying content element directly (rather than the bubble fillArea, which doesn't exist)
             return this.isContentHitByPoint(point);
         }
 
