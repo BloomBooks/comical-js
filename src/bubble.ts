@@ -277,13 +277,32 @@ export class Bubble {
             ...oldDataOverrides,
             ...(newBubbleProps as BubbleSpec)
         };
+        // Review: The other possibility is to somehow make any shadow partly transparent too.
+        if (this.containsTransparencyInBackground(mergedBubble)) {
+            mergedBubble.shadowOffset = undefined; // shadowOffset is opaque
+        }
 
         this.setBubbleSpec(mergedBubble);
+    }
+
+    private containsTransparencyInBackground(mergedBubble: BubbleSpec): boolean {
+        const backColorArray = mergedBubble.backgroundColors;
+        // at this point only the first color could be partly transparent
+        if (backColorArray && backColorArray.length === 1) {
+            const backColor = backColorArray[0];
+            if (backColor.startsWith("rgba")) {
+                const regex = /,\s0\./;
+                const match = regex.exec(backColor);
+                return match !== null && match.length > 0;
+            }
+        }
+        return false;
     }
 
     public getStyle(): string {
         return this.getFullSpec().style;
     }
+
     public setStyle(style: string): void {
         // TODO: Consider validating
         this.spec.style = style;
