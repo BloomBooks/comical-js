@@ -1398,6 +1398,10 @@ storiesOf("comical", module)
             50,
             250
         );
+        textDiv2.style.zIndex = "2"; // same level as canvas
+        // this one will be at zIndex 1, under the above textDiv2 and the canvas
+        const textDiv3 = makeTextBlock(wrapDiv, "Some other text to show transparency", 100, 80, 250);
+        wrapDiv.appendChild(textDiv3);
         wrapDiv.appendChild(textDiv2);
 
         let bubble = new Bubble(textDiv2);
@@ -1411,6 +1415,8 @@ storiesOf("comical", module)
 
         setTimeout(() => {
             Comical.startEditing([wrapDiv]);
+            const canvas = wrapDiv.getElementsByTagName("canvas")[0];
+            canvas.style.zIndex = "2"; // so the canvas is above the "textDiv3"
         }, 200);
 
         addButtonBelow(
@@ -1421,6 +1427,26 @@ storiesOf("comical", module)
                 Comical.update(wrapDiv);
             },
             "430px"
+        );
+
+        addButtonBelow(
+            wrapDiv,
+            "Bloom Red 60% transparent, no tail",
+            () => {
+                bubble.mergeWithNewBubbleProps({ backgroundColors: ["rgba(214, 86, 73, 0.4)"], tails: [] });
+                Comical.update(wrapDiv);
+            },
+            "460px"
+        );
+
+        addButtonBelow(
+            wrapDiv,
+            "Bloom Blue 60% transparent, change to bubble",
+            () => {
+                bubble.mergeWithNewBubbleProps({ backgroundColors: ["rgba(29, 148, 164, 0.4)"], style: "speech" });
+                Comical.update(wrapDiv);
+            },
+            "490px"
         );
 
         const button = addFinishButton(wrapDiv);
