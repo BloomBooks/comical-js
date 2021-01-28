@@ -763,6 +763,38 @@ storiesOf("comical", module)
         wrapDiv.appendChild(detector);
         return wrapDiv;
     })
+    .add("tail fully inside bubble draws okay", () => {
+        // We had a real book with this situation and it caused problems. See BL-9451.
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.height = "400px";
+        wrapDiv.style.width = "400px";
+        wrapDiv.className = "wrapperDiv"; // just for debugging
+
+        const textDiv1 = document.createElement("div");
+        textDiv1.innerText = "parent";
+        textDiv1.style.width = "200px";
+        textDiv1.style.height = "100px";
+        textDiv1.style.textAlign = "center";
+        textDiv1.style.position = "absolute";
+        textDiv1.style.top = "100px";
+        textDiv1.style.left = "100px";
+        wrapDiv.appendChild(textDiv1);
+
+        let bubble = new Bubble(textDiv1);
+        bubble.setBubbleSpec({
+            version: "1.0",
+            style: "speech",
+            tails: [{ tipX: 125, tipY: 125, midpointX: 125, midpointY: 125, autoCurve: true }],
+            level: 1,
+            order: 1
+        });
+
+        setTimeout(() => {
+            Comical.startEditing([wrapDiv]);
+        }, 200);
+        return wrapDiv;
+    })
     .add("Multiple tails", () => {
         const wrapDiv = document.createElement("div");
         wrapDiv.style.position = "relative";

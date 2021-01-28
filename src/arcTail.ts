@@ -57,9 +57,11 @@ export class ArcTail extends CurveTail {
             if (bubblePath instanceof paper.Path) {
                 const intersections = rootTipCurve.getIntersections(bubblePath);
                 if (intersections.length === 0) {
-                    // This is very pathological and could only happen if the tip and mid are
+                    // This is very unusual and only happens if the tip and mid are
                     // both inside the bubble. In that case any tail will be inside the bubble
                     // and invisible anyway, so we may as well just give up and not make any shapes.
+                    // As of Jan 2021, the only way we know to get this is to expand the bounds of the
+                    // the bubble to cover the area where the tail is. But we did see this in a real book. See BL-9451.
                     return;
                 }
                 // in the pathological case where there's more than one intersection,

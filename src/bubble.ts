@@ -821,7 +821,7 @@ export class Bubble {
                 combinedPath = selfAndRelatives[i].uniteTails(combinedPath, tailsToClip);
             } else {
                 // If the bubbles overlap we don't need the joining tail; just hide it.
-                selfAndRelatives[i].tails.forEach(t => this.hideShape(t.pathstroke));
+                selfAndRelatives[i].tails.forEach(t => t.pathstroke && this.hideShape(t.pathstroke));
             }
             // We can be confident the outline is a PathItem because we checked
             // above that it has the unite() function.
@@ -836,6 +836,8 @@ export class Bubble {
         if (tailsToClip.length) {
             const groupItems: paper.PathItem[] = [combinedPath];
             tailsToClip.forEach(t => {
+                if (!t.pathstroke) return;
+
                 let clippedTail = t.pathstroke.clone({ insert: false }) as paper.PathItem;
                 this.hideShape(t.pathstroke);
                 selfAndRelatives.forEach(r => {
@@ -872,7 +874,7 @@ export class Bubble {
     uniteTails(combinedPath: paper.PathItem, tailsToClip: Tail[]): paper.PathItem {
         let result = combinedPath;
         this.tails.forEach(t => {
-            if (t.canUnite()) {
+            if (t.canUnite() && t.pathstroke) {
                 result = result.unite(t.pathstroke, { insert: false });
                 this.hideShape(t.pathstroke);
             } else {
