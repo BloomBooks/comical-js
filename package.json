@@ -13,8 +13,7 @@
     "private": false,
     "devDependencies": {
         "@babel/core": "^7.5.5",
-        "@storybook/html": "^5.1.11",
-        "@types/storybook__html": "^5.0.2",
+        "@storybook/html": "^6.1.15",
         "@types/svg.js": "^2.3.1",
         "awesome-typescript-loader": "^5.2.1",
         "babel-loader": "^8.0.6",
