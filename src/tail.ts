@@ -11,10 +11,14 @@ import { Handle } from "./handle";
 // If it involves additional shapes not stored in pathStroke and pathFill,
 // it should override fillPaths() and allPaths().
 export class Tail {
-    // the path representing the line around the tail
-    pathstroke: paper.Path;
-    // the path representing the space within the tail
-    pathFill: paper.Path;
+    // The path representing the line around the tail.
+    // This is usually defined but will be undefined in the
+    // unusual case of the tail being inside the bubble.
+    pathstroke?: paper.Path;
+    // The path representing the space within the tail.
+    // It will be undefined if the bubble is transparent
+    // or the tail is inside the bubble.
+    pathFill?: paper.Path;
 
     public debugMode: boolean;
 
@@ -114,9 +118,9 @@ export class Tail {
         // persistSpecChanges() AFTER calling this.
     }
 
-    // override for subclasses that can't.
-    public canUnite() {
-        return true;
+    // Override in subclasses which always can't (like lineTail).
+    public canUnite(): boolean {
+        return this.pathstroke !== undefined;
     }
 
     public uniteBubbleShapes() {
