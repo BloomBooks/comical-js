@@ -213,7 +213,7 @@ storiesOf("paper", module)
         return wrapDiv;
     });
 
-storiesOf("comical", module)
+storiesOf("comical/general", module)
     // I don't think we need a story for the tail by itself any more
     .add("drag tail", () => {
         const canvas = document.createElement("canvas");
@@ -445,7 +445,8 @@ storiesOf("comical", module)
                 version: "1.0",
                 style: "speech",
                 tails: [tail2],
-                level: 1
+                level: 1,
+                backgroundColors: ["rgba(255,200,255,0.5)"]
             });
 
             const bubble3 = new Bubble(div3);
@@ -455,63 +456,10 @@ storiesOf("comical", module)
                 style: "thought",
                 tails: [tail3],
                 level: 1,
-                backgroundColors: ["rgba(255,200,255,0.5)"]
+                backgroundColors: ["rgba(241,235,156,0.5)"]
             });
             Comical.convertBubbleJsonToCanvas(wrapDiv);
             startDragging(wrapDiv);
-        }, 200);
-
-        const button = addFinishButton(wrapDiv);
-        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
-        button.style.position = "absolute";
-        button.style.top = "600px";
-        button.style.left = "0";
-        return wrapDiv;
-    })
-    .add("three captions on picture", () => {
-        const wrapDiv = document.createElement("div");
-        wrapDiv.style.position = "relative";
-        wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
-        wrapDiv.style.height = "600px";
-
-        var div1 = makeTextBlock(wrapDiv, "Joe got some fancy glasses", 120, 100, 100);
-
-        var div2 = makeTextBlock(wrapDiv, "Bill got a blue hat that he really loves", 300, 150, 200);
-        div2.setAttribute("contenteditable", "true");
-
-        var div3 = makeTextBlock(wrapDiv, "This is someone outside speaking.", 100, 250, 150);
-        div3.setAttribute("contenteditable", "true");
-
-        // convertBubbleJsonToCanvas needs to see the divs laid out in their eventual positions
-        window.setTimeout(() => {
-            const bubble1 = new Bubble(div1);
-            bubble1.setBubbleSpec({
-                version: "1.0",
-                style: "caption",
-                tails: [],
-                level: 1,
-                backgroundColors: ["white", "yellow", "cyan"]
-            });
-
-            const bubble2 = new Bubble(div2);
-            bubble2.setBubbleSpec({
-                version: "1.0",
-                style: "caption",
-                tails: [],
-                level: 1,
-                backgroundColors: ["#FFFFFF", "#DFB28B"],
-                shadowOffset: 5
-            });
-
-            const bubble3 = new Bubble(div3);
-            bubble3.setBubbleSpec({
-                version: "1.0",
-                style: "pointedArcs",
-                tails: [],
-                level: 1
-            });
-
-            Comical.convertBubbleJsonToCanvas(wrapDiv);
         }, 200);
 
         const button = addFinishButton(wrapDiv);
@@ -834,6 +782,385 @@ storiesOf("comical", module)
 
         return wrapDiv;
     })
+    .add("bubbles on two pictures", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        const firstPicDiv = document.createElement("div");
+        firstPicDiv.style.position = "relative";
+        firstPicDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/400px";
+        firstPicDiv.style.height = "400px";
+        wrapDiv.appendChild(firstPicDiv);
+
+        const secondPicDiv = document.createElement("div");
+        secondPicDiv.style.position = "relative";
+        secondPicDiv.style.background = "url('The Moon and The Cap_Page 051.jpg') no-repeat 0/400px";
+        secondPicDiv.style.height = "400px";
+        wrapDiv.appendChild(secondPicDiv);
+
+        var div1 = makeTextBlock(firstPicDiv, "Sweet! Rad glasses!", 120, 100, 100);
+
+        var div2 = makeTextBlock(firstPicDiv, "I got a blue hat. I love it! Better not lose it...", 300, 150, 200);
+        div2.setAttribute("contenteditable", "true");
+
+        var div3 = makeTextBlock(secondPicDiv, "My hat is stuck in the tree!", 50, 50, 200);
+        div3.setAttribute("contenteditable", "true");
+
+        // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+        // as does convertBubbleJsonToCanvas.
+        window.setTimeout(() => {
+            const bubble1 = new Bubble(div1);
+            var tail = Bubble.makeDefaultTail(div1);
+            tail.style = "straight";
+            bubble1.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [tail],
+                level: 1
+            });
+
+            const bubble2 = new Bubble(div2);
+            bubble2.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [Bubble.makeDefaultTail(div2)],
+                level: 2
+            });
+            const bubble3 = new Bubble(div3);
+            bubble3.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [Bubble.makeDefaultTail(div3)],
+                level: 1
+            });
+            Comical.startEditing([firstPicDiv, secondPicDiv]);
+        }, 200);
+
+        const button = addFinishButton(wrapDiv, undefined, undefined, [firstPicDiv, secondPicDiv]);
+        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "600px";
+        button.style.left = "0";
+        return wrapDiv;
+    })
+    .add("compare with real bubbles", () => {
+        Comical.setUserInterfaceProperties({ tailHandleColor: "pink" });
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        const firstPicDiv = document.createElement("div");
+        firstPicDiv.style.position = "relative";
+        firstPicDiv.style.background = "url('HowDidItGoMyDaughter.png') no-repeat 0/150px";
+        firstPicDiv.style.backgroundColor = "cyan";
+        firstPicDiv.style.height = "250px";
+        wrapDiv.appendChild(firstPicDiv);
+
+        const secondPicDiv = document.createElement("div");
+        secondPicDiv.style.position = "relative";
+        secondPicDiv.style.background = "url('MotherNaomi.png') no-repeat 0/150px";
+        secondPicDiv.style.backgroundColor = "pink";
+        secondPicDiv.style.height = "300px";
+        wrapDiv.appendChild(secondPicDiv);
+
+        var div1 = makeTextBlock(firstPicDiv, "How did it go, my daughter?", 180, 100, 80);
+
+        var div3 = makeTextBlock(secondPicDiv, "Mother Naomi, we want to be with you!", 180, 100, 100);
+        div3.setAttribute("contenteditable", "true");
+
+        // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+        // as does convertBubbleJsonToCanvas.
+        window.setTimeout(() => {
+            const bubble1 = new Bubble(div1);
+            var tail = Bubble.makeDefaultTail(div1);
+            bubble1.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [tail],
+                level: 1
+            });
+
+            const bubble3 = new Bubble(div3);
+            bubble3.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [Bubble.makeDefaultTail(div3)],
+                level: 1
+            });
+            Comical.startEditing([firstPicDiv, secondPicDiv]);
+        }, 200);
+
+        const button = addFinishButton(wrapDiv, undefined, undefined, [firstPicDiv, secondPicDiv]);
+        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "600px";
+        button.style.left = "0";
+        return wrapDiv;
+    })
+    .add("Move content element", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.height = "300px";
+
+        const instructionsDiv = document.createElement("div");
+        instructionsDiv.innerText =
+            "Click the button to move the content element to the right. Then adjust the mid handle. Make sure the tail root goes to the new start, not the original start.";
+        instructionsDiv.style.width = "600px";
+        instructionsDiv.style.position = "absolute";
+        instructionsDiv.style.top = "0px";
+        instructionsDiv.style.left = "0px";
+        wrapDiv.appendChild(instructionsDiv);
+
+        const textDiv1 = document.createElement("div");
+        textDiv1.innerText = "Text";
+        textDiv1.style.width = "50px";
+        textDiv1.style.textAlign = "center";
+        textDiv1.style.position = "absolute";
+        textDiv1.style.top = "50px";
+        textDiv1.style.left = "200px";
+        wrapDiv.appendChild(textDiv1);
+
+        setTimeout(() => {
+            let bubble = new Bubble(textDiv1);
+            bubble.setBubbleSpec({
+                version: "1.0",
+                style: "speech",
+                tails: [{ tipX: 300, tipY: 275, midpointX: 300, midpointY: 225 }],
+                level: 1
+            });
+
+            Comical.startEditing([wrapDiv]);
+        }, 200);
+
+        const buttonLeft = addButton(wrapDiv, "Click to move box left", () => {
+            textDiv1.style.left = "100px";
+        });
+        const buttonRight = addButton(wrapDiv, "Click to move box right", () => {
+            textDiv1.style.left = "300px";
+        });
+        // Force it below the wrapDiv.
+        buttonLeft.style.position = "absolute";
+        buttonLeft.style.top = "400px";
+        buttonLeft.style.left = "0";
+
+        buttonRight.style.position = "absolute";
+        buttonRight.style.top = "400px";
+        buttonRight.style.left = "200px";
+
+        return wrapDiv;
+    })
+    .add("single-pixel line tail", () => {
+        const canvas = document.createElement("canvas");
+        canvas.height = 600;
+        canvas.width = 600;
+        paper.setup(canvas);
+
+        const start = new paper.Point(100, 100);
+        const tip = start.add(new paper.Point(200, 150));
+        const layer1 = paper.project!.activeLayer;
+        const layer2 = new paper.Layer();
+        const handleLayer = new paper.Layer();
+        paper.project!.addLayer(layer2);
+        paper.project!.addLayer(handleLayer);
+        const mid = Bubble.defaultMid(start, tip, new paper.Size(0, 0));
+
+        const tail = new LineTail(
+            start,
+            tip,
+            layer1,
+            layer2,
+            handleLayer,
+            {
+                tipX: tip.x,
+                tipY: tip.y,
+                midpointX: mid.x,
+                midpointY: mid.y
+            },
+            undefined
+        );
+        tail.debugMode = true;
+        tail.makeShapes();
+        tail.showHandles();
+        return canvas;
+    });
+
+storiesOf("comical/captions", module)
+    .add("three captions on picture", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+        wrapDiv.style.height = "600px";
+
+        var div1 = makeTextBlock(wrapDiv, "Joe got some fancy glasses", 120, 100, 100);
+
+        var div2 = makeTextBlock(wrapDiv, "Bill got a blue hat that he really loves", 300, 150, 200);
+        div2.setAttribute("contenteditable", "true");
+
+        var div3 = makeTextBlock(wrapDiv, "This is someone outside speaking.", 100, 250, 150);
+        div3.setAttribute("contenteditable", "true");
+
+        // convertBubbleJsonToCanvas needs to see the divs laid out in their eventual positions
+        window.setTimeout(() => {
+            const bubble1 = new Bubble(div1);
+            bubble1.setBubbleSpec({
+                version: "1.0",
+                style: "caption",
+                tails: [],
+                level: 1,
+                backgroundColors: ["white", "yellow", "cyan"]
+            });
+
+            const bubble2 = new Bubble(div2);
+            bubble2.setBubbleSpec({
+                version: "1.0",
+                style: "caption",
+                tails: [],
+                level: 1,
+                backgroundColors: ["#FFFFFF", "#DFB28B"],
+                shadowOffset: 5
+            });
+
+            const bubble3 = new Bubble(div3);
+            bubble3.setBubbleSpec({
+                version: "1.0",
+                style: "pointedArcs",
+                tails: [],
+                level: 1
+            });
+
+            Comical.convertBubbleJsonToCanvas(wrapDiv);
+        }, 200);
+
+        const button = addFinishButton(wrapDiv);
+        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "600px";
+        button.style.left = "0";
+        return wrapDiv;
+    })
+    .add("single-pixel tail on picture", () => {
+        const wrapDiv = document.createElement("div");
+
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+        wrapDiv.style.height = "600px";
+
+        const canvas = document.createElement("canvas");
+        canvas.width = wrapDiv.clientWidth;
+        canvas.height = wrapDiv.clientHeight;
+        paper.setup(canvas);
+
+        wrapDiv.appendChild(canvas);
+
+        var div1 = makeTextBlock(wrapDiv, "How do you like my fancy glasses?", 120, 100, 100);
+        var div2 = makeTextBlock(wrapDiv, "Nice lollipop!", 200, 460, 150);
+
+        window.setTimeout(() => {
+            const bubble1 = new Bubble(div1);
+            var tail1 = Bubble.makeDefaultTail(div1);
+            tail1.style = "line";
+            bubble1.setBubbleSpec({
+                version: "1.0",
+                style: "caption",
+                tails: [tail1],
+                level: 1,
+                backgroundColors: ["rgb(255,255,255)", "rgb(150,150,150)"],
+                shadowOffset: 1
+            });
+            const bubble2 = new Bubble(div2);
+            var tail2 = Bubble.makeDefaultTail(div2);
+            tail2.style = "line";
+            bubble2.setBubbleSpec({
+                version: "1.0",
+                style: "none",
+                tails: [tail2],
+                level: 1,
+                backgroundColors: ["rgba(255,192,203,0.3)"]
+            });
+            Comical.convertBubbleJsonToCanvas(wrapDiv);
+            startDragging(wrapDiv);
+        }, 200);
+        addFinishButton(wrapDiv, 400, 600);
+
+        return wrapDiv;
+    })
+    .add("Change background color on caption w/tail", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.height = "300px";
+        wrapDiv.style.width = "500px";
+
+        const textDiv2 = makeTextBlock(
+            wrapDiv,
+            "Change the bubble background color and make sure the tail doesn't disappear",
+            120,
+            50,
+            250
+        );
+        wrapDiv.appendChild(textDiv2);
+
+        let bubble = new Bubble(textDiv2);
+        bubble.setBubbleSpec({
+            version: "1.0",
+            style: "caption",
+            tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }],
+            backgroundColors: ["#fff", "#839496"],
+            level: 1,
+            shadowOffset: 5
+        });
+
+        setTimeout(() => {
+            Comical.startEditing([wrapDiv]);
+        }, 200);
+
+        addButtonBelow(
+            wrapDiv,
+            "Bloom Blue background",
+            () => {
+                bubble.mergeWithNewBubbleProps({ backgroundColors: ["#1d94a4"] });
+                Comical.update(wrapDiv);
+            },
+            "430px"
+        );
+
+        const button = addFinishButton(wrapDiv);
+        // Force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "400px";
+        button.style.left = "0";
+
+        return wrapDiv;
+    })
+    .add("Rounded corner caption", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.height = "300px";
+        wrapDiv.style.width = "500px";
+
+        const textDiv = makeTextBlock(
+            wrapDiv,
+            "Check that this caption has rounded corners, not square corners",
+            120,
+            50,
+            250
+        );
+
+        const bubble = new Bubble(textDiv);
+        bubble.setBubbleSpec({
+            version: "1.0",
+            style: "caption",
+            cornerRadiusX: 5,
+            cornerRadiusY: 5,
+            tails: [],
+            level: 1,
+            shadowOffset: 5
+        });
+
+        setTimeout(() => {
+            Comical.startEditing([wrapDiv]);
+        }, 1);
+
+        return wrapDiv;
+    });
+
+storiesOf("comical/parent child relations", module)
     .add("child bubbles", () => {
         // A generic picture
         // Four bubbles in the same layer, two overlapping
@@ -1181,316 +1508,6 @@ storiesOf("comical", module)
         });
 
         addFinishButton(wrapDiv, 400, 450);
-        return wrapDiv;
-    })
-    .add("bubbles on two pictures", () => {
-        const wrapDiv = document.createElement("div");
-        wrapDiv.style.position = "relative";
-        const firstPicDiv = document.createElement("div");
-        firstPicDiv.style.position = "relative";
-        firstPicDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/400px";
-        firstPicDiv.style.height = "400px";
-        wrapDiv.appendChild(firstPicDiv);
-
-        const secondPicDiv = document.createElement("div");
-        secondPicDiv.style.position = "relative";
-        secondPicDiv.style.background = "url('The Moon and The Cap_Page 051.jpg') no-repeat 0/400px";
-        secondPicDiv.style.height = "400px";
-        wrapDiv.appendChild(secondPicDiv);
-
-        var div1 = makeTextBlock(firstPicDiv, "Sweet! Rad glasses!", 120, 100, 100);
-
-        var div2 = makeTextBlock(firstPicDiv, "I got a blue hat. I love it! Better not lose it...", 300, 150, 200);
-        div2.setAttribute("contenteditable", "true");
-
-        var div3 = makeTextBlock(secondPicDiv, "My hat is stuck in the tree!", 50, 50, 200);
-        div3.setAttribute("contenteditable", "true");
-
-        // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
-        // as does convertBubbleJsonToCanvas.
-        window.setTimeout(() => {
-            const bubble1 = new Bubble(div1);
-            var tail = Bubble.makeDefaultTail(div1);
-            tail.style = "straight";
-            bubble1.setBubbleSpec({
-                version: "1.0",
-                style: "speech",
-                tails: [tail],
-                level: 1
-            });
-
-            const bubble2 = new Bubble(div2);
-            bubble2.setBubbleSpec({
-                version: "1.0",
-                style: "speech",
-                tails: [Bubble.makeDefaultTail(div2)],
-                level: 2
-            });
-            const bubble3 = new Bubble(div3);
-            bubble3.setBubbleSpec({
-                version: "1.0",
-                style: "speech",
-                tails: [Bubble.makeDefaultTail(div3)],
-                level: 1
-            });
-            Comical.startEditing([firstPicDiv, secondPicDiv]);
-        }, 200);
-
-        const button = addFinishButton(wrapDiv, undefined, undefined, [firstPicDiv, secondPicDiv]);
-        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
-        button.style.position = "absolute";
-        button.style.top = "600px";
-        button.style.left = "0";
-        return wrapDiv;
-    })
-    .add("compare with real bubbles", () => {
-        Comical.setUserInterfaceProperties({ tailHandleColor: "pink" });
-        const wrapDiv = document.createElement("div");
-        wrapDiv.style.position = "relative";
-        const firstPicDiv = document.createElement("div");
-        firstPicDiv.style.position = "relative";
-        firstPicDiv.style.background = "url('HowDidItGoMyDaughter.png') no-repeat 0/150px";
-        firstPicDiv.style.backgroundColor = "cyan";
-        firstPicDiv.style.height = "250px";
-        wrapDiv.appendChild(firstPicDiv);
-
-        const secondPicDiv = document.createElement("div");
-        secondPicDiv.style.position = "relative";
-        secondPicDiv.style.background = "url('MotherNaomi.png') no-repeat 0/150px";
-        secondPicDiv.style.backgroundColor = "pink";
-        secondPicDiv.style.height = "300px";
-        wrapDiv.appendChild(secondPicDiv);
-
-        var div1 = makeTextBlock(firstPicDiv, "How did it go, my daughter?", 180, 100, 80);
-
-        var div3 = makeTextBlock(secondPicDiv, "Mother Naomi, we want to be with you!", 180, 100, 100);
-        div3.setAttribute("contenteditable", "true");
-
-        // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
-        // as does convertBubbleJsonToCanvas.
-        window.setTimeout(() => {
-            const bubble1 = new Bubble(div1);
-            var tail = Bubble.makeDefaultTail(div1);
-            bubble1.setBubbleSpec({
-                version: "1.0",
-                style: "speech",
-                tails: [tail],
-                level: 1
-            });
-
-            const bubble3 = new Bubble(div3);
-            bubble3.setBubbleSpec({
-                version: "1.0",
-                style: "speech",
-                tails: [Bubble.makeDefaultTail(div3)],
-                level: 1
-            });
-            Comical.startEditing([firstPicDiv, secondPicDiv]);
-        }, 200);
-
-        const button = addFinishButton(wrapDiv, undefined, undefined, [firstPicDiv, secondPicDiv]);
-        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
-        button.style.position = "absolute";
-        button.style.top = "600px";
-        button.style.left = "0";
-        return wrapDiv;
-    })
-    .add("Move content element", () => {
-        const wrapDiv = document.createElement("div");
-        wrapDiv.style.position = "relative";
-        wrapDiv.style.height = "300px";
-
-        const instructionsDiv = document.createElement("div");
-        instructionsDiv.innerText =
-            "Click the button to move the content element to the right. Then adjust the mid handle. Make sure the tail root goes to the new start, not the original start.";
-        instructionsDiv.style.width = "600px";
-        instructionsDiv.style.position = "absolute";
-        instructionsDiv.style.top = "0px";
-        instructionsDiv.style.left = "0px";
-        wrapDiv.appendChild(instructionsDiv);
-
-        const textDiv1 = document.createElement("div");
-        textDiv1.innerText = "Text";
-        textDiv1.style.width = "50px";
-        textDiv1.style.textAlign = "center";
-        textDiv1.style.position = "absolute";
-        textDiv1.style.top = "50px";
-        textDiv1.style.left = "200px";
-        wrapDiv.appendChild(textDiv1);
-
-        setTimeout(() => {
-            let bubble = new Bubble(textDiv1);
-            bubble.setBubbleSpec({
-                version: "1.0",
-                style: "speech",
-                tails: [{ tipX: 300, tipY: 275, midpointX: 300, midpointY: 225 }],
-                level: 1
-            });
-
-            Comical.startEditing([wrapDiv]);
-        }, 200);
-
-        const buttonLeft = addButton(wrapDiv, "Click to move box left", () => {
-            textDiv1.style.left = "100px";
-        });
-        const buttonRight = addButton(wrapDiv, "Click to move box right", () => {
-            textDiv1.style.left = "300px";
-        });
-        // Force it below the wrapDiv.
-        buttonLeft.style.position = "absolute";
-        buttonLeft.style.top = "400px";
-        buttonLeft.style.left = "0";
-
-        buttonRight.style.position = "absolute";
-        buttonRight.style.top = "400px";
-        buttonRight.style.left = "200px";
-
-        return wrapDiv;
-    })
-    .add("single-pixel line tail", () => {
-        const canvas = document.createElement("canvas");
-        canvas.height = 600;
-        canvas.width = 600;
-        paper.setup(canvas);
-
-        const start = new paper.Point(100, 100);
-        const tip = start.add(new paper.Point(200, 150));
-        const layer1 = paper.project!.activeLayer;
-        const layer2 = new paper.Layer();
-        const handleLayer = new paper.Layer();
-        paper.project!.addLayer(layer2);
-        paper.project!.addLayer(handleLayer);
-        const mid = Bubble.defaultMid(start, tip, new paper.Size(0, 0));
-
-        const tail = new LineTail(
-            start,
-            tip,
-            layer1,
-            layer2,
-            handleLayer,
-            {
-                tipX: tip.x,
-                tipY: tip.y,
-                midpointX: mid.x,
-                midpointY: mid.y
-            },
-            undefined
-        );
-        tail.debugMode = true;
-        tail.makeShapes();
-        tail.showHandles();
-        return canvas;
-    })
-
-    .add("single-pixel tail on picture", () => {
-        const wrapDiv = document.createElement("div");
-
-        wrapDiv.style.position = "relative";
-        wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
-        wrapDiv.style.height = "600px";
-
-        const canvas = document.createElement("canvas");
-        canvas.width = wrapDiv.clientWidth;
-        canvas.height = wrapDiv.clientHeight;
-        paper.setup(canvas);
-
-        wrapDiv.appendChild(canvas);
-
-        var div1 = makeTextBlock(wrapDiv, "How do you like my fancy glasses?", 120, 100, 100);
-
-        window.setTimeout(() => {
-            const bubble1 = new Bubble(div1);
-            var tail = Bubble.makeDefaultTail(div1);
-            tail.style = "line";
-            bubble1.setBubbleSpec({
-                version: "1.0",
-                style: "caption",
-                tails: [tail],
-                level: 1,
-                backgroundColors: ["rgba(255,255,255,0.5)", "rgba(150,150,150,0.5)"]
-                //shadowOffset: 1
-            });
-            Comical.convertBubbleJsonToCanvas(wrapDiv);
-            startDragging(wrapDiv);
-        }, 200);
-        addFinishButton(wrapDiv, 400, 600);
-
-        return wrapDiv;
-    })
-    .add("Change background color on caption w/tail", () => {
-        const wrapDiv = document.createElement("div");
-        wrapDiv.style.position = "relative";
-        wrapDiv.style.height = "300px";
-        wrapDiv.style.width = "500px";
-
-        const textDiv2 = makeTextBlock(
-            wrapDiv,
-            "Change the bubble background color and make sure the tail doesn't disappear",
-            120,
-            50,
-            250
-        );
-        wrapDiv.appendChild(textDiv2);
-
-        let bubble = new Bubble(textDiv2);
-        bubble.setBubbleSpec({
-            version: "1.0",
-            style: "caption",
-            tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }],
-            backgroundColors: ["#fff", "#839496"],
-            level: 1
-        });
-
-        setTimeout(() => {
-            Comical.startEditing([wrapDiv]);
-        }, 200);
-
-        addButtonBelow(
-            wrapDiv,
-            "Bloom Blue background",
-            () => {
-                bubble.mergeWithNewBubbleProps({ backgroundColors: ["#1d94a4"] });
-                Comical.update(wrapDiv);
-            },
-            "430px"
-        );
-
-        const button = addFinishButton(wrapDiv);
-        // Force it below the wrapDiv.
-        button.style.position = "absolute";
-        button.style.top = "400px";
-        button.style.left = "0";
-
-        return wrapDiv;
-    })
-    .add("Rounded corner caption", () => {
-        const wrapDiv = document.createElement("div");
-        wrapDiv.style.position = "relative";
-        wrapDiv.style.height = "300px";
-        wrapDiv.style.width = "500px";
-
-        const textDiv = makeTextBlock(
-            wrapDiv,
-            "Check that this caption has rounded corners, not square corners",
-            120,
-            50,
-            250
-        );
-
-        const bubble = new Bubble(textDiv);
-        bubble.setBubbleSpec({
-            version: "1.0",
-            style: "caption",
-            cornerRadiusX: 5,
-            cornerRadiusY: 5,
-            tails: [],
-            level: 1
-        });
-
-        setTimeout(() => {
-            Comical.startEditing([wrapDiv]);
-        }, 1);
-
         return wrapDiv;
     });
 
