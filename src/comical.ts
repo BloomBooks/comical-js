@@ -772,6 +772,35 @@ export class Comical {
             .sort((a, b) => a.getBubbleSpec().order! - b.getBubbleSpec().order!);
     }
 
+    // Removes the bubble associated with 'elementToDelete' from its 'family' of bubbles.
+    // This can either be the parent of this family or one of the child bubbles.
+    public static deleteBubbleFromFamily(elementToDelete: HTMLElement, container: HTMLElement) {
+        const specToDelete = Bubble.getBubbleSpec(elementToDelete);
+        const orderOfGoner = specToDelete.order;
+        if (orderOfGoner && orderOfGoner > 0) {
+            // We're in a family of more than one bubble; adjust order and tailspec joiner status.
+            const tempBubble = new Bubble(elementToDelete);
+            // By default 'includeSelf' is false, which is fine whether we're deleting self or not.
+            // In any case, 'relatives' will be in order of... 'order'.
+            const relatives = this.findRelatives(tempBubble);
+            relatives.forEach((relatedBubble, index) => {
+                let relationSpec: BubbleSpec = relatedBubble.getBubbleSpec();
+                if (index === 0 && orderOfGoner === 1 && relationSpec.tails.length > 0) {
+                    // We're deleting the parent bubble, so the first child's tail is now non-joiner.
+                    relationSpec.tails[0].joiner = false;
+                }
+                if (relationSpec.order && relationSpec.order > orderOfGoner) {
+                    relationSpec.order--;
+                }
+                relatedBubble.setBubbleSpec(relationSpec);
+            });
+        }
+
+        // Now remove the text div and update
+        container.removeChild(elementToDelete);
+        this.update(container);
+    }
+
     public static bubbleVersion = "1.0";
 }
 
