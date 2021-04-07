@@ -10,6 +10,7 @@ import { makeThoughtBubble } from "./thoughtBubble";
 import { makeCaptionBox } from "./captionBubble";
 import { activateLayer } from "./utilities";
 import { SimpleRandom } from "./random";
+import { makeCircleBubble } from "./circleBubble";
 
 // This class represents a bubble (including the tails, if any) wrapped around an HTML element
 // and handles:
@@ -127,7 +128,7 @@ export class Bubble {
             result.backgroundColors = ["#FFFFFF", "#DFB28B"];
             result.tails = [];
             result.shadowOffset = 5;
-        } else if (style === "pointedArcs") {
+        } else if (style === "pointedArcs" || style === "circle") {
             result.tails = [];
         }
         return result;
@@ -444,6 +445,8 @@ export class Bubble {
                 return makeThoughtBubble(this);
             case "speech":
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
+            case "circle":
+                return makeCircleBubble(this.content.offsetWidth, this.content.offsetHeight);
             case "caption": // purposeful fall-through; these three types should have the same shape
             case "caption-withTail":
             case "none":
