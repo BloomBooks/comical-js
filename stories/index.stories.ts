@@ -469,6 +469,72 @@ storiesOf("comical/general", module)
         button.style.left = "0";
         return wrapDiv;
     })
+    .add("circular bubbles", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+        wrapDiv.style.height = "600px";
+        //wrapDiv.style.transform = "scale(1.3)";
+        wrapDiv.style.transformOrigin = "left top";
+
+        var div1 = makeTextBlock(wrapDiv, "Sweet! Rad glasses!", 20, 50, 100);
+
+        var div2 = makeTextBlock(wrapDiv, "I got a blue hat. I love it! Better not lose it...", 100, 170, 200);
+        div2.setAttribute("contenteditable", "true");
+
+        var div3 = makeTextBlock(
+            wrapDiv,
+            "Yum! This tastes really good!  I want more and more and more...",
+            300,
+            50,
+            100
+        );
+        div3.setAttribute("contenteditable", "true");
+
+        // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+        // as does convertBubbleJsonToCanvas.
+        window.setTimeout(() => {
+            const bubble1 = new Bubble(div1);
+            var tail = Bubble.makeDefaultTail(div1);
+            tail.style = "straight";
+            bubble1.setBubbleSpec({
+                version: "1.0",
+                style: "circle",
+                tails: [tail],
+                level: 1,
+                outerBorderColor: "red"
+            });
+
+            const bubble2 = new Bubble(div2);
+            const tail2 = Bubble.makeDefaultTail(div2);
+            bubble2.setBubbleSpec({
+                version: "1.0",
+                style: "circle",
+                tails: [tail2],
+                level: 1,
+                backgroundColors: ["rgba(255,200,255,0.5)"]
+            });
+
+            const bubble3 = new Bubble(div3);
+            var tail3 = Bubble.makeDefaultTail(div3);
+            bubble3.setBubbleSpec({
+                version: "1.0",
+                style: "circle",
+                tails: [tail3],
+                level: 1,
+                backgroundColors: ["rgba(241,235,156,0.5)"]
+            });
+            Comical.convertBubbleJsonToCanvas(wrapDiv);
+            startDragging(wrapDiv);
+        }, 200);
+
+        const button = addFinishButton(wrapDiv);
+        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "600px";
+        button.style.left = "0";
+        return wrapDiv;
+    })
     .add("overlapping bubbles", () => {
         // A generic picture
         // Two bubbles that are merged together (at the same layer)
