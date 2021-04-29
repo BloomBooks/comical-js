@@ -14,7 +14,7 @@ export function makeCaptionBox(bubble: Bubble, cornerRadii?: paper.Size): paper.
 }
 
 function makeOutline(bounds: paper.Rectangle, cornerRadii?: paper.Size): paper.Path.Rectangle {
-    const delta = 1;
+    const delta = 3;
     const outlineTopLeft = bounds.topLeft.subtract(delta);
     const outlineSize = new paper.Size(bounds.size.add(delta * 2));
 
