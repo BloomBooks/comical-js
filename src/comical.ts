@@ -778,16 +778,22 @@ export class Comical {
         const specToDelete = Bubble.getBubbleSpec(elementToDelete);
         const orderOfGoner = specToDelete.order;
         if (orderOfGoner && orderOfGoner > 0) {
-            // We're in a family of more than one bubble; adjust order and tailspec joiner status.
+            // We're in a family of more than one bubble; adjust order (at least).
             const tempBubble = new Bubble(elementToDelete);
             // By default 'includeSelf' is false, which is fine whether we're deleting self or not.
             // In any case, 'relatives' will be in order of... 'order'.
             const relatives = this.findRelatives(tempBubble);
             relatives.forEach((relatedBubble, index) => {
                 let relationSpec: BubbleSpec = relatedBubble.getBubbleSpec();
-                if (index === 0 && orderOfGoner === 1 && relationSpec.tails.length > 0) {
-                    // We're deleting the parent bubble, so the first child's tail is now non-joiner.
-                    relationSpec.tails[0].joiner = false;
+                if (index === 0 && orderOfGoner === 1) {
+                    // We're deleting the patriarch bubble and this relation will be the new patriarch.
+                    // Since everything in the patriarch bubble's spec should still be in the new
+                    // patriarch's spec, we just copy it over.
+                    // Most fields in the bubble spec apply to the entire family, not just to the
+                    // individual bubble. The exceptions to that right now are "order" and "tails".
+                    // But once relationSpec becomes the parent, its order and tail values just happen
+                    // to become the same as that of the old parent.
+                    relationSpec = specToDelete;
                 }
                 if (relationSpec.order && relationSpec.order > orderOfGoner) {
                     relationSpec.order--;
