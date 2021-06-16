@@ -785,9 +785,16 @@ export class Comical {
             const relatives = this.findRelatives(tempBubble);
             relatives.forEach((relatedBubble, index) => {
                 let relationSpec: BubbleSpec = relatedBubble.getBubbleSpec();
-                if (index === 0 && orderOfGoner === 1 && relationSpec.tails.length > 0) {
-                    // We're deleting the parent bubble, so the first child's tail is now non-joiner.
-                    relationSpec.tails[0].joiner = false;
+                if (index === 0 && orderOfGoner === 1) {
+                    // We're deleting the parent bubble; clean up a couple of things.
+                    if (relationSpec.tails.length > 0) {
+                        // The first child's tail is now non-joiner.
+                        relationSpec.tails[0].joiner = false;
+                    }
+                    // If there was a background color on the parent, the first child needs to "inherit" the color.
+                    if (specToDelete.backgroundColors) {
+                        relationSpec.backgroundColors = specToDelete.backgroundColors;
+                    }
                 }
                 if (relationSpec.order && relationSpec.order > orderOfGoner) {
                     relationSpec.order--;
