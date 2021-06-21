@@ -1576,7 +1576,7 @@ storiesOf("comical/parent child relations", module)
         addFinishButton(wrapDiv, 400, 450);
         return wrapDiv;
     })
-    .add("delete parent bubble - tail adjusts", () => {
+    .add("delete parent bubble - tail adjusts and background inherits", () => {
         const wrapDiv = document.createElement("div");
         wrapDiv.style.position = "relative";
         wrapDiv.style.height = "440px";
@@ -1604,6 +1604,7 @@ storiesOf("comical/parent child relations", module)
                 version: "1.0",
                 style: "speech",
                 tails: [Bubble.makeDefaultTail(parentDiv)],
+                backgroundColors: ["rgba(200,255,255,0.5)"],
                 level: 1
             });
             // To get the right behaviour from initializeChild,
