@@ -933,7 +933,7 @@ export class Bubble {
     // Returns true if the point is contained within the bubble itself (not including the tail).
     public isHitByPoint(point: paper.Point): boolean {
         if (!this.fillArea) {
-            if (this.outline.fillColor && this.outline.fillColor.alpha > 0) {
+            if (this.outline?.fillColor && this.outline.fillColor.alpha > 0) {
                 return !!this.outline.hitTest(point);
             }
             // If style = none, then fillArea and outline can both be undefined
