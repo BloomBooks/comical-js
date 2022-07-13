@@ -48,8 +48,8 @@
         "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
         "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js",
         "build": "shx rm -rf dist/ && webpack",
-        "//publish": "strips out the scripts, dependencies, etc and then does `npm publish`",
-        "publish": "clean-publish"
+        "//publish-clean": "strips out the scripts, dependencies, etc and then does `npm publish`",
+        "publish-clean": "clean-publish"
     },
     "clean-publish": {
         "packageManager": "yarn"
