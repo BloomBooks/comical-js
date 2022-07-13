@@ -1,16 +1,23 @@
 {
     "name": "comicaljs",
-    "version": "0.2.0",
+    "//version": "major and minor come from here, the patch number comes from TeamCity",
+    "version": "0.3.0",
     "description": "Edit cartoon bubble frames around an HTML element",
     "main": "index.js",
     "types": "index.d.ts",
+    "//files": "we get package.json, README, and LICENSE automatically. Use `npm pack` to test.",
     "files": [
-        "/dist/*"
+        "dist/"
     ],
-    "repository": "https://github.com/BloomBooks/comical-js.git",
+    "keywords": [
+        "comic",
+        "balloon",
+        "speech bubbles"
+    ],
     "author": "SIL Bloom Team & Contributors",
     "license": "MIT",
     "private": false,
+    "repository": "https://github.com/BloomBooks/comical-js.git",
     "devDependencies": {
         "@babel/core": "^7.5.5",
         "@storybook/html": "^6.1.15",
@@ -19,6 +26,7 @@
         "babel-loader": "^8.0.6",
         "babel-preset-env": "^1.7.0",
         "babel-preset-react": "^6.24.1",
+        "clean-publish": "^4.0.1",
         "copy-webpack-plugin": "^5.0.4",
         "globule": "^1.2.1",
         "husky": "^3.0.9",
@@ -38,10 +46,13 @@
         "storybook": "start-storybook -s ./storyStatic -p 6006",
         "build-storybook": "build-storybook",
         "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
-        "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js && shx cp package-publish.json dist/package.json && shx cp *.md dist",
-        "build": "shx rm -rf dist/ && webpack && shx cp package-publish.json dist/package.json && shx cp *.md dist",
-        "Notice that we do 'publish dist', because what we want to publish is just the contents of the dist directory": "//",
-        "So we want `yarn publish dist`": "//"
+        "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js",
+        "build": "shx rm -rf dist/ && webpack",
+        "//publish": "strips out the scripts, dependencies, etc and then does `npm publish`",
+        "publish": "clean-publish"
+    },
+    "clean-publish": {
+        "packageManager": "yarn"
     },
     "husky": {
         "hooks": {
