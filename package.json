@@ -3,8 +3,8 @@
     "//version": "major and minor come from here, the patch number comes from TeamCity",
     "version": "0.3.0",
     "description": "Edit cartoon bubble frames around an HTML element",
-    "main": "index.js",
-    "types": "index.d.ts",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "//files": "we get package.json, README, and LICENSE automatically. Use `npm pack` to test.",
     "files": [
         "dist/"
