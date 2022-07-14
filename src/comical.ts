@@ -270,6 +270,23 @@ export class Comical {
         item.data.onClick = clickAction;
     }
 
+    // Return true if a click at the specified point (relative to the top left
+    // of the specified container element) will hit something draggable.
+    // Note: the name of this method reflects the intention to identify points NEAR
+    // something draggable...say, close enough that it would be good to convert a
+    // hand cursor to a pointer for accurate dragging of small targets like tail handles.
+    // The current implementation is cruder and returns true only if the point directly
+    // hits something draggable.
+    public static isDraggableNear(element: HTMLElement, x: number, y: number): boolean {
+        const containerData = Comical.activeContainers.get(element);
+        if (!containerData) {
+            return false;
+        }
+        const where = new paper.Point(x, y);
+        const hit = containerData.project.hitTest(where);
+        return hit && hit.item && hit.item.data && hit.item.data.hasOwnProperty("onDrag");
+    }
+
     public static convertBubbleJsonToCanvas(parent: HTMLElement) {
         const canvas = parent.ownerDocument!.createElement("canvas");
         canvas.style.position = "absolute";
@@ -664,7 +681,15 @@ export class Comical {
         if (!parentContainer) {
             return true; // shouldn't happen, I think.
         }
-        if (this.getBubbleHit(parentContainer, dest.x, dest.y)) {
+        // We don't allow tails to extend into other bubbles, except ones that have no style
+        // or tails. This might be too strong; we mainly want to prevent a tail being
+        // drawn underneath a bubble, which dosn't work well visually, and a tail connected
+        // back to the bubble it started from, which also doesn't work well. The main case
+        // where we DO want to allow it is where a tail is dragged inside an overlay image.
+        // Currently those have no bubble or tail so this is a reasonable test.
+        const bubbleHit = this.getBubbleHit(parentContainer, dest.x, dest.y);
+        const spec = bubbleHit?.getFullSpec();
+        if (bubbleHit && (spec?.style !== "none" || spec.tails.length > 0)) {
             return false;
         }
 
