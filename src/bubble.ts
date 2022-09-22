@@ -128,7 +128,7 @@ export class Bubble {
             result.backgroundColors = ["#FFFFFF", "#DFB28B"];
             result.tails = [];
             result.shadowOffset = 5;
-        } else if (style === "pointedArcs" || style === "circle") {
+        } else if (style === "pointedArcs" || style === "circle" || style === "rectangle") {
             result.tails = [];
         }
         return result;
@@ -447,8 +447,9 @@ export class Bubble {
                 return makeSpeechBubble(this.content.offsetWidth, this.content.offsetHeight, 0.6, 0.8);
             case "circle":
                 return makeCircleBubble(this.content.offsetWidth, this.content.offsetHeight);
-            case "caption": // purposeful fall-through; these three types should have the same shape
+            case "caption": // purposeful fall-through; these four types should have the same shape
             case "caption-withTail":
+            case "rectangle":
             case "none":
                 const spec = this.getFullSpec();
                 const rounderCornerRadii =
@@ -1039,6 +1040,7 @@ export class Bubble {
             // Currently captions have optional tails. If they have a tail,
             // it will be a straight line. The 'none' style may soon be able to have tails too.
             case "caption":
+            case "rectangle":
             case "none": // Purposeful fall-through.
                 tail = new LineTail(
                     startPoint,

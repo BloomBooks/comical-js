@@ -16,7 +16,7 @@ export interface BubbleSpecPattern {
     level?: number; // relative z-index, bubbles with same one merge, larger overlay (not implemented yet)
     borderStyle?: string; // not implemented or fully designed yet
 
-    // Optional: Support rounded corners. Currently only applicable if style=caption.
+    // Optional: Support rounded corners. Currently only applicable if style=caption or rectangle.
     // For square corners, leave undefined or set to 0.
     // For round corners, both must be defined and non-zero.
     cornerRadiusX?: number;
