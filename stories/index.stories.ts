@@ -747,6 +747,20 @@ storiesOf("comical/general", module)
             "200px"
         );
 
+        addButtonBelow(
+            wrapDiv,
+            "Rectangle",
+            () => {
+                bubble.mergeWithNewBubbleProps({
+                    style: "rectangle"
+                });
+                Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
+            },
+            "550px",
+            "200px"
+        );
+
         const button = addFinishButton(wrapDiv);
         // Force it below the wrapDiv.
         button.style.position = "absolute";
