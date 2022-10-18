@@ -456,7 +456,7 @@ export class Bubble {
                     spec.cornerRadiusX && spec.cornerRadiusY
                         ? new paper.Size(spec.cornerRadiusX, spec.cornerRadiusY)
                         : undefined;
-                return makeCaptionBox(this, rounderCornerRadii);
+                return makeCaptionBox(this, rounderCornerRadii, this.getBorderWidth());
             default:
                 return undefined; // not a computed shape, may be svg...caller has real default
         }
@@ -529,8 +529,7 @@ export class Bubble {
             this.outline.insertBelow(oldOutline);
             oldOutline.remove();
         }
-        const style = this.getStyle();
-        this.outline.strokeWidth = style === "none" ? 0 : Bubble.defaultBorderWidth;
+        this.outline.strokeWidth = this.getBorderWidth();
         this.hScale = this.vScale = 1; // haven't scaled it at all yet.
         // recursive: true is required to see any but the root "g" element
         // (apparently contrary to documentation).
@@ -639,7 +638,11 @@ export class Bubble {
     }
 
     public getBorderWidth() {
-        return Bubble.defaultBorderWidth;
+        const style = this.getStyle();
+        if (style === "rectangle") {
+            return 1;
+        }
+        return style === "none" ? 0 : Bubble.defaultBorderWidth;
     }
 
     public getBackgroundColor(): paper.Color {
@@ -832,8 +835,7 @@ export class Bubble {
             combinedPath = combinedPath.unite(selfAndRelatives[i].outline as paper.PathItem);
             this.hideShape(selfAndRelatives[i].outline);
         }
-        const style = this.getStyle();
-        combinedPath.strokeWidth = style === "none" ? 0 : Bubble.defaultBorderWidth;
+        combinedPath.strokeWidth = this.getBorderWidth();
         combinedPath.strokeColor = this.oulineStrokeColor;
         combinedPath.fillColor = this.getBackgroundColor();
         parent.combinedShapes = combinedPath;
