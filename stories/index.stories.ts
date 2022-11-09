@@ -535,6 +535,45 @@ storiesOf("comical/general", module)
         button.style.left = "0";
         return wrapDiv;
     })
+    .add("rectangular bubble with background", () => {
+        const wrapDiv = document.createElement("div");
+        wrapDiv.style.position = "relative";
+        wrapDiv.style.background = "url('The Moon and The Cap_Page 031.jpg') no-repeat 0/600px";
+        wrapDiv.style.height = "600px";
+        //wrapDiv.style.transform = "scale(1.3)";
+        wrapDiv.style.transformOrigin = "left top";
+
+        var div1 = makeTextBlock(wrapDiv, "This is a test of BL-11715", 20, 50, 100);
+
+        div1.setAttribute("contenteditable", "true");
+
+        // MakeDefaultTip() needs to see the divs laid out in their eventual positions,
+        // as does convertBubbleJsonToCanvas.
+        window.setTimeout(() => {
+            const bubble1 = new Bubble(div1);
+
+            bubble1.setBubbleSpec({
+                version: "1.0",
+                style: "none",
+                tails: [],
+                level: 1,
+                backgroundColors: [`#60ee5a`],
+                //shadowOffset: 0,
+                cornerRadiusX: 8,
+                cornerRadiusY: 8
+            });
+
+            Comical.convertBubbleJsonToCanvas(wrapDiv);
+            startDragging(wrapDiv);
+        }, 200);
+
+        const button = addFinishButton(wrapDiv);
+        // I can't get the button to respond to clicks if it overlays the canvas, so force it below the wrapDiv.
+        button.style.position = "absolute";
+        button.style.top = "600px";
+        button.style.left = "0";
+        return wrapDiv;
+    })
     .add("overlapping bubbles", () => {
         // A generic picture
         // Two bubbles that are merged together (at the same layer)
