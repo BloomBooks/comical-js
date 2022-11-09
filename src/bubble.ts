@@ -456,7 +456,13 @@ export class Bubble {
                     spec.cornerRadiusX && spec.cornerRadiusY
                         ? new paper.Size(spec.cornerRadiusX, spec.cornerRadiusY)
                         : undefined;
-                return makeCaptionBox(this, rounderCornerRadii, this.getBorderWidth());
+                // The padding thing is kind of backwards compatibility. In an earlier version,
+                // the border set up by makeCaptionBox was always 3px, but we reduced the thickness
+                // to zero for 'none' later. That actually left the box 3px larger, which acted as padding.
+                // It's probably a good thing, might even be desirable to have some for other bubbles,
+                // but we don't want to change things and break existing books. So, put the 3px padding
+                // back in for 'none' (BL-11715).
+                return makeCaptionBox(this, rounderCornerRadii, this.getBorderWidth(), bubbleStyle == "none" ? 3 : 0);
             default:
                 return undefined; // not a computed shape, may be svg...caller has real default
         }
@@ -640,7 +646,7 @@ export class Bubble {
     public getBorderWidth() {
         const style = this.getStyle();
         if (style === "rectangle") {
-            return 1;
+            return 1; // BL-11618, we want rectangle thickness to match the tail line
         }
         return style === "none" ? 0 : Bubble.defaultBorderWidth;
     }
