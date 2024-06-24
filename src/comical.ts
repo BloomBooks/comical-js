@@ -499,7 +499,12 @@ export class Comical {
     // Returns the first bubble at the point (x, y), or undefined if no bubble is present at that point.
     // Note that this must be a point in real pixels (like MouseEvent.offsetX/Y), not scaled pixels,
     // if some transform:scale has been applied to the Comical canvas.
-    public static getBubbleHit(parentContainer: HTMLElement, x: number, y: number): Bubble | undefined {
+    public static getBubbleHit(
+        parentContainer: HTMLElement,
+        x: number,
+        y: number,
+        onlyIfEnabled?: boolean
+    ): Bubble | undefined {
         const containerData = Comical.activeContainers.get(parentContainer);
         if (!containerData) {
             return undefined;
@@ -509,7 +514,11 @@ export class Comical {
         // You could try to run hitTest, but that gives you a Paper Item, and then you have to figure out which Bubble the Paper Item belongs to... not any easier.
 
         // Create a shallow copy so we can mess it without concern.
-        const bubbleList = containerData.bubbleList.slice(0);
+        let bubbleList = containerData.bubbleList.slice(0);
+        if (onlyIfEnabled) {
+            // Filter out bubbles whose main content is not enabled for pointer events.
+            bubbleList = bubbleList.filter(bubble => window.getComputedStyle(bubble.content).pointerEvents !== "none");
+        }
 
         // Sort them so that bubbles with higher level come first.
         Comical.sortBubbleListTopLevelFirst(bubbleList);
