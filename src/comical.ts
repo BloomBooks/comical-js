@@ -513,12 +513,20 @@ export class Comical {
         // I think it's easier to just iterate through the bubbles and check if they're hit or not.
         // You could try to run hitTest, but that gives you a Paper Item, and then you have to figure out which Bubble the Paper Item belongs to... not any easier.
 
-        // Create a shallow copy so we can mess it without concern.
-        let bubbleList = containerData.bubbleList.slice(0);
-        if (onlyIfEnabled) {
-            // Filter out bubbles whose main content is not enabled for pointer events.
-            bubbleList = bubbleList.filter(bubble => window.getComputedStyle(bubble.content).pointerEvents !== "none");
-        }
+        // Filtering also serves to give us our own copy we can manipulate without affecting the original.
+        let bubbleList = containerData.bubbleList.filter(bubble => {
+            // Always filter out bubbles that are completely invisible.
+            // (There are other ways bubbles could be invisible, but this is enough for current purposes.)
+            const cs = window.getComputedStyle(bubble.content);
+            if (cs.display === "none") {
+                return false;
+            }
+            // And if requested, filter out bubbles whose main content is not enabled for pointer events.
+            if (onlyIfEnabled && cs.pointerEvents === "none") {
+                return false;
+            }
+            return true;
+        });
 
         // Sort them so that bubbles with higher level come first.
         Comical.sortBubbleListTopLevelFirst(bubbleList);
