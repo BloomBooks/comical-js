@@ -94,17 +94,17 @@ export class ThoughtTail extends CurveTail {
                 center: center,
                 size: new paper.Size(bubbleRadius + 5, bubbleRadius)
             });
-            newStroke.strokeWidth = this.bubble!.getBorderWidth();
+            // Anything with a matching fill element needs doubled border
+            // because it grows both ways from the ideal line, and the inner
+            // half is covered by the fill.
+            newStroke.strokeWidth = this.bubble!.getBorderWidth() * 2;
             newStroke.strokeColor = new paper.Color("black");
             //newStroke.rotation = center.subtract(lastPoint).angle;
             this.miniBubbleStrokePaths.push(newStroke);
             const newFill = newStroke.clone() as paper.Path;
             newFill.fillColor = this.getFillColor();
-            // The idea here is to let the full width of pathStroke's border
-            // show through. It doesn't quite work but gives a result consistent
-            // with other similar fill paths.
-            newFill.strokeColor = new paper.Color("white");
-            newFill.strokeColor.alpha = 0;
+            // Any border on the fill area just confuses things.
+            newFill.strokeWidth = 0;
 
             if (this.clickAction) {
                 Comical.setItemOnClick(newFill, this.clickAction);
