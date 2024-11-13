@@ -37,6 +37,7 @@ export function makeThoughtBubble(bubble: Bubble): paper.Item {
         outline.strokeWidth = bubble.getBorderWidth();
         outline.strokeColor = new paper.Color("black");
         outline.closed = true; // It should already be, but may help paper.js to treat it so.
+        outline.name = "outlineShape";
         return outline;
     });
 }
