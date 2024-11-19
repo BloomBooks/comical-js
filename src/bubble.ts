@@ -566,18 +566,26 @@ export class Bubble {
                 Comical.activateBubble(this);
             });
         } else {
+            // This strategy does not work well with partly transparent background colors.
+            // The partly-transparent background won't erase any part of the tail that is
+            // inside the bubble. Nor will it properly erase the half of the border width
+            // that is 'inside' the bubble. So new bubbles should use outlineShape if possible.
             this.fillArea = this.outline.clone({ insert: false });
             Comical.setItemOnClick(this.fillArea, () => {
                 Comical.activateBubble(this);
             });
 
-            // If we get rid of the stroke of the fill area, then it hides the outline
-            // completely. Then we have to try to guess how much to shrink it so it
-            // doesn't hide the outline. And if the outline border is thicker, we
-            // have to shrink it more. Better to leave the border properties,
-            // but make that part of the fill area transparent.
-            this.fillArea.strokeColor = new paper.Color("white");
-            this.fillArea.strokeColor.alpha = 0;
+            // Any stroke on the fill just confuses things.
+            // An earlier version made the stroke transparent so that the outline border
+            // would show through and the fill area would be shrunk to inside the border.
+            // Then (I think) Comical was changed so that the border grows both ways from the ideal
+            // line, and the fill is painted (under the border) all the way to the ideal line.
+            // Thus, even a transparent border didn't stop the background from overlaying
+            // the outline border, which is at a lower layer. So now we just remove the stroke
+            // here, and adjust the width of the outline border. Unfortunately, this only works
+            // well if the background color has no transparency.
+            this.fillArea.strokeWidth = 0;
+            this.outline.strokeWidth *= 2;
 
             this.fillArea.fillColor = this.getBackgroundColor();
 
@@ -1327,6 +1335,7 @@ export class Bubble {
             outline.strokeWidth = 1;
             outline.strokeColor = new paper.Color("black");
             outline.closed = true; // It should already be, but may help paper.js to treat it so.
+            outline.name = "outlineShape";
             return outline;
         });
     }

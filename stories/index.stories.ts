@@ -732,6 +732,20 @@ storiesOf("comical/general", module)
 
         addButtonBelow(
             wrapDiv,
+            "Exclamation w. tail",
+            () => {
+                bubble.mergeWithNewBubbleProps({
+                    style: "pointedArcs",
+                    tails: [{ tipX: 220, tipY: 250, midpointX: 220, midpointY: 175 }]
+                });
+                Comical.update(wrapDiv);
+                updateTransparencyDetector(wrapDiv, bubble, inEditMode());
+            },
+            "550px"
+        );
+
+        addButtonBelow(
+            wrapDiv,
             "Thought",
             () => {
                 bubble.mergeWithNewBubbleProps({ style: "thought" });
