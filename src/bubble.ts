@@ -66,7 +66,7 @@ export class Bubble {
     // The tail objects (which include things like its PaperJs underlying objects and how to draw them).
     // Contains more details than the "tips" array in the spec object
     // The elements in each array should correspond, though.
-    private tails: Tail[] = [];
+    public tails: Tail[] = [];
     private observer: MutationObserver | undefined;
     private hScale: number = 1; // Horizontal scaling
     private vScale: number = 1; // Vertical scaling
