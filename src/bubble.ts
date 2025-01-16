@@ -748,11 +748,26 @@ export class Bubble {
         }
         const contentLeft = this.content.offsetLeft;
         const contentTop = this.content.offsetTop;
-        const contentCenter = new paper.Point(contentLeft + contentWidth / 2, contentTop + contentHeight / 2);
+        let contentCenter = new paper.Point(contentLeft + contentWidth / 2, contentTop + contentHeight / 2);
         if (this.outline) {
             // it's just possible if shape is created asynchronously from
             // an SVG that this method is called to adjust tails before the main shape
             // exists. If so, it will be called again when it does.
+
+            if (this.getBorderWidth() % 2 === 1) {
+                // To draw odd width lines properly, we need the coordinates where they are drawn to end
+                // in 0.5. If not already, make it so.
+                // (Otherwise, canvas draws the line one pixel wider, with the two outer pixels being a
+                // lighter color. This is particularly bad when we want a one-pixel black line (e.g., for a
+                // rectangle) and get a two-pixel grey one (a secondary problem in BL-14075).)
+                // This fix is mainly focused on rectangles, the only thing we currently draw with width one.
+                // Oddly, this is always achieved by adding 0.5. For example, if the width is even, the initial
+                // contentCenter.x is a whole number, adding 0.5 makes it end in 0.5, and subtracting half of it
+                // to get left makes left end in 0.5, since half of it is a whole number. If the width is odd,
+                // contentCenter.x starts out ending in 0.5, adding 0.5 makes it a whole number, but now
+                // half of the width ends in 0.5, so subtracting that to get left again makes left end in 0.5.
+                contentCenter = contentCenter.add(new paper.Point(0.5, 0.5));
+            }
             this.outline.position = contentCenter;
             if (this.fillArea) {
                 this.fillArea.position = contentCenter;
