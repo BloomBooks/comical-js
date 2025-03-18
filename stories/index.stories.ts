@@ -1702,6 +1702,106 @@ storiesOf("comical/parent child relations", module)
         return wrapDiv;
     });
 
+storiesOf("comical/tails", module).add("midpoint rules", () => {
+    const mainDiv = document.createElement("div");
+
+    const wrapDiv = document.createElement("div");
+    wrapDiv.style.position = "relative";
+    wrapDiv.style.height = "500px";
+    wrapDiv.style.width = "600px";
+    wrapDiv.style.backgroundColor = "LightCyan";
+    mainDiv.appendChild(wrapDiv);
+
+    const textDivForBubble = document.createElement("div");
+    textDivForBubble.innerText =
+        "You should never be able to drag the midpoint into a bubble, including self... Unless you specifically allow for it with a special selector.";
+    textDivForBubble.style.width = "200px";
+    textDivForBubble.style.textAlign = "center";
+    textDivForBubble.style.position = "absolute";
+    textDivForBubble.style.top = "50px";
+    textDivForBubble.style.left = "30px";
+    textDivForBubble.style.pointerEvents = "none";
+    wrapDiv.appendChild(textDivForBubble);
+
+    let bubble = new Bubble(textDivForBubble);
+    bubble.setBubbleSpec({
+        version: "1.0",
+        style: "speech",
+        tails: [{ tipX: 100, tipY: 250, midpointX: 50, midpointY: 175 }],
+        level: 1
+    });
+
+    const textDivForCaption = document.createElement("div");
+    textDivForCaption.innerText = "not allowed";
+    textDivForCaption.style.width = "200px";
+    textDivForCaption.style.textAlign = "center";
+    textDivForCaption.style.position = "absolute";
+    textDivForCaption.style.top = "50px";
+    textDivForCaption.style.left = "270px";
+    textDivForCaption.style.pointerEvents = "none";
+    textDivForCaption.classList.add("my-caption");
+    wrapDiv.appendChild(textDivForCaption);
+
+    let caption = new Bubble(textDivForCaption);
+    caption.setBubbleSpec({
+        version: "1.0",
+        style: "caption",
+        tails: [],
+        level: 1
+    });
+
+    const divForRedBox = document.createElement("div");
+    divForRedBox.innerText = "not allowed";
+    divForRedBox.style.width = "200px";
+    divForRedBox.style.height = "200px";
+    divForRedBox.style.position = "absolute";
+    divForRedBox.style.top = "150px";
+    divForRedBox.style.left = "240px";
+    divForRedBox.style.backgroundColor = "red";
+    divForRedBox.style.pointerEvents = "none";
+    divForRedBox.classList.add("my-red-box");
+    wrapDiv.appendChild(divForRedBox);
+
+    let redBubble = new Bubble(divForRedBox);
+    redBubble.setBubbleSpec({
+        version: "1.0",
+        style: "none",
+        tails: [],
+        level: 1
+    });
+
+    setTimeout(() => {
+        Comical.startEditing([wrapDiv]);
+    }, 200);
+
+    let redBoxAllowed = false;
+    let captionAllowed = false;
+    function getSelector() {
+        var selectors: string[] = [];
+        if (captionAllowed) selectors.push(".my-caption");
+        if (redBoxAllowed) selectors.push(".my-red-box");
+        return selectors.join(", ");
+    }
+
+    const toggleCaptionButton = addButton(wrapDiv, "Toggle allow dragging midpoint into caption", () => {
+        captionAllowed = !captionAllowed;
+        Comical.allowTailMidpointToOverlapBubbleWithSelector = getSelector();
+        textDivForCaption.innerText = captionAllowed ? "allowed" : "not allowed";
+    });
+    const toggleRedBoxButton = addButton(wrapDiv, "Toggle allow dragging midpoint into red box", () => {
+        redBoxAllowed = !redBoxAllowed;
+        Comical.allowTailMidpointToOverlapBubbleWithSelector = getSelector();
+        divForRedBox.innerText = redBoxAllowed ? "allowed" : "not allowed";
+    });
+    const buttonsDiv = document.createElement("div");
+    buttonsDiv.appendChild(addFinishButton(wrapDiv));
+    buttonsDiv.appendChild(toggleCaptionButton);
+    buttonsDiv.appendChild(toggleRedBoxButton);
+    mainDiv.appendChild(buttonsDiv);
+
+    return mainDiv;
+});
+
 function makeTextBlock(
     parent: HTMLElement,
     content: string,
