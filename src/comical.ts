@@ -32,6 +32,8 @@ export class Comical {
     //client can change this using setUserInterfaceProperties
     public static tailHandleColor = new paper.Color("orange");
 
+    private static selectorForBubblesWhichTailMidpointMayOverlap = "";
+
     static activeContainers = new Map<Element, ContainerData>();
 
     static activeBubble: Bubble | undefined;
@@ -42,6 +44,13 @@ export class Comical {
     // there is no attempt to update anything already showing on screen.
     public static setUserInterfaceProperties(props: IUserInterfaceProperties) {
         Comical.tailHandleColor = new paper.Color(props.tailHandleColor);
+    }
+
+    public static setSelectorForBubblesWhichTailMidpointMayOverlap(selector: string) {
+        Comical.selectorForBubblesWhichTailMidpointMayOverlap = selector;
+    }
+    static getSelectorForBubblesWhichTailMidpointMayOverlap(): string {
+        return Comical.selectorForBubblesWhichTailMidpointMayOverlap;
     }
 
     public static startEditing(parents: HTMLElement[]): void {
@@ -503,7 +512,8 @@ export class Comical {
         parentContainer: HTMLElement,
         x: number,
         y: number,
-        onlyIfEnabled?: boolean
+        onlyIfEnabled?: boolean,
+        ignoreSelector?: string
     ): Bubble | undefined {
         const containerData = Comical.activeContainers.get(parentContainer);
         if (!containerData) {
@@ -515,6 +525,8 @@ export class Comical {
 
         // Filtering also serves to give us our own copy we can manipulate without affecting the original.
         let bubbleList = containerData.bubbleList.filter(bubble => {
+            if (ignoreSelector && bubble.content.matches(ignoreSelector)) return false;
+
             // Always filter out bubbles that are completely invisible.
             // (There are other ways bubbles could be invisible, but this is enough for current purposes.)
             const cs = window.getComputedStyle(bubble.content);
@@ -527,6 +539,10 @@ export class Comical {
             }
             return true;
         });
+
+        if (bubbleList.length === 0) {
+            return undefined;
+        }
 
         // Sort them so that bubbles with higher level come first.
         Comical.sortBubbleListTopLevelFirst(bubbleList);
@@ -626,13 +642,14 @@ export class Comical {
         element: HTMLElement,
         position: paper.Point,
         towards: paper.Point,
-        from: paper.Point
+        from: paper.Point,
+        ignoreSelector?: string
     ): paper.Point {
         const [parentContainer] = Comical.comicalParentOf(element);
         if (!parentContainer) {
             return position;
         }
-        let bubble = this.getBubbleHit(parentContainer, position.x, position.y);
+        let bubble = this.getBubbleHit(parentContainer, position.x, position.y, false, ignoreSelector);
         if (!bubble) {
             return position;
         }
@@ -674,7 +691,7 @@ export class Comical {
                 return farPoint;
             }
             const newPoint = nearPoint.add(delta);
-            const newBubble = this.getBubbleHit(parentContainer, newPoint.x, newPoint.y);
+            const newBubble = this.getBubbleHit(parentContainer, newPoint.x, newPoint.y, false, ignoreSelector);
             // Basic idea here is a binary search for a point that's not in a bubble. If newPoint
             // is in the original bubble, we need to move further, so we move badPoint. If it's not
             // in a bubble, we can try closer to the bubble, so we move goodPoint.
@@ -700,7 +717,7 @@ export class Comical {
         }
         // We don't allow tails to extend into other bubbles, except ones that have no style
         // or tails. This might be too strong; we mainly want to prevent a tail being
-        // drawn underneath a bubble, which dosn't work well visually, and a tail connected
+        // drawn underneath a bubble, which doesn't work well visually, and a tail connected
         // back to the bubble it started from, which also doesn't work well. The main case
         // where we DO want to allow it is where a tail is dragged inside an overlay image.
         // Currently those have no bubble or tail so this is a reasonable test.

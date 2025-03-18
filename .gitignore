@@ -3,3 +3,5 @@ storybook-static
 dist
 build
 yarn-error.log
+
+*.orig
