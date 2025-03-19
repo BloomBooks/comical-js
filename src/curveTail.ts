@@ -27,7 +27,13 @@ export class CurveTail extends Tail {
             );
         }
         if (this.bubble) {
-            newPosition = Comical.movePointOutsideBubble(this.bubble.content, newPosition, this.tip, this.root);
+            newPosition = Comical.movePointOutsideBubble(
+                this.bubble.content,
+                newPosition,
+                this.tip,
+                this.root,
+                Comical.getSelectorForBubblesWhichTailMidpointMayOverlap()
+            );
         }
         this.mid = newPosition;
         if (this.midHandle) {
@@ -50,7 +56,16 @@ export class CurveTail extends Tail {
         this.midHandle.onDrag = (where: paper.Point) => {
             if (this.bubble) {
                 const [parentElement] = Comical.comicalParentOf(this.bubble.content);
-                if (parentElement && Comical.getBubbleHit(parentElement, where.x, where.y)) {
+                if (
+                    parentElement &&
+                    Comical.getBubbleHit(
+                        parentElement,
+                        where.x,
+                        where.y,
+                        false,
+                        Comical.getSelectorForBubblesWhichTailMidpointMayOverlap()
+                    )
+                ) {
                     return; // refuse to drag mid to a point inside a bubble
                 }
             }
