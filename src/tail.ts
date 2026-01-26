@@ -107,6 +107,29 @@ export class Tail {
             return;
         }
         this.root = newRoot;
+
+        // If we're in batch initialization mode, defer the adjustment until all bubbles have outlines
+        if (this.bubble) {
+            const [, containerData] = Comical.comicalParentOf(this.bubble.content);
+            if (containerData?.batchInitializing) {
+                if (!containerData.pendingTailAdjustments) {
+                    containerData.pendingTailAdjustments = [];
+                }
+                containerData.pendingTailAdjustments.push({ tail: this, newRoot: newRoot });
+                return;
+            }
+        }
+
+        this.finishAdjustingRoot(delta);
+    }
+
+    // Complete a deferred root adjustment (called after all bubble outlines are ready)
+    completeDeferredAdjustment(newRoot: paper.Point): void {
+        const delta = newRoot.subtract(this.root!);
+        this.finishAdjustingRoot(delta);
+    }
+
+    finishAdjustingRoot(delta: paper.Point): void {
         this.adjustForChangedRoot(delta);
         this.makeShapes();
         this.persistSpecChanges();
