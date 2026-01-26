@@ -107,6 +107,26 @@ export class Tail {
             return;
         }
         this.root = newRoot;
+
+        // If we're in batch initialization mode, defer the adjustment until all bubbles have outlines
+        if (this.bubble) {
+            const [, containerData] = Comical.comicalParentOf(this.bubble.content);
+            if (containerData?.batchInitializing) {
+                if (!containerData.pendingTailAdjustments) {
+                    containerData.pendingTailAdjustments = [];
+                }
+                containerData.pendingTailAdjustments.push({ tail: this, delta });
+                return;
+            }
+        }
+
+        // We can do it now if we're not in a state where the set of outlines might
+        // be incomplete.
+        this.finishAdjustingRoot(delta);
+    }
+
+    // Do the part of adjustRoot that requires a complete set of bubble outlines.
+    public finishAdjustingRoot(delta: paper.Point): void {
         this.adjustForChangedRoot(delta);
         this.makeShapes();
         this.persistSpecChanges();

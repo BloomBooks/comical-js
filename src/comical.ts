@@ -218,6 +218,10 @@ export class Comical {
         }
         containerData.handleLayer = new paper.Layer();
 
+        // Enable batch initialization mode to defer tail adjustments
+        containerData.batchInitializing = true;
+        containerData.pendingTailAdjustments = [];
+
         // Now that the layers are created, we can go back and place objects into the correct layers and ask them to draw themselves.
         for (let i = 0; i < bubbles.length; ++i) {
             const bubble = bubbles[i];
@@ -230,6 +234,41 @@ export class Comical {
             const [lowerLayer, upperLayer] = levelToLayer[zLevel];
             bubble.setLayers(lowerLayer, upperLayer, containerData.handleLayer);
             bubble.initialize();
+        }
+
+        // All bubbles have been initialized. Now process any deferred tail adjustments.
+        // At this point, all bubble outlines should be set (or in the process of being set asynchronously).
+        // We need to wait for async shape loading to complete before processing deferred adjustments.
+        this.processDeferredTailAdjustments(containerData);
+    }
+
+    // Adjusting the tails of bubbles that may have moved since the last update(), e.g.,
+    // when a parent bubble is deleted, causes calls to movePointOutsideBubble, which requires
+    // that ALL the bubbles have their outlines set. So we defer tail adjustments until we do.
+    // (If we discover other stuff that needs to be deferred until all outlines are ready,
+    // we should gernalize this, probably giving containerData a list of functions to run
+    // when we have all the outlines.)
+    private static processDeferredTailAdjustments(containerData: ContainerData): void {
+        // Check if all bubbles have their outlines set
+        const allOutlinesReady = containerData.bubbleList.every(b => b.outline !== undefined);
+
+        if (
+            allOutlinesReady &&
+            containerData.pendingTailAdjustments &&
+            containerData.pendingTailAdjustments.length > 0
+        ) {
+            // All outlines are ready, process the deferred adjustments
+            containerData.pendingTailAdjustments.forEach(({ tail, delta }) => {
+                tail.finishAdjustingRoot(delta);
+            });
+            containerData.pendingTailAdjustments = [];
+            containerData.batchInitializing = false;
+        } else if (!allOutlinesReady) {
+            // Some outlines are still loading, check again soon
+            setTimeout(() => this.processDeferredTailAdjustments(containerData), 10);
+        } else {
+            // No pending adjustments, just turn off batch mode
+            containerData.batchInitializing = false;
         }
     }
 
