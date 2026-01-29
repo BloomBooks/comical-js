@@ -24,6 +24,7 @@ on:
 permissions:
     contents: read
     id-token: write
+    actions: write
 
 concurrency:
     group: npm-publish
@@ -54,15 +55,35 @@ jobs:
               env:
                   BUILD_NUMBER: ${{ github.event_name == 'workflow_dispatch' && inputs.build_number || '' }}
                   FIRST_PATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.first_patch || '0' }}
-              shell: bash
-              run: |
-                  node scripts/set-version-from-npm.js
+              run: node scripts/set-version-from-npm.js
 
             - name: Build
               run: yarn build
 
             - name: Publish (OIDC trusted publishing)
+              id: publish
               if: ${{ github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true' }}
-              env:
-                  npm_config_registry: https://registry.npmjs.org
-              run: yarn publish-clean
+              shell: bash
+              run: |
+                  set -euo pipefail
+
+                  LOG_FILE="$RUNNER_TEMP/clean-publish.log"
+                  rm -f "$LOG_FILE"
+
+                  # Run via npm (not yarn) to avoid Yarn forcing the yarnpkg registry.
+                  # Then check output for the success marker we expect.
+                  npm exec --yes clean-publish --package-manager npm -- --provenance --registry https://registry.npmjs.org/ 2>&1 | tee "$LOG_FILE"
+
+                  grep -q "success Published" "$LOG_FILE"
+
+            - name: Trigger dependent builds
+              if: ${{ steps.publish.outcome == 'success' }}
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      await github.rest.actions.createWorkflowDispatch({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        workflow_id: 'trigger-builds.yml',
+                        ref: context.ref
+                      })
