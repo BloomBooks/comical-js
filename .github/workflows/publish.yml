@@ -42,6 +42,7 @@ jobs:
               with:
                   node-version: 16.20.2
                   cache: yarn
+                  registry-url: https://registry.npmjs.org
 
             - name: Upgrade npm (for provenance/OIDC)
               run: npm i -g npm@9
@@ -62,4 +63,6 @@ jobs:
 
             - name: Publish (OIDC trusted publishing)
               if: ${{ github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true' }}
+              env:
+                  npm_config_registry: https://registry.npmjs.org
               run: yarn publish-clean

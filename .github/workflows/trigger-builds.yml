@@ -4,7 +4,7 @@ on:
     workflow_dispatch: # Allows manual triggering
 
 jobs:
-    trigger-builds:
+    trigger-build:
         runs-on: ubuntu-latest
         steps:
             - name: Trigger TeamCity Build for Bloom Desktop Alpha
