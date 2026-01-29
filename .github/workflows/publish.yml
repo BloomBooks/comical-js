@@ -1,0 +1,54 @@
+name: Publish to npm
+
+on:
+    workflow_dispatch:
+        inputs:
+            build_number:
+                description: Patch/build number to use for the published version
+                required: false
+                type: string
+            first_patch:
+                description: If no matching versions exist on npm for this major.minor, start patch at this value
+                required: false
+                default: "0"
+                type: string
+
+permissions:
+    contents: read
+    id-token: write
+
+concurrency:
+    group: npm-publish
+    cancel-in-progress: false
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 16.20.2
+                  cache: yarn
+
+            - name: Upgrade npm (for provenance/OIDC)
+              run: npm i -g npm@9
+
+            - name: Install dependencies
+              run: yarn --frozen-lockfile
+
+            - name: Set version (major.minor from package.json; patch = next npm version)
+              env:
+                  BUILD_NUMBER: ${{ inputs.build_number }}
+                  FIRST_PATCH: ${{ inputs.first_patch }}
+              run: |
+                  node -e "const fs=require('fs'); const cp=require('child_process'); const pkg=require('./package.json'); const [major, minor] = String(pkg.version).split('.'); if(major==null||minor==null) throw new Error('Unexpected version: '+pkg.version); const base=`${major}.${minor}`; const explicit=process.env.BUILD_NUMBER && String(process.env.BUILD_NUMBER).trim(); const firstPatchRaw=(process.env.FIRST_PATCH ?? '0').trim(); const firstPatch=Number.parseInt(firstPatchRaw,10); if(!Number.isFinite(firstPatch)) throw new Error('Invalid FIRST_PATCH: '+firstPatchRaw); let patch; if(explicit){ patch=Number.parseInt(explicit,10); if(!Number.isFinite(patch)) throw new Error('Invalid BUILD_NUMBER: '+explicit); } else { let versions=[]; try { const out=cp.execSync(`npm view ${pkg.name} versions --json`,{stdio:['ignore','pipe','pipe']}).toString().trim(); if(out){ const parsed=JSON.parse(out); versions=Array.isArray(parsed)?parsed:[parsed]; } } catch(e) { versions=[]; } const prefix=base+'.'; const patches=versions.filter(v=>typeof v==='string' && v.startsWith(prefix)).map(v=>Number.parseInt(v.slice(prefix.length).split('.')[0],10)).filter(n=>Number.isFinite(n)); const max=patches.length?Math.max(...patches):-1; patch=(max>=0)?(max+1):firstPatch; } pkg.version=`${base}.${patch}`; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 4)+'\n'); console.log('Version set to', pkg.version);"
+
+            - name: Build
+              run: yarn build
+            # - name: Publish (OIDC trusted publishing)
+            #   run: yarn publish-clean

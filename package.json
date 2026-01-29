@@ -49,10 +49,10 @@
         "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js",
         "build": "shx rm -rf dist/ && webpack",
         "//publish-clean": "strips out the scripts, dependencies, etc and then does `npm publish`",
-        "publish-clean": "clean-publish"
+        "publish-clean": "clean-publish -- --provenance"
     },
     "clean-publish": {
-        "packageManager": "yarn"
+        "packageManager": "npm"
     },
     "husky": {
         "hooks": {
