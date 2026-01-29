@@ -1,0 +1,17 @@
+name: Trigger Dependent Build of BloomDesktop
+
+on:
+    workflow_dispatch: # Allows manual triggering
+
+jobs:
+    trigger-builds:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Trigger TeamCity Build for Bloom Desktop Alpha
+              uses: fjogeleit/http-request-action@v1
+              with:
+                  url: "${{ secrets.TEAMCITY_URL }}/app/rest/buildQueue"
+                  method: "POST"
+                  contentType: "application/json"
+                  customHeaders: '{"Authorization": "Bearer ${{ secrets.TEAMCITY_TOKEN_RUN_BUILD }}"}'
+                  data: '{"buildType": {"id": "bt222"}}'

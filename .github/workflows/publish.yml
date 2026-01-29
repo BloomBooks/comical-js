@@ -1,6 +1,9 @@
 name: Publish to npm
 
 on:
+    push:
+        branches:
+            - master
     workflow_dispatch:
         inputs:
             publish:
@@ -48,8 +51,8 @@ jobs:
 
             - name: Set version (major.minor from package.json; patch = next npm version)
               env:
-                  BUILD_NUMBER: ${{ inputs.build_number }}
-                  FIRST_PATCH: ${{ inputs.first_patch }}
+                  BUILD_NUMBER: ${{ github.event_name == 'workflow_dispatch' && inputs.build_number || '' }}
+                  FIRST_PATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.first_patch || '0' }}
               shell: bash
               run: |
                   node scripts/set-version-from-npm.js
@@ -58,5 +61,5 @@ jobs:
               run: yarn build
 
             - name: Publish (OIDC trusted publishing)
-              if: ${{ inputs.publish == true || inputs.publish == 'true' }}
+              if: ${{ github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true' }}
               run: yarn publish-clean
