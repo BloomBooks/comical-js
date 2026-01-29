@@ -64,6 +64,8 @@ jobs:
               id: publish
               if: ${{ github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true' }}
               shell: bash
+              env:
+                  NODE_AUTH_TOKEN: ""
               run: |
                   set -euo pipefail
 
