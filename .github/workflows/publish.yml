@@ -71,10 +71,12 @@ jobs:
                   rm -f "$LOG_FILE"
 
                   # Run via npm (not yarn) to avoid Yarn forcing the yarnpkg registry.
+                  # Run the local binary directly to avoid arg-forwarding issues.
                   # Then check output for the success marker we expect.
-                  npm exec --yes clean-publish --package-manager npm -- --provenance --registry https://registry.npmjs.org/ 2>&1 | tee "$LOG_FILE"
+                  ./node_modules/.bin/clean-publish --package-manager npm -- --provenance --registry https://registry.npmjs.org/ 2>&1 | tee "$LOG_FILE"
 
-                  grep -q "success Published" "$LOG_FILE"
+                  # npm prints a line like: "+ comicaljs@0.3.104" on successful publish.
+                  grep -Eq '^\+ comicaljs@' "$LOG_FILE"
 
             - name: Trigger dependent builds
               if: ${{ steps.publish.outcome == 'success' }}
