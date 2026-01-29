@@ -3,8 +3,13 @@ name: Publish to npm
 on:
     workflow_dispatch:
         inputs:
+            publish:
+                description: If true, publish to npm (OIDC). If false, just build/version.
+                required: false
+                default: false
+                type: boolean
             build_number:
-                description: Patch/build number to use for the published version
+                description: Patch/build number to use for the published version (defaults to next highest number)
                 required: false
                 type: string
             first_patch:
@@ -45,10 +50,13 @@ jobs:
               env:
                   BUILD_NUMBER: ${{ inputs.build_number }}
                   FIRST_PATCH: ${{ inputs.first_patch }}
+              shell: bash
               run: |
-                  node -e "const fs=require('fs'); const cp=require('child_process'); const pkg=require('./package.json'); const [major, minor] = String(pkg.version).split('.'); if(major==null||minor==null) throw new Error('Unexpected version: '+pkg.version); const base=`${major}.${minor}`; const explicit=process.env.BUILD_NUMBER && String(process.env.BUILD_NUMBER).trim(); const firstPatchRaw=(process.env.FIRST_PATCH ?? '0').trim(); const firstPatch=Number.parseInt(firstPatchRaw,10); if(!Number.isFinite(firstPatch)) throw new Error('Invalid FIRST_PATCH: '+firstPatchRaw); let patch; if(explicit){ patch=Number.parseInt(explicit,10); if(!Number.isFinite(patch)) throw new Error('Invalid BUILD_NUMBER: '+explicit); } else { let versions=[]; try { const out=cp.execSync(`npm view ${pkg.name} versions --json`,{stdio:['ignore','pipe','pipe']}).toString().trim(); if(out){ const parsed=JSON.parse(out); versions=Array.isArray(parsed)?parsed:[parsed]; } } catch(e) { versions=[]; } const prefix=base+'.'; const patches=versions.filter(v=>typeof v==='string' && v.startsWith(prefix)).map(v=>Number.parseInt(v.slice(prefix.length).split('.')[0],10)).filter(n=>Number.isFinite(n)); const max=patches.length?Math.max(...patches):-1; patch=(max>=0)?(max+1):firstPatch; } pkg.version=`${base}.${patch}`; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 4)+'\n'); console.log('Version set to', pkg.version);"
+                  node scripts/set-version-from-npm.js
 
             - name: Build
               run: yarn build
-            # - name: Publish (OIDC trusted publishing)
-            #   run: yarn publish-clean
+
+            - name: Publish (OIDC trusted publishing)
+              if: ${{ inputs.publish == true || inputs.publish == 'true' }}
+              run: yarn publish-clean
