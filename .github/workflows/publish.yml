@@ -84,7 +84,7 @@ jobs:
             - name: Setup Node (publish)
               uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  node-version: 24
                   registry-url: https://registry.npmjs.org
 
             - name: Set version (major.minor from package.json; patch = next npm version)
