@@ -30,12 +30,14 @@ concurrency:
     group: npm-publish
     cancel-in-progress: false
 
-    # The reason for two separate jobs: we currently need to build using node 16.
-    # But the publish process needs at least 18 for the new npm publish using provenance.
-    # If and when the code/build is upgraded to use a higher node version, we could combine them.
+# The reason for two separate jobs: we currently need to build using node 16.
+# But the publish process needs a modern npm/node for OIDC/provenance.
+# If and when the code/build is upgraded to use a higher node version, we could combine them.
 jobs:
     build:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         steps:
             - name: Checkout
@@ -64,6 +66,10 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         needs: build
+        permissions:
+            contents: read
+            id-token: write
+            actions: write
 
         steps:
             - name: Checkout
@@ -90,6 +96,24 @@ jobs:
             - name: Install clean-publish only
               run: npm i --no-save clean-publish@4.0.1
 
+            - name: Diagnostics (publish auth)
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  echo "node: $(node -v)"
+                  echo "npm:  $(npm -v)"
+                  echo "registry: $(npm config get registry)"
+                  if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]]; then
+                      echo "OIDC request URL present"
+                  else
+                      echo "OIDC request URL MISSING"
+                  fi
+                  if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+                      echo "OIDC request token present"
+                  else
+                      echo "OIDC request token MISSING"
+                  fi
+
             - name: Publish (OIDC trusted publishing)
               id: publish
               if: ${{ github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true' }}
@@ -102,10 +126,18 @@ jobs:
                   LOG_FILE="$RUNNER_TEMP/clean-publish.log"
                   rm -f "$LOG_FILE"
 
+                  # Avoid token-based auth config produced by actions/setup-node. For OIDC trusted
+                  # publishing we want npm to use GitHub OIDC, not NODE_AUTH_TOKEN.
+                  NPMRC_TMP="$(mktemp)"
+                  echo "registry=https://registry.npmjs.org/" > "$NPMRC_TMP"
+                  export NPM_CONFIG_USERCONFIG="$NPMRC_TMP"
+
                   # Run via npm (not yarn) to avoid Yarn forcing the yarnpkg registry.
                   # Run the local binary directly to avoid arg-forwarding issues.
                   # Then check output for the success marker we expect.
                   ./node_modules/.bin/clean-publish --package-manager npm -- --provenance --registry https://registry.npmjs.org/ 2>&1 | tee "$LOG_FILE"
+
+                  rm -f "$NPMRC_TMP"
 
                   # npm prints a line like: "+ comicaljs@0.3.104" on successful publish.
                   grep -Eq '^\+ comicaljs@' "$LOG_FILE"
