@@ -17,7 +17,10 @@
     "author": "SIL Bloom Team & Contributors",
     "license": "MIT",
     "private": false,
-    "repository": "https://github.com/BloomBooks/comical-js.git",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/BloomBooks/comical-js.git"
+    },
     "devDependencies": {
         "@babel/core": "^7.5.5",
         "@storybook/html": "^6.1.15",
