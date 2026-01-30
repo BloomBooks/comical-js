@@ -30,28 +30,25 @@ concurrency:
     group: npm-publish
     cancel-in-progress: false
 
+# The reason for two separate jobs: we currently need to build using node 16.
+# But the publish process needs a modern npm/node for OIDC/provenance.
+# If and when the code/build is upgraded to use a higher node version, we could combine them.
 jobs:
-    publish:
+    build:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Setup Node
+            - name: Setup Node (build)
               uses: actions/setup-node@v4
               with:
                   # matches package.json
                   node-version: 16.20.2
                   cache: yarn
-
-            - name: Update npm to latest
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  echo "node: $(node -v)"
-                  echo "npm (before): $(npm -v)"
-                  npm i -g npm@latest
-                  echo "npm (after):  $(npm -v)"
 
             - name: Install dependencies
               run: yarn --frozen-lockfile
@@ -59,11 +56,45 @@ jobs:
             - name: Build
               run: yarn build
 
+            - name: Upload dist artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: dist
+                  path: dist/
+                  if-no-files-found: error
+
+    publish:
+        runs-on: ubuntu-latest
+        needs: build
+        permissions:
+            contents: read
+            id-token: write
+            actions: write
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Download dist artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: dist
+                  path: dist/
+
+            - name: Setup Node (publish)
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  registry-url: https://registry.npmjs.org
+
             - name: Set version (major.minor from package.json; patch = next npm version)
               env:
                   BUILD_NUMBER: ${{ github.event_name == 'workflow_dispatch' && inputs.build_number || '' }}
                   FIRST_PATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.first_patch || '0' }}
               run: node scripts/set-version-from-npm.js
+
+            - name: Install clean-publish only
+              run: npm i --no-save clean-publish@4.0.1
 
             - name: Publish (OIDC trusted publishing)
               id: publish
