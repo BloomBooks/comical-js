@@ -1,5 +1,5 @@
 import { Tail } from "./tail";
-import paper = require("paper");
+import paper from "paper";
 import { Comical } from "./comical";
 import { Bubble } from "./bubble";
 import { Handle } from "./handle";

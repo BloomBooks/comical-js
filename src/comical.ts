@@ -1,8 +1,8 @@
-import paper = require("paper");
+import paper from "paper";
 
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
-import { BubbleSpec } from "bubbleSpec";
+import { BubbleSpec } from "./bubbleSpec";
 import { ContainerData } from "./containerData";
 
 // Manages a collection of comic bubbles wrapped around HTML elements that share a common parent.
@@ -59,12 +59,12 @@ export class Comical {
 
     public static stopEditing(): void {
         const keys: HTMLElement[] = [];
-        Comical.activeContainers.forEach((value, key: HTMLElement) => {
+        Comical.activeContainers.forEach((value, key) => {
             // Possibly we could just call convertCanvasToSvgImg(key) here,
             // but each such call deletes key from Comical.editElements,
             // so we'd be modifying the collection we're iterating over,
             // which feels dangerous.
-            keys.push(key);
+            keys.push(key as HTMLElement);
         });
         keys.forEach(key => Comical.convertCanvasToSvgImg(key));
     }
@@ -206,13 +206,13 @@ export class Comical {
 
         // First we need to create all the layers in order. (Because they automatically get added to the end of the project's list of layers)
         // Precondition: Assumes zLevelList is sorted.
-        const levelToLayer = {};
+        const levelToLayer: Record<number, [paper.Layer, paper.Layer]> = {};
         for (let i = 0; i < zLevelList.length; ++i) {
             // Check if different than previous. (Ignore duplicate z-indices)
             if (i == 0 || zLevelList[i - 1] != zLevelList[i]) {
                 const zLevel = zLevelList[i];
-                var lowerLayer = new paper.Layer();
-                var upperLayer = new paper.Layer();
+                const lowerLayer = new paper.Layer();
+                const upperLayer = new paper.Layer();
                 levelToLayer[zLevel] = [lowerLayer, upperLayer];
             }
         }
@@ -632,19 +632,17 @@ export class Comical {
     }
 
     // Answer target.getBoundingClientRect(), but relative to the top left of the specified parent.
-    static getBoundsRelativeToParent(parentContainer: HTMLElement, target: HTMLElement): ClientRect {
+    static getBoundsRelativeToParent(parentContainer: HTMLElement, target: HTMLElement): DOMRect {
         const parentBounds = parentContainer.getBoundingClientRect();
         const targetBounds = target.getBoundingClientRect();
         const xOffset = parentBounds.left;
         const yOffset = parentBounds.top;
-        return {
-            left: targetBounds.left - xOffset,
-            right: targetBounds.right - xOffset,
-            width: targetBounds.width,
-            top: targetBounds.top - yOffset,
-            bottom: targetBounds.bottom - yOffset,
-            height: targetBounds.height
-        };
+        return new DOMRect(
+            targetBounds.left - xOffset,
+            targetBounds.top - yOffset,
+            targetBounds.width,
+            targetBounds.height
+        );
     }
 
     // Gets a point along the line from start to end that is not inside any bubble

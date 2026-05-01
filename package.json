@@ -1,10 +1,22 @@
 {
     "name": "comicaljs",
     "//version": "major.minor come from here; publish sets patch via scripts/set-version-from-npm.js (BUILD_NUMBER override or next npm version)",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "Edit cartoon bubble frames around an HTML element",
     "main": "dist/index.js",
+    "module": "dist/index.mjs",
     "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js",
+            "default": "./dist/index.mjs"
+        },
+        "./package.json": "./package.json"
+    },
+    "unpkg": "dist/index.umd.js",
+    "jsdelivr": "dist/index.umd.js",
     "files": [
         "dist/"
     ],
@@ -22,7 +34,8 @@
     },
     "devDependencies": {
         "@babel/core": "7.12.10",
-        "@storybook/html": "6.1.15",
+        "@storybook/html": "7.6.3",
+        "@storybook/html-vite": "7.6.3",
         "@types/svg.js": "2.3.1",
         "babel-loader": "8.2.2",
         "babel-preset-env": "1.7.0",
@@ -35,7 +48,9 @@
         "pretty-quick": "2.0.2",
         "shx": "0.3.3",
         "ts-loader": "6.2.2",
-        "typescript": "3.9.7",
+        "typescript": "6.0.3",
+        "storybook": "7.6.3",
+        "vite": "5.4.21",
         "webpack": "4.44.2",
         "webpack-cli": "3.3.12",
         "webpack-merge": "4.2.2"
@@ -44,11 +59,12 @@
         "paper": "0.12.8"
     },
     "scripts": {
-        "storybook": "start-storybook -s ./storyStatic -p 6006",
-        "build-storybook": "build-storybook",
+        "storybook": "storybook dev -p 6006 -s ./storyStatic",
+        "build-storybook": "storybook build -o storybook-static -s ./storyStatic",
         "We want to use a special package.json for the npm module we're making. That file is package-publish.json.": "//",
-        "buildMin": "shx rm -rf dist/ && webpack --config webpack.config-prod.js",
-        "build": "shx rm -rf dist/ && webpack",
+        "build:types": "tsc --emitDeclarationOnly",
+        "buildMin": "shx rm -rf dist/ && vite build --mode minified && pnpm build:types",
+        "build": "shx rm -rf dist/ && vite build && pnpm build:types",
         "//publish-clean": "strips out the scripts, dependencies, etc and then does `npm publish`",
         "publish-clean": "clean-publish -- --provenance"
     },

@@ -1,4 +1,4 @@
-import paper = require("paper");
+import paper from "paper";
 import { activateLayer } from "./utilities";
 import { Tail } from "./tail";
 import { Comical } from "./comical";

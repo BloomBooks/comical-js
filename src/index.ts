@@ -3,6 +3,13 @@
 
 import { Comical } from "./comical";
 import { Bubble } from "./bubble";
-import { BubbleSpec, BubbleSpecPattern, TailSpec } from "./bubbleSpec";
+import {
+    BubbleSpec as BubbleSpecType,
+    BubbleSpecPattern as BubbleSpecPatternType,
+    TailSpec as TailSpecType
+} from "./bubbleSpec";
 
-export { Comical, Bubble, BubbleSpec, BubbleSpecPattern, TailSpec };
+export { Comical, Bubble };
+export type BubbleSpec = BubbleSpecType;
+export type BubbleSpecPattern = BubbleSpecPatternType;
+export type TailSpec = TailSpecType;

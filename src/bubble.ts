@@ -1,5 +1,5 @@
-import paper = require("paper");
-import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
+import paper from "paper";
+import { BubbleSpec, TailSpec, BubbleSpecPattern } from "./bubbleSpec";
 import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";

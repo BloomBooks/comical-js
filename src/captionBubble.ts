@@ -1,4 +1,4 @@
-import paper = require("paper");
+import paper from "paper";
 import { Bubble } from "./bubble";
 
 // bubble: The bubble around which to make a caption

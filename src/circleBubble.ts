@@ -1,4 +1,4 @@
-import paper = require("paper");
+import paper from "paper";
 
 // Implements a simple circular bubble.
 // Eventually we'd like to use https://developer.mozilla.org/en-US/docs/Web/CSS/shape-outside to try to make the

@@ -8,6 +8,7 @@ blockExoticSubdeps: true
 strictDepBuilds: true
 
 allowBuilds:
+    esbuild@0.21.3: true
     core-js-pure@3.8.2: false
     core-js@2.6.12: false
     core-js@3.8.2: false

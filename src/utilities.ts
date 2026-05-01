@@ -1,4 +1,4 @@
-import paper = require("paper");
+import paper from "paper";
 
 // a place for useful functions that don't seem to belong in any particular class.
 

@@ -1,5 +1,5 @@
-import paper = require("paper");
-import { TailSpec } from "bubbleSpec";
+import paper from "paper";
+import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer, makeArc } from "./utilities";
 import { CurveTail } from "./curveTail";

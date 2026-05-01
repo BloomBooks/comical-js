@@ -1,6 +1,6 @@
-import paper = require("paper");
+import paper from "paper";
 import { Comical } from "./comical";
-import { TailSpec } from "bubbleSpec";
+import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
 import { Handle } from "./handle";

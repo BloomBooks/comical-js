@@ -1,4 +1,4 @@
-import paper = require("paper");
+import paper from "paper";
 
 // This file contains the definition for how a speech bubble is made.
 // It is roughly an oval, but actually made as a sequence of four bezier curves,

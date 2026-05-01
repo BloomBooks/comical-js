@@ -1,5 +1,5 @@
 import { Tail } from "./tail";
-import paper = require("paper");
+import paper from "paper";
 import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { Comical } from "./comical";
