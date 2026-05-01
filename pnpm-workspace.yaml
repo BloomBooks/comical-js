@@ -1,0 +1,21 @@
+# Delay adoption of newly published versions by 7 days (10080 minutes).
+minimumReleaseAge: 10080
+
+# Reject non-registry transitive dependency sources such as git/file/url deps.
+blockExoticSubdeps: true
+
+# Fail install when a dependency wants to run lifecycle/build scripts unless allowed.
+strictDepBuilds: true
+
+allowBuilds:
+    core-js-pure@3.8.2: false
+    core-js@2.6.12: false
+    core-js@3.8.2: false
+    husky@3.1.0: true
+
+# Temporary compatibility escape for the legacy webpack 4 / Storybook 6 toolchain.
+# Remove this after the build no longer depends on md4-era OpenSSL behavior.
+nodeOptions: --openssl-legacy-provider
+
+# Save exact versions in package.json instead of adding ^ or ~ prefixes.
+savePrefix: ""

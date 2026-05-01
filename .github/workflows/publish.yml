@@ -30,9 +30,8 @@ concurrency:
     group: npm-publish
     cancel-in-progress: false
 
-# The reason for two separate jobs: we currently need to build using node 16.
-# But the publish process needs a modern npm/node for OIDC/provenance.
-# If and when the code/build is upgraded to use a higher node version, we could combine them.
+# Keep build and publish separate so publishing can reuse the built dist artifact
+# while preserving the npm-based clean-publish/OIDC flow.
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -43,18 +42,25 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
+            - name: Setup pnpm (build)
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.33.2
+                  run_install: false
+
             - name: Setup Node (build)
               uses: actions/setup-node@v4
               with:
                   # matches package.json
-                  node-version: 16.20.2
-                  cache: yarn
+                  node-version: 24.15.0
+                  cache: pnpm
+                  cache-dependency-path: pnpm-lock.yaml
 
             - name: Install dependencies
-              run: yarn --frozen-lockfile
+              run: pnpm install --frozen-lockfile
 
             - name: Build
-              run: yarn build
+              run: pnpm build
 
             - name: Upload dist artifact
               uses: actions/upload-artifact@v4
@@ -84,7 +90,7 @@ jobs:
             - name: Setup Node (publish)
               uses: actions/setup-node@v4
               with:
-                  node-version: 24
+                  node-version: 24.15.0
                   registry-url: https://registry.npmjs.org
 
             - name: Set version (major.minor from package.json; patch = next npm version)
@@ -108,9 +114,8 @@ jobs:
                   LOG_FILE="$RUNNER_TEMP/clean-publish.log"
                   rm -f "$LOG_FILE"
 
-                  # Run via npm (not yarn) to avoid Yarn forcing the yarnpkg registry.
-                  # Run the local binary directly to avoid arg-forwarding issues.
-                  # Then check output for the success marker we expect.
+                  # Keep the publish path on npm and call the local binary directly
+                  # to avoid wrapper arg-forwarding issues.
                   ./node_modules/.bin/clean-publish --package-manager npm -- --provenance --registry https://registry.npmjs.org/ 2>&1 | tee "$LOG_FILE"
 
                   # npm prints a line like: "+ comicaljs@0.3.104" on successful publish.
