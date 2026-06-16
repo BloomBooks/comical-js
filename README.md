@@ -22,7 +22,7 @@ Comical has the main pieces in place and is in use within Bloom. We are graduall
 
 To get started:
 
-`yarn add comicaljs`
+`pnpm add comicaljs`
 
 ### To make bubbles appear
 
@@ -66,14 +66,16 @@ Two of the properties of bubbles are level and order. Bubbles at the same level 
 
 ## Developing
 
+Use Node 24.15.0 and pnpm 10.33.2, which are pinned in package.json for Volta and CI.
+
 Do this once to get the dependencies
-`yarn`
+`pnpm install`
 
 Do this to launch a browser window in which you can see various examples of ComicalJS running, or add your own
-`yarn storybook`
+`pnpm storybook`
 
-Do this to create a 'dest' directory with the current version of the files that are npm-published as part of Comical.js
-`yarn build`
+Do this to create a `dist` directory with the current version of the files that are npm-published as part of Comical.js
+`pnpm build`
 
 ## Acknowledgements
 
