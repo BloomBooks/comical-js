@@ -6,7 +6,7 @@
 
 export function uniqueIds(e: Element) {
     const idElements = e.ownerDocument!.evaluate(".//*[@id]", e, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-    const map = {};
+    const map: Record<string, string> = {};
     const guid: string = "i" + createUuid();
     for (let i = 0; i < idElements.snapshotLength; i++) {
         const idElement = idElements.snapshotItem(i) as HTMLElement;
@@ -36,7 +36,7 @@ function createUuid(): string {
     return uuid;
 }
 
-function fixElement(e: Element, map: object) {
+function fixElement(e: Element, map: Record<string, string>) {
     for (let i = 0; i < e.children.length; i++) {
         fixElement(e.children[i], map);
     }

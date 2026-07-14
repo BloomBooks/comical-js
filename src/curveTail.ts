@@ -8,12 +8,12 @@ import { Handle } from "./handle";
 // have a handle to control a mid-point which configures their shape.
 // Typically something follows a curve through the midpoint to the tip.
 export class CurveTail extends Tail {
-    mid: paper.Point;
+    mid!: paper.Point;
 
     // This may be set to ensure that when the tail's midpoint is moved
     // automatically (e.g., to adjust for the root moving), the corresponding
     // handle is moved too.
-    midHandle: Handle;
+    midHandle!: Handle;
 
     adjustForChangedRoot(delta: paper.Point): void {
         let newPosition = this.mid.add(delta.divide(2));

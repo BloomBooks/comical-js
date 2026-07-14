@@ -1,0 +1,14 @@
+{
+    // Storybook compiles the stories/ folder (which imports from src/) in addition
+    // to src/. The main build's tsconfig sets "rootDir": "./src" so that emitted
+    // output lands directly in dist/; but that would place the stories outside
+    // rootDir. Storybook only transpiles in memory (transpileOnly) and emits no
+    // declaration files, so here we widen rootDir to the project root and turn off
+    // declaration emit.
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "declaration": false
+    },
+    "include": ["src/**/*", "stories/**/*"]
+}

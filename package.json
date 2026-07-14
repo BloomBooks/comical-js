@@ -34,8 +34,8 @@
         "prettier": "1.19.1",
         "pretty-quick": "2.0.2",
         "shx": "0.3.3",
-        "ts-loader": "6.2.2",
-        "typescript": "3.9.7",
+        "ts-loader": "^9.5.1",
+        "typescript": "6.0.3",
         "webpack": "4.44.2",
         "webpack-cli": "3.3.12",
         "webpack-merge": "4.2.2"

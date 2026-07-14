@@ -40,6 +40,6 @@ export class Handle {
 
     // This gets called because of some mouse event handlers added to the whole canvas by
     // code in comical.ts (convertBubbleJsonToCanvas).
-    onDrag: (p: paper.Point) => void;
-    onDoubleClick: () => void;
+    onDrag!: (p: paper.Point) => void;
+    onDoubleClick!: () => void;
 }
