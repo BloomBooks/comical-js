@@ -1,5 +1,5 @@
 import paper = require("paper");
-import { BubbleSpec, TailSpec, BubbleSpecPattern } from "bubbleSpec";
+import { BubbleSpec, TailSpec, BubbleSpecPattern } from "./bubbleSpec";
 import { Comical } from "./comical";
 import { Tail } from "./tail";
 import { ArcTail } from "./arcTail";
@@ -35,7 +35,7 @@ export class Bubble {
     // When it's simply obtained from an svg, it's usually some kind of group.
     // When we extract a single outline from the svg (or eventually make one algorithmically),
     // it will most likely be a Path.
-    public outline: paper.Item;
+    public outline!: paper.Item;
     // The original stroke color of the outline. In some modes, the actual outline color is changed.
     private oulineStrokeColor: paper.Color | null = null;
     // When possible, the shapes of all bubbles and their tails at the same level are combined
@@ -46,7 +46,7 @@ export class Bubble {
     // If the item has a shadow, this makes it.
     // We would prefer to do this with the paper.js shadow properties applied to shape,
     // but experiment indicates that such shadows do not convert to SVG.
-    private shadowShape: paper.Item;
+    private shadowShape!: paper.Item;
     // a clone of this.outline with no border and an appropriate fill; drawn on top of all outlines
     // to fill them in and erase any overlapping borders.
     // When possible, this is left undefined and combinedShapes is set up instead.
@@ -72,13 +72,13 @@ export class Bubble {
     private vScale: number = 1; // Vertical scaling
 
     // The PaperJS layers in which to draw various pieces of the bubble into.
-    private lowerLayer: paper.Layer;
-    private upperLayer: paper.Layer;
-    private handleLayer: paper.Layer;
+    private lowerLayer!: paper.Layer;
+    private upperLayer!: paper.Layer;
+    private handleLayer!: paper.Layer;
 
     // true if we computed a shape for the bubble (in such a way that more than just
     // its size depends on the shape and size of the content element).
-    private shapeIsComputed: boolean;
+    private shapeIsComputed!: boolean;
     // Remember the size of the content element when we last computed the bubble shape.
     oldContentWidth: number = 0;
     oldContentHeight: number = 0;

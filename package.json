@@ -1,7 +1,7 @@
 {
     "name": "comicaljs",
     "//version": "major.minor come from here; publish sets patch via scripts/set-version-from-npm.js (BUILD_NUMBER override or next npm version)",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "Edit cartoon bubble frames around an HTML element",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -34,8 +34,8 @@
         "prettier": "1.19.1",
         "pretty-quick": "2.0.2",
         "shx": "0.3.3",
-        "ts-loader": "6.2.2",
-        "typescript": "3.9.7",
+        "ts-loader": "^9.5.1",
+        "typescript": "6.0.3",
         "webpack": "4.44.2",
         "webpack-cli": "3.3.12",
         "webpack-merge": "4.2.2"

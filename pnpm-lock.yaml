@@ -16,7 +16,7 @@ importers:
                 version: 7.12.10
             "@storybook/html":
                 specifier: 6.1.15
-                version: 6.1.15(@babel/core@7.12.10)(typescript@3.9.7)(webpack-cli@3.3.12)(webpack@4.44.2)
+                version: 6.1.15(@babel/core@7.12.10)(typescript@6.0.3)(webpack-cli@3.3.12)(webpack@4.44.2)
             "@types/svg.js":
                 specifier: 2.3.1
                 version: 2.3.1
@@ -51,11 +51,11 @@ importers:
                 specifier: 0.3.3
                 version: 0.3.3
             ts-loader:
-                specifier: 6.2.2
-                version: 6.2.2(typescript@3.9.7)
+                specifier: ^9.5.1
+                version: 9.6.2(loader-utils@2.0.0)(typescript@6.0.3)(webpack@4.44.2)
             typescript:
-                specifier: 3.9.7
-                version: 3.9.7
+                specifier: 6.0.3
+                version: 6.0.3
             webpack:
                 specifier: 4.44.2
                 version: 4.44.2(webpack-cli@3.3.12)
@@ -6196,6 +6196,13 @@ packages:
             }
         engines: { node: ">=8.6" }
 
+    picomatch@4.0.5:
+        resolution:
+            {
+                integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==,
+            }
+        engines: { node: ">=12" }
+
     pify@3.0.0:
         resolution:
             {
@@ -7323,6 +7330,13 @@ packages:
             }
         engines: { node: ">= 8" }
 
+    source-map@0.7.6:
+        resolution:
+            {
+                integrity: sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ==,
+            }
+        engines: { node: ">= 12" }
+
     space-separated-tokens@1.1.5:
         resolution:
             {
@@ -7774,14 +7788,19 @@ packages:
                 integrity: sha512-3IVX4nI6B5cc31/GFFE+i8ey/N2eA0CZDbo6n0yrz0zDX8ZJ8djmU1p+XRz7G3is0F3bB3pu2pAroFdAWQKU3w==,
             }
 
-    ts-loader@6.2.2:
+    ts-loader@9.6.2:
         resolution:
             {
-                integrity: sha512-HDo5kXZCBml3EUPcc7RlZOV/JGlLHwppTLEHb3SHnr5V7NXD4klMEkrhJe5wgRbaWsSXi+Y1SIBN/K9B6zWGWQ==,
+                integrity: sha512-R4iuczmtgxvtuI556s+hTZ6/7Ee03VCAk/l/M8LY1OAsUgB7YydsCxkgq9D9pKRaD7GJqUi2u8fp9zZP/ufjKA==,
             }
-        engines: { node: ">=8.6" }
+        engines: { node: ">=12.0.0" }
         peerDependencies:
+            loader-utils: "*"
             typescript: "*"
+            webpack: ^4.0.0 || ^5.0.0
+        peerDependenciesMeta:
+            loader-utils:
+                optional: true
 
     ts-pnp@1.2.0:
         resolution:
@@ -7847,12 +7866,12 @@ packages:
                 integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==,
             }
 
-    typescript@3.9.7:
+    typescript@6.0.3:
         resolution:
             {
-                integrity: sha512-BLbiRkiBzAwsjut4x/dsibSTB6yWpwT5qWmC2OfuCg3GgVQCSgMs4vEctYPhsaGtd0AeuuHMkjZ2h2WG8MSzRw==,
+                integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==,
             }
-        engines: { node: ">=4.2.0" }
+        engines: { node: ">=14.17" }
         hasBin: true
 
     unfetch@4.2.0:
@@ -9254,7 +9273,7 @@ snapshots:
         dependencies:
             core-js: 3.8.2
 
-    ? "@storybook/core@6.1.15(react-dom@16.13.1(react@16.13.1))(react@16.13.1)(typescript@3.9.7)(webpack-cli@3.3.12)"
+    ? "@storybook/core@6.1.15(react-dom@16.13.1(react@16.13.1))(react@16.13.1)(typescript@6.0.3)(webpack-cli@3.3.12)"
     : dependencies:
           "@babel/core": 7.12.10
           "@babel/plugin-proposal-class-properties": 7.12.1(@babel/core@7.12.10)
@@ -9318,7 +9337,7 @@ snapshots:
           file-loader: 6.2.0(webpack@4.44.2)
           file-system-cache: 1.0.5
           find-up: 4.1.0
-          fork-ts-checker-webpack-plugin: 4.1.6(typescript@3.9.7)(webpack@4.44.2)
+          fork-ts-checker-webpack-plugin: 4.1.6(typescript@6.0.3)(webpack@4.44.2)
           fs-extra: 9.0.1
           glob: 7.1.6
           glob-base: 0.3.0
@@ -9333,14 +9352,14 @@ snapshots:
           micromatch: 4.0.5
           node-fetch: 2.6.1
           pkg-dir: 4.2.0
-          pnp-webpack-plugin: 1.6.4(typescript@3.9.7)
+          pnp-webpack-plugin: 1.6.4(typescript@6.0.3)
           postcss-flexbugs-fixes: 4.2.1
           postcss-loader: 3.0.0
           pretty-hrtime: 1.0.3
           qs: 6.9.4
           raw-loader: 4.0.2(webpack@4.44.2)
           react: 16.13.1
-          react-dev-utils: 10.2.1(typescript@3.9.7)(webpack@4.44.2)
+          react-dev-utils: 10.2.1(typescript@6.0.3)(webpack@4.44.2)
           react-dom: 16.13.1(react@16.13.1)
           regenerator-runtime: 0.13.7
           resolve-from: 5.0.0
@@ -9373,12 +9392,12 @@ snapshots:
         dependencies:
             lodash: 4.17.20
 
-    ? "@storybook/html@6.1.15(@babel/core@7.12.10)(typescript@3.9.7)(webpack-cli@3.3.12)(webpack@4.44.2)"
+    ? "@storybook/html@6.1.15(@babel/core@7.12.10)(typescript@6.0.3)(webpack-cli@3.3.12)(webpack@4.44.2)"
     : dependencies:
           "@babel/core": 7.12.10
           "@storybook/addons": 6.1.15(react-dom@16.13.1(react@16.13.1))(react@16.13.1)
           "@storybook/client-api": 6.1.15(react-dom@16.13.1(react@16.13.1))(react@16.13.1)
-          "@storybook/core": 6.1.15(react-dom@16.13.1(react@16.13.1))(react@16.13.1)(typescript@3.9.7)(webpack-cli@3.3.12)
+          "@storybook/core": 6.1.15(react-dom@16.13.1(react@16.13.1))(react@16.13.1)(typescript@6.0.3)(webpack-cli@3.3.12)
           "@types/webpack-env": 1.16.0
           core-js: 3.8.2
           global: 4.4.0
@@ -11563,7 +11582,7 @@ snapshots:
 
     for-in@1.0.2: {}
 
-    fork-ts-checker-webpack-plugin@3.1.1(typescript@3.9.7)(webpack@4.44.2):
+    fork-ts-checker-webpack-plugin@3.1.1(typescript@6.0.3)(webpack@4.44.2):
         dependencies:
             babel-code-frame: 6.26.0
             chalk: 2.4.2
@@ -11572,13 +11591,13 @@ snapshots:
             minimatch: 3.0.4
             semver: 5.7.1
             tapable: 1.1.3
-            typescript: 3.9.7
+            typescript: 6.0.3
             webpack: 4.44.2(webpack-cli@3.3.12)
             worker-rpc: 0.1.1
         transitivePeerDependencies:
             - supports-color
 
-    fork-ts-checker-webpack-plugin@4.1.6(typescript@3.9.7)(webpack@4.44.2):
+    fork-ts-checker-webpack-plugin@4.1.6(typescript@6.0.3)(webpack@4.44.2):
         dependencies:
             "@babel/code-frame": 7.12.11
             chalk: 2.4.2
@@ -11586,7 +11605,7 @@ snapshots:
             minimatch: 3.0.4
             semver: 5.7.1
             tapable: 1.1.3
-            typescript: 3.9.7
+            typescript: 6.0.3
             webpack: 4.44.2(webpack-cli@3.3.12)
             worker-rpc: 0.1.1
         transitivePeerDependencies:
@@ -12887,6 +12906,8 @@ snapshots:
 
     picomatch@2.3.1: {}
 
+    picomatch@4.0.5: {}
+
     pify@3.0.0: {}
 
     pify@4.0.1: {}
@@ -12911,9 +12932,9 @@ snapshots:
         dependencies:
             semver-compare: 1.0.0
 
-    pnp-webpack-plugin@1.6.4(typescript@3.9.7):
+    pnp-webpack-plugin@1.6.4(typescript@6.0.3):
         dependencies:
-            ts-pnp: 1.2.0(typescript@3.9.7)
+            ts-pnp: 1.2.0(typescript@6.0.3)
         transitivePeerDependencies:
             - typescript
 
@@ -13117,7 +13138,7 @@ snapshots:
             reactcss: 1.2.3(react@16.13.1)
             tinycolor2: 1.4.2
 
-    react-dev-utils@10.2.1(typescript@3.9.7)(webpack@4.44.2):
+    react-dev-utils@10.2.1(typescript@6.0.3)(webpack@4.44.2):
         dependencies:
             "@babel/code-frame": 7.8.3
             address: 1.1.2
@@ -13128,7 +13149,7 @@ snapshots:
             escape-string-regexp: 2.0.0
             filesize: 6.0.1
             find-up: 4.1.0
-            fork-ts-checker-webpack-plugin: 3.1.1(typescript@3.9.7)(webpack@4.44.2)
+            fork-ts-checker-webpack-plugin: 3.1.1(typescript@6.0.3)(webpack@4.44.2)
             global-modules: 2.0.0
             globby: 8.0.2
             gzip-size: 5.1.1
@@ -13145,7 +13166,7 @@ snapshots:
             text-table: 0.2.0
             webpack: 4.44.2(webpack-cli@3.3.12)
         optionalDependencies:
-            typescript: 3.9.7
+            typescript: 6.0.3
         transitivePeerDependencies:
             - eslint
             - supports-color
@@ -13622,6 +13643,8 @@ snapshots:
 
     source-map@0.7.3: {}
 
+    source-map@0.7.6: {}
+
     space-separated-tokens@1.1.5: {}
 
     spdx-correct@3.1.1:
@@ -13912,18 +13935,19 @@ snapshots:
 
     ts-essentials@2.0.12: {}
 
-    ts-loader@6.2.2(typescript@3.9.7):
+    ts-loader@9.6.2(loader-utils@2.0.0)(typescript@6.0.3)(webpack@4.44.2):
         dependencies:
-            chalk: 2.4.2
-            enhanced-resolve: 4.3.0
-            loader-utils: 1.4.0
-            micromatch: 4.0.5
-            semver: 6.3.0
-            typescript: 3.9.7
-
-    ts-pnp@1.2.0(typescript@3.9.7):
+            chalk: 4.1.0
+            picomatch: 4.0.5
+            source-map: 0.7.6
+            typescript: 6.0.3
+            webpack: 4.44.2(webpack-cli@3.3.12)
         optionalDependencies:
-            typescript: 3.9.7
+            loader-utils: 2.0.0
+
+    ts-pnp@1.2.0(typescript@6.0.3):
+        optionalDependencies:
+            typescript: 6.0.3
 
     tslib@1.14.1: {}
 
@@ -13944,7 +13968,7 @@ snapshots:
 
     typedarray@0.0.6: {}
 
-    typescript@3.9.7: {}
+    typescript@6.0.3: {}
 
     unfetch@4.2.0: {}
 

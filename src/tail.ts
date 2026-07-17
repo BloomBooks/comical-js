@@ -1,6 +1,6 @@
 import paper = require("paper");
 import { Comical } from "./comical";
-import { TailSpec } from "bubbleSpec";
+import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer } from "./utilities";
 import { Handle } from "./handle";
@@ -20,18 +20,18 @@ export class Tail {
     // or the tail is inside the bubble.
     pathFill?: paper.Path;
 
-    public debugMode: boolean;
+    public debugMode!: boolean;
 
-    lowerLayer: paper.Layer;
-    upperLayer: paper.Layer;
-    handleLayer: paper.Layer;
+    lowerLayer!: paper.Layer;
+    upperLayer!: paper.Layer;
+    handleLayer!: paper.Layer;
 
-    root: paper.Point;
-    tip: paper.Point;
-    spec: TailSpec;
+    root!: paper.Point;
+    tip!: paper.Point;
+    spec!: TailSpec;
     bubble: Bubble | undefined;
-    clickAction: () => void;
-    state: string; // various values used during handle drag
+    clickAction!: () => void;
+    state!: string; // various values used during handle drag
 
     public constructor(
         root: paper.Point,

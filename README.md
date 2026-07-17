@@ -64,6 +64,11 @@ on the appropriate parent element to make the visible bubbles conform. Note that
 
 Two of the properties of bubbles are level and order. Bubbles at the same level are considered to be a family and should have different orders. They will merge their outlines if they overlap. Bubbles in a family are expected to share most other properties; the one with the lowest order is considered the parent, and its properties control all the others in the family. Typically the parent is the bubble which has a tail linked to something in the picture. If the other bubbles don't overlap, joiner tails will be drawn linking them in order.
 
+### Requirements
+
+As of v0.4.0, the published bundle targets **ES2015**. Environments that only
+support ES5 (e.g. IE11) are no longer supported.
+
 ## Developing
 
 Use Node 24.15.0 and pnpm 10.33.2, which are pinned in package.json for Volta and CI.

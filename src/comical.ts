@@ -2,7 +2,7 @@ import paper = require("paper");
 
 import { Bubble } from "./bubble";
 import { uniqueIds } from "./uniqueId";
-import { BubbleSpec } from "bubbleSpec";
+import { BubbleSpec } from "./bubbleSpec";
 import { ContainerData } from "./containerData";
 
 // Manages a collection of comic bubbles wrapped around HTML elements that share a common parent.
@@ -34,7 +34,7 @@ export class Comical {
 
     private static selectorForBubblesWhichTailMidpointMayOverlap = "";
 
-    static activeContainers = new Map<Element, ContainerData>();
+    static activeContainers = new Map<HTMLElement, ContainerData>();
 
     static activeBubble: Bubble | undefined;
 
@@ -59,7 +59,7 @@ export class Comical {
 
     public static stopEditing(): void {
         const keys: HTMLElement[] = [];
-        Comical.activeContainers.forEach((value, key: HTMLElement) => {
+        Comical.activeContainers.forEach((value, key) => {
             // Possibly we could just call convertCanvasToSvgImg(key) here,
             // but each such call deletes key from Comical.editElements,
             // so we'd be modifying the collection we're iterating over,
@@ -206,7 +206,7 @@ export class Comical {
 
         // First we need to create all the layers in order. (Because they automatically get added to the end of the project's list of layers)
         // Precondition: Assumes zLevelList is sorted.
-        const levelToLayer = {};
+        const levelToLayer: Record<number, paper.Layer[]> = {};
         for (let i = 0; i < zLevelList.length; ++i) {
             // Check if different than previous. (Ignore duplicate z-indices)
             if (i == 0 || zLevelList[i - 1] != zLevelList[i]) {
@@ -632,7 +632,7 @@ export class Comical {
     }
 
     // Answer target.getBoundingClientRect(), but relative to the top left of the specified parent.
-    static getBoundsRelativeToParent(parentContainer: HTMLElement, target: HTMLElement): ClientRect {
+    static getBoundsRelativeToParent(parentContainer: HTMLElement, target: HTMLElement) {
         const parentBounds = parentContainer.getBoundingClientRect();
         const targetBounds = target.getBoundingClientRect();
         const xOffset = parentBounds.left;

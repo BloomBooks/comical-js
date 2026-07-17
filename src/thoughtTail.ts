@@ -1,5 +1,5 @@
 import paper = require("paper");
-import { TailSpec } from "bubbleSpec";
+import { TailSpec } from "./bubbleSpec";
 import { Bubble } from "./bubble";
 import { activateLayer, makeArc } from "./utilities";
 import { CurveTail } from "./curveTail";
@@ -13,8 +13,8 @@ export class ThoughtTail extends CurveTail {
     mark1: paper.Path.Circle | undefined;
     mark2: paper.Path.Circle | undefined;
 
-    miniBubbleStrokePaths: paper.Path[];
-    miniBubbleFillPaths: paper.Path[];
+    miniBubbleStrokePaths!: paper.Path[];
+    miniBubbleFillPaths!: paper.Path[];
 
     public constructor(
         root: paper.Point,

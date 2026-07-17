@@ -1,3 +1,5 @@
+const path = require("path");
+
 module.exports = ({ config }) => {
     config.module.rules.push({
         test: /\.(ts|tsx)$/,
@@ -5,7 +7,8 @@ module.exports = ({ config }) => {
             {
                 loader: require.resolve("ts-loader"),
                 options: {
-                    transpileOnly: true
+                    transpileOnly: true,
+                    configFile: path.resolve(__dirname, "../tsconfig.storybook.json")
                 }
             }
         ]
