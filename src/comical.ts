@@ -137,6 +137,12 @@ export class Comical {
             canvasInCopy?.remove();
             return;
         }
+        // Past this point we are the ones who decide what drawing this copy ends up with, so
+        // whatever it holds now goes, unconditionally. Waiting until we know whether we have a
+        // replacement would mean an export made after the last bubble was deleted left the deleted
+        // bubbles on show in the copy. convertBubbleJsonToCanvas likewise always drops the old SVG.
+        // (While editing, this IS the copied canvas: that method gives the canvas the class too.)
+        const oldDrawingInCopy = copyOfParent.getElementsByClassName("comical-generated")[0];
         const bubbles = containerData.bubbleList;
         if (bubbles.length !== 0 && Comical.isAnyBubbleVisible(bubbles)) {
             // Same reasoning as in convertCanvasToSvgImg: with no visible bubble there is nothing
@@ -144,24 +150,18 @@ export class Comical {
             const svg = Comical.exportSvgWithoutHandles(containerData);
             svg.classList.add("comical-generated");
             uniqueIds(svg);
-            // Put the SVG where convertBubbleJsonToCanvas put the canvas it replaces, so that the
-            // copy ends up with the same document order the live path produces. If this copy has
-            // no canvas, follow the rest of that method: replace an SVG left by an earlier save,
-            // or, failing that, go first in the parent. (Getting this right is what makes calling
-            // us twice on the same copy safe, rather than leaving two comical-generated SVGs.)
-            if (canvasInCopy) {
-                canvasInCopy.parentElement!.insertBefore(svg, canvasInCopy);
+            // Put the SVG where the drawing it replaces was, so the copy ends up in the same
+            // document order the live path produces; failing that, first in the parent, which is
+            // where convertBubbleJsonToCanvas puts a canvas when there is nothing to replace.
+            const whereTheDrawingGoes = canvasInCopy || oldDrawingInCopy;
+            if (whereTheDrawingGoes) {
+                whereTheDrawingGoes.parentElement!.insertBefore(svg, whereTheDrawingGoes);
             } else {
-                const svgFromEarlierSave = copyOfParent.getElementsByClassName("comical-generated")[0];
-                if (svgFromEarlierSave) {
-                    svgFromEarlierSave.parentElement!.insertBefore(svg, svgFromEarlierSave);
-                    svgFromEarlierSave.remove();
-                } else {
-                    copyOfParent.insertBefore(svg, copyOfParent.firstChild);
-                }
+                copyOfParent.insertBefore(svg, copyOfParent.firstChild);
             }
         }
         canvasInCopy?.remove();
+        oldDrawingInCopy?.remove();
     }
 
     // Export the project as convertCanvasToSvgImg does, without the drag handles and WITHOUT
