@@ -105,6 +105,105 @@ export class Comical {
         this.activeContainers.delete(parent);
     }
 
+    // The non-destructive counterpart of stopEditing(). For each pair, produce the same SVG that
+    // stopEditing() would have left in the live parent, but put it in a COPY of that parent
+    // instead, leaving the live parent still being edited.
+    //
+    // The point is to let a client save a finished, canvas-free version of the document (the only
+    // form that renders without Javascript) while the user goes on editing the bubbles.
+    // stopEditing() cannot do that: it throws the editing state away (deleting the handles from
+    // the project, removing the canvas, and forgetting the container), so a client that wants to
+    // keep editing has to build it all again afterwards.
+    //
+    // Each pair is [the live parent Comical is editing, the corresponding element in the copy].
+    // The copy may be detached from any document; nothing here needs it to have a layout. A live
+    // parent that Comical is not currently editing is skipped, since its copy already holds
+    // whatever SVG was last saved there.
+    public static exportSvgToCopiesOfParents(liveAndCopiedParents: [HTMLElement, HTMLElement][]): void {
+        liveAndCopiedParents.forEach(([liveParent, copyOfParent]) =>
+            Comical.exportSvgToCopyOfParent(liveParent, copyOfParent)
+        );
+    }
+
+    // See exportSvgToCopiesOfParents, which is the form clients normally want.
+    public static exportSvgToCopyOfParent(liveParent: HTMLElement, copyOfParent: HTMLElement): void {
+        // A copy of the canvas is no use to anybody: only the live one has a paper project behind
+        // it. So it comes out whether or not we have an SVG to put in its place, which is why we
+        // look for it before the early return below.
+        const canvasInCopy = copyOfParent.getElementsByTagName("canvas")[0];
+        const containerData = this.activeContainers.get(liveParent);
+        if (!containerData) {
+            // Not being edited, so the copy already has whatever SVG belongs there.
+            canvasInCopy?.remove();
+            return;
+        }
+        // Past this point we are the ones who decide what drawing this copy ends up with, so
+        // whatever it holds now goes, unconditionally. Waiting until we know whether we have a
+        // replacement would mean an export made after the last bubble was deleted left the deleted
+        // bubbles on show in the copy. convertBubbleJsonToCanvas likewise always drops the old SVG.
+        // (While editing, this IS the copied canvas: that method gives the canvas the class too.)
+        const oldDrawingInCopy = copyOfParent.getElementsByClassName("comical-generated")[0];
+        const bubbles = containerData.bubbleList;
+        if (bubbles.length !== 0 && Comical.isAnyBubbleVisible(bubbles)) {
+            // Same reasoning as in convertCanvasToSvgImg: with no visible bubble there is nothing
+            // worth drawing, so we produce no SVG at all.
+            const svg = Comical.exportSvgWithoutHandles(containerData);
+            svg.classList.add("comical-generated");
+            uniqueIds(svg);
+            // Put the SVG where the drawing it replaces was, so the copy ends up in the same
+            // document order the live path produces; failing that, first in the parent, which is
+            // where convertBubbleJsonToCanvas puts a canvas when there is nothing to replace.
+            const whereTheDrawingGoes = canvasInCopy || oldDrawingInCopy;
+            if (whereTheDrawingGoes) {
+                whereTheDrawingGoes.parentElement!.insertBefore(svg, whereTheDrawingGoes);
+            } else {
+                copyOfParent.insertBefore(svg, copyOfParent.firstChild);
+            }
+        }
+        canvasInCopy?.remove();
+        oldDrawingInCopy?.remove();
+    }
+
+    // Export the project as convertCanvasToSvgImg does, without the drag handles and WITHOUT
+    // destroying anything: the project is exactly as it was when we return.
+    //
+    // convertCanvasToSvgImg can simply delete the handle items before exporting, because it is
+    // discarding the project anyway. We can't, so we take the layer the handles live in out of the
+    // project just long enough to export, then put it back at the same index. (Hiding it instead
+    // would not do: paper exports invisible items too, marked visibility="hidden", so all the
+    // handle geometry would still land in the saved SVG.)
+    private static exportSvgWithoutHandles(containerData: ContainerData): SVGElement {
+        const project = containerData.project;
+        const handleLayer = containerData.handleLayer;
+        const indexOfHandleLayer = handleLayer ? handleLayer.index : -1;
+        // Removing a layer that happens to be the active one makes paper hand that role to a
+        // sibling, and insertLayer only takes it back if the project has no active layer at all,
+        // so restoring it is up to us. This is not a corner case: Tail.showHandlesInternal
+        // activates the handle layer, so it is the active layer whenever a bubble is selected,
+        // which is exactly when a client is most likely to be saving.
+        const handleLayerWasActive = !!handleLayer && project.activeLayer === handleLayer;
+        handleLayer?.remove();
+        let svg: SVGElement;
+        try {
+            // Taking the layer out cannot change the size of what we export: paper sizes the SVG
+            // from the view, not from the bounds of the content.
+            svg = project.exportSVG() as SVGElement;
+        } finally {
+            if (handleLayer) {
+                project.insertLayer(indexOfHandleLayer, handleLayer);
+                if (handleLayerWasActive) {
+                    handleLayer.activate();
+                }
+            }
+        }
+        // Belt and braces. Every handle should be in handleLayer, but convertCanvasToSvgImg hunts
+        // for them by name across the whole project rather than trusting that, and a handle that
+        // reached a saved document would be a lasting mess. paper writes each item's name out as
+        // the id of its SVG element, and we get in before uniqueIds() rewrites those ids.
+        Array.from(svg.querySelectorAll('[id^="handle"]')).forEach(handle => handle.remove());
+        return svg;
+    }
+
     private static isAnyBubbleVisible(bubbles: Bubble[]): boolean {
         for (let i = 0; i < bubbles.length; i++) {
             if (!bubbles[i].isTransparent()) {
