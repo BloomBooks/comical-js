@@ -825,9 +825,13 @@ export class Bubble {
     }
 
     public uniteShapes() {
-        // Since we have set the includeSelf flag, we are guaranteed that selfAndRelatives will contain
-        // at least this (self) bubble.
+        // With the includeSelf flag, selfAndRelatives contains this (self) bubble, provided it
+        // is one Comical is currently using. A bubble Comical has replaced is looked up in the
+        // current bubble list, which no longer has it, and gets an empty list.
         const selfAndRelatives = Comical.findRelatives(this, true);
+        if (selfAndRelatives.length === 0) {
+            return;
+        }
         // Get rid of any old combinedShapes. This is especially important to do first when
         // switching to 'none' as no new one will be created.
         selfAndRelatives.forEach(r => {
@@ -1024,7 +1028,16 @@ export class Bubble {
 
     // Monitors for changes to the content element, and update this object if the content element is updated
     monitorContent() {
-        this.observer = new MutationObserver(() => this.adjustSizeAndPosition());
+        this.observer = new MutationObserver(() => {
+            // A bubble that Comical has since replaced (see Comical.update and
+            // convertBubbleJsonToCanvas) must not keep drawing: its cached spec is out of
+            // date, and its relatives may no longer exist. Just let go of the content.
+            if (!Comical.isCurrentBubble(this)) {
+                this.stopMonitoring();
+                return;
+            }
+            this.adjustSizeAndPosition();
+        });
         this.observer.observe(this.content, {
             attributes: true,
             characterData: true,
