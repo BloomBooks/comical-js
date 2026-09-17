@@ -501,12 +501,24 @@ export class Comical {
                 hit.item.data.onDoubleClick();
             }
         });
+        // If this parent was already active, its previous generation of Bubble objects is
+        // still watching the content elements. Stop that before we replace it, or those
+        // stale bubbles keep reacting to every later change (and, once the levels in the
+        // DOM move on without them, a stale family bubble finds no relatives and crashes).
+        Comical.stopMonitoring(parent);
         var containerData: ContainerData = {
             project: paper.project!,
             bubbleList: []
         };
         this.activeContainers.set(parent, containerData);
         Comical.update(parent);
+    }
+
+    // True if bubble is one of the Bubble objects Comical is currently using for its
+    // container, as opposed to a leftover from before the container was last converted
+    // or updated, or a throwaway made just to read or write a spec.
+    public static isCurrentBubble(bubble: Bubble): boolean {
+        return Comical.getBubblesInSameCanvas(bubble.content).includes(bubble);
     }
 
     private static getScaling(element: HTMLElement): paper.Point {
